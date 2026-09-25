@@ -52,9 +52,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   recoverCorruptedDatabase: () => ipcRenderer.invoke('backend:recover-corrupted-database'),
 });
 
-// Task bridge — the main-process task service owns persistence and dispatch, so
-// this surface is intentionally thin. `create` kicks a real aioncore
-// conversation; see `src/process/task/taskService.ts`.
+// Task bridge — kept for Kanban card dispatch (BoardAutomationModal).
+// The main process starts the task service once aioncore is ready; this
+// context bridge only forwards the thin IPC surface used by the renderer.
 contextBridge.exposeInMainWorld('taskAPI', {
   create: (mission: string, options?: { assistant_id?: string; team_id?: string; workspace?: string }) =>
     ipcRenderer.invoke('task:create', { mission, ...options }),

@@ -15,6 +15,7 @@ type QuitCleanupDeps = {
   markExplicitQuit: () => void;
   destroyTray: () => void;
   disposeCronResumeListener: () => void;
+  stopTaskService: () => Promise<void> | void;
   stopBackend: () => Promise<void>;
   destroyPetWindow: () => Promise<void> | void;
   logInfo: (message: string) => void;
@@ -54,6 +55,12 @@ async function runQuitCleanup(deps: QuitCleanupDeps): Promise<void> {
 
   const cleanup = async () => {
     deps.disposeCronResumeListener();
+
+    try {
+      await deps.stopTaskService();
+    } catch (error) {
+      deps.logError('[TaskService] Failed to stop:', error);
+    }
 
     await deps.stopBackend().catch((err) => deps.logError('[App] Failed to stop backend:', err));
 

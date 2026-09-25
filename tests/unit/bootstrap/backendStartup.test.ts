@@ -27,6 +27,29 @@ describe('startBackendOrExit', () => {
     expect(exitApp).not.toHaveBeenCalled();
   });
 
+  it('waits for asynchronous readiness work before reporting startup complete', async () => {
+    let finishOnStarted: (() => void) | undefined;
+    const onStarted = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishOnStarted = resolve;
+        })
+    );
+    const resultPromise = startBackendOrExit({
+      startBackend: async () => 42123,
+      onStarted,
+      captureFailure: vi.fn(),
+      exitApp: vi.fn(),
+      logError: vi.fn(),
+    });
+
+    await Promise.resolve();
+    expect(onStarted).toHaveBeenCalledWith(42123);
+
+    finishOnStarted?.();
+    await expect(resultPromise).resolves.toEqual({ ok: true, port: 42123 });
+  });
+
   it('captures startup failure and exits without registering a backend port by default', async () => {
     const error = new Error('aioncore failed to start within timeout');
     const calls: string[] = [];

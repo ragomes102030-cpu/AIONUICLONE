@@ -58,6 +58,32 @@ describe('recoverCorruptedDatabaseAfterUserConfirmation', () => {
     expect(deps.logInfo).toHaveBeenCalledOnce();
   });
 
+  it('waits for readiness activation before reloading the renderer', async () => {
+    const deps = makeDeps({
+      reason: 'backend_recoverable_database_corruption',
+      backendBoundaryCode: 'BOOTSTRAP_DATA_MIGRATION_FAILED',
+      backendBoundaryStage: 'database.recoverable_corruption',
+    });
+    let finishMarkReady: (() => void) | undefined;
+    deps.markReady.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finishMarkReady = resolve;
+        })
+    );
+
+    const recovery = recoverCorruptedDatabaseAfterUserConfirmation(deps);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+
+    expect(deps.markReady).toHaveBeenCalledOnce();
+    expect(deps.reloadMainWindow).not.toHaveBeenCalled();
+
+    finishMarkReady?.();
+    await recovery;
+
+    expect(deps.reloadMainWindow).toHaveBeenCalledOnce();
+  });
+
   it('does not mark ready or reload when restart fails', async () => {
     const failure: BackendStartupFailureInfo = {
       reason: 'backend_recoverable_database_corruption',

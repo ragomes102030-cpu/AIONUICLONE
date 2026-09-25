@@ -28,6 +28,7 @@ import { assertStartupArchitectureCompatible } from './process/startup/architect
 import { classifyBackendStartupFailure } from './process/startup/backendStartupFailure';
 import { installQuitCleanup } from './process/startup/quitCleanup';
 import { shouldRegisterBackendStartup } from './process/startup/singleInstanceGating';
+import { createTaskServiceStartup } from './process/startup/taskServiceStartup';
 import { ProcessConfig } from './process/utils/initStorage';
 import type { BackendStartupFailureInfo } from './common/types/platform/electron';
 import { registerWindowMaximizeListeners } from '@process/bridge';
@@ -219,13 +220,25 @@ const backendManager = new BackendLifecycleManager(
   },
   resolveBinaryPath
 );
+const taskServiceStartup = createTaskServiceStartup({
+  isEnabled: () => process.env.AIONUI_E2E_TEST !== '1',
+  start: async (backendPort) => {
+    const { getDataPath } = await import('./process/utils/utils');
+    const { startTaskService } = await import('./process/task/taskService');
+    const dataPath = getDataPath();
+    return startTaskService({
+      dbPath: path.join(dataPath, 'tasks.db'),
+      getBackendPort: () => backendManager.port || backendPort,
+      defaultWorkspace: path.join(dataPath, 'task-workspaces'),
+    });
+  },
+});
 let disposeCronResumeListener: (() => void) | null = null;
-/** Task service handle; null when the service never started. */
-let taskService: { stop: () => void } | null = null;
 
 // Flag tracking whether the backend subprocess started successfully. Read by
 // the deferred runBackendMigrations trigger in createWindow().
 let backendStartedOk = false;
+let backendReadyPromise: Promise<void> | null = null;
 let backendStartupFailed = false;
 let backendStartupFailureInfo: BackendStartupFailureInfo | null = null;
 let rendererInitialLanguage: string | null = null;
@@ -277,9 +290,8 @@ ipcMain.handle('backend:recover-corrupted-database', async () => {
               markBackendStartupFailed(error);
               await captureBackendStartupFailure(error);
             },
-            onReady: (backendPort) => {
-              markBackendReady(backendPort, 'backendManager.recoverCorruptedDatabase.lateReady');
-            },
+            onReady: (backendPort) =>
+              markBackendReady(backendPort, 'backendManager.recoverCorruptedDatabase.lateReady'),
           },
           undefined,
           { recoverCorruptedDatabase: true }
@@ -383,8 +395,8 @@ function ensureAdminUserOnce(backendPort: number): Promise<void> {
   return ensureAdminUserPromise;
 }
 
-function markBackendReady(backendPort: number, source: string): void {
-  if (backendStartedOk) return;
+function markBackendReady(backendPort: number, source: string): Promise<void> {
+  if (backendReadyPromise) return backendReadyPromise;
   console.log(`[AionUi] ${source} ready (port=${backendPort})`);
   exposeBackendPort(backendPort);
   registerCronResumeBridge(backendPort);
@@ -392,10 +404,19 @@ function markBackendReady(backendPort: number, source: string): void {
   backendStartupFailed = false;
   backendStartupFailureInfo = null;
   (globalThis as typeof globalThis & { __backendStartupFailed?: boolean }).__backendStartupFailed = false;
-  // Backend is ready: tell the renderer to drop any "starting" view and show the App.
-  broadcastBackendStartupState(null);
   void ensureAdminUserOnce(backendPort);
   scheduleBackendMigrations();
+
+  backendReadyPromise = (async () => {
+    try {
+      await taskServiceStartup.start(backendPort);
+    } catch (error) {
+      console.error('[TaskService] failed to start:', error);
+    }
+    // Publish ready only after the task/Kanban IPC handlers are available.
+    broadcastBackendStartupState(null);
+  })();
+  return backendReadyPromise;
 }
 
 function resolveDebugBackendStartupFailure(): BackendStartupFailureInfo | null {
@@ -852,18 +873,16 @@ const handleAppReady = async (): Promise<void> => {
               markBackendStartupFailed(error);
               await captureBackendStartupFailure(error);
             },
-            onReady: (backendPort) => {
-              markBackendReady(backendPort, 'backendManager.lateReady');
-            },
+            onReady: (backendPort) => markBackendReady(backendPort, 'backendManager.lateReady'),
           }
         );
       },
-      onStarted: (backendPort) => {
-        exposeBackendPort(backendPort);
+      onStarted: async (backendPort) => {
         if (backendManager.status === 'running') {
-          markBackendReady(backendPort, 'backendManager.start');
+          await markBackendReady(backendPort, 'backendManager.start');
           return;
         }
+        exposeBackendPort(backendPort);
         mark(`backendManager.start pending health (port=${backendPort})`);
       },
       captureFailure: async (error) => {
@@ -886,29 +905,6 @@ const handleAppReady = async (): Promise<void> => {
     const bootBackendPort = (globalThis as typeof globalThis & { __backendPort?: number }).__backendPort;
     if (backendStartedOk && bootBackendPort) {
       await ensureAdminUserOnce(bootBackendPort);
-    }
-
-    // Task service — dispatches pending tasks to aioncore as real conversations
-    // and records the agent's actual reply. It lives in the main process because
-    // the backend port is only known here and `--local` identity mode needs no
-    // token. Skipped under E2E so a test run never dispatches leftover tasks.
-    if (backendStartedOk && bootBackendPort && process.env.AIONUI_E2E_TEST !== '1') {
-      try {
-        const { getDataPath } = await import('./process/utils/utils');
-        const { startTaskService } = await import('./process/task/taskService');
-        const dataPath = getDataPath();
-        taskService = startTaskService({
-          dbPath: path.join(dataPath, 'tasks.db'),
-          getBackendPort: () => backendManager.port || bootBackendPort,
-          defaultWorkspace: path.join(dataPath, 'task-workspaces'),
-        });
-        app.on('will-quit', () => {
-          taskService?.stop();
-          taskService = null;
-        });
-      } catch (error) {
-        console.error('[TaskService] failed to start:', error);
-      }
     }
   }
 
@@ -1175,6 +1171,7 @@ installQuitCleanup({
     disposeCronResumeListener?.();
     disposeCronResumeListener = null;
   },
+  stopTaskService: () => taskServiceStartup.stop(),
   // Stop aioncore subprocess — backend shutdown kills all agent children
   // transitively (no separate frontend workerTaskManager remains).
   stopBackend: () => backendManager.stop(),

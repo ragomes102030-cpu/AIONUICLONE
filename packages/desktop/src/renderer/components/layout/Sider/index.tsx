@@ -225,7 +225,7 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
               onClick={handleAssistantClick}
             />
             <SiderNavEntry
-              label={t('agentTasks.kanban.title', { defaultValue: 'Kanban' })}
+              label={t('kanban.title', { defaultValue: 'Kanban' })}
               icon={<ViewGridList theme='outline' size='16' fill='currentColor' />}
               isActive={pathname.startsWith('/kanban')}
               collapsed={collapsed}
@@ -257,15 +257,6 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
               collapsed={collapsed}
               siderTooltipProps={siderTooltipProps}
               onClick={handleScheduledClick}
-            />
-            <SiderNavEntry
-              label={t('agentTasks.library')}
-              icon={<BookOpen theme='outline' size='16' fill='currentColor' />}
-              trailing={<span className='text-11px text-t-tertiary'>{t('common.comingSoon')}</span>}
-              disabled
-              collapsed={collapsed}
-              isMobile={isMobile}
-              siderTooltipProps={siderTooltipProps}
             />
             {/* Divider between fixed navigation and conversation history. */}
             <div

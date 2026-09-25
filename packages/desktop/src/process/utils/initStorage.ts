@@ -352,9 +352,19 @@ const resolveFactorySkillsDir = (): string | null => {
   return null;
 };
 
+const FACTORY_SKILL_ALLOWLIST = new Set([
+  'construction',
+  'superpowers',
+  'context7',
+  'book-to-skill',
+  'whatsapp-skills-repo',
+]);
+
 /**
  * Copy only entries that do NOT already exist in the destination.
  * Never overwrites user-modified skills — factory seed is additive.
+ * Only allowlisted top-level factory skills are seeded; stray files
+ * (docs, configs, .git) bundled next to them are ignored.
  */
 const copyMissingEntries = async (srcDir: string, destDir: string): Promise<number> => {
   let seeded = 0;
@@ -362,16 +372,13 @@ const copyMissingEntries = async (srcDir: string, destDir: string): Promise<numb
   for (const entry of entries) {
     // Skip VCS metadata accidentally bundled with a skill clone.
     if (entry.name === '.git') continue;
+    if (!FACTORY_SKILL_ALLOWLIST.has(entry.name)) continue;
+    if (!entry.isDirectory()) continue;
     const srcPath = path.join(srcDir, entry.name);
     const destPath = path.join(destDir, entry.name);
     if (existsSync(destPath)) continue;
-    if (entry.isDirectory()) {
-      await copyDirectoryRecursively(srcPath, destPath);
-      seeded += 1;
-    } else if (entry.isFile()) {
-      await fs.copyFile(srcPath, destPath);
-      seeded += 1;
-    }
+    await copyDirectoryRecursively(srcPath, destPath);
+    seeded += 1;
   }
   return seeded;
 };

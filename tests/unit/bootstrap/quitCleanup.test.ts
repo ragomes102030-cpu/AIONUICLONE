@@ -11,11 +11,7 @@ type BeforeQuitEvent = {
   preventDefault: () => void;
 };
 
-const flushMicrotasks = async () => {
-  for (let i = 0; i < 6; i += 1) {
-    await Promise.resolve();
-  }
-};
+const flushMicrotasks = () => new Promise<void>((resolve) => setImmediate(resolve));
 
 describe('installQuitCleanup', () => {
   it('prevents the first quit until cleanup finishes, then requests quit again', async () => {
@@ -41,6 +37,7 @@ describe('installQuitCleanup', () => {
       markExplicitQuit: () => calls.push('mark-explicit-quit'),
       destroyTray: () => calls.push('destroy-tray'),
       disposeCronResumeListener: () => calls.push('dispose-cron'),
+      stopTaskService: () => calls.push('stop-task-service'),
       stopBackend,
       destroyPetWindow: () => calls.push('destroy-pet'),
       logInfo: vi.fn(),
@@ -59,6 +56,7 @@ describe('installQuitCleanup', () => {
       'mark-explicit-quit',
       'destroy-tray',
       'dispose-cron',
+      'stop-task-service',
       'stop-backend-start',
     ]);
 
@@ -71,6 +69,7 @@ describe('installQuitCleanup', () => {
       'mark-explicit-quit',
       'destroy-tray',
       'dispose-cron',
+      'stop-task-service',
       'stop-backend-start',
       'destroy-pet',
       'quit-app',
@@ -89,6 +88,7 @@ describe('installQuitCleanup', () => {
       markExplicitQuit: vi.fn(),
       destroyTray: vi.fn(),
       disposeCronResumeListener: vi.fn(),
+      stopTaskService: vi.fn(),
       stopBackend: async () => {},
       destroyPetWindow: vi.fn(),
       logInfo: vi.fn(),

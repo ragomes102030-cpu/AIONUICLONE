@@ -1,72 +1,241 @@
 name: Build Windows Installer
 
+# ---------------------------------------------------------------------------
+# Package manager: Bun (NOT npm, NOT pnpm)
+# ---------------------------------------------------------------------------
+# This repository is a Bun workspace monorepo:
+#   * package.json declares `workspaces: ["packages/*"]`
+#   * dependencies use `"@aionui/web-host": "workspace:*"` (4 occurrences)
+#   * the committed lockfile is `bun.lock`
+#
+# npm does not implement the `workspace:` protocol, so it always fails with:
+#   npm error code EUNSUPPORTEDPROTOCOL
+#   npm error Unsupported URL Type "workspace:": workspace:*
+# pnpm does support `workspace:*`, but only through `pnpm-workspace.yaml` —
+# pnpm deliberately ignores the `workspaces` field of package.json and requires
+# a committed `pnpm-lock.yaml`. Neither file exists in this repo, so
+# `pnpm install --frozen-lockfile` fails before it can install anything.
+#
+# Bun resolves `workspace:*` natively from `bun.lock`, exactly like the other
+# pipelines of this repo already do (_build-reusable.yml, build-and-release.yml).
+# Additionally, scripts/build-with-builder.js shells out to `bunx electron-vite`
+# and `bunx electron-builder`, and scripts/postinstall.js calls
+# `bunx electron-builder install-app-deps`, so Bun is required in this job
+# regardless of which package manager performs the install.
+#
+# Build output: electron-builder writes to `<repo>/out`. packages/desktop/electron-builder.yml
+# sets `directories.output: out` with `directories.app: .`, and
+# scripts/build-with-builder.js always packages from the repository root, so the
+# installer lands at `out/AionUi-<version>-win-x64.exe` — NOT under packages/desktop/out.
+# ---------------------------------------------------------------------------
+
 on:
   push:
     branches: [main, 'feat/*']
     tags:
       - 'v*'
+  workflow_dispatch:
 
 env:
+  BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'
+  # Pinned AionHub tag for the offline hub fallback bundled into resources/hub.
+  # Must exist in iOfficeAI/AionHub; scripts/prepareHubResources.js aborts the
+  # build (exit 1) when neither mirror can serve the tag.
+  AIONUI_HUB_TAG: 'dist-ebc6a2b'
   NODE_OPTIONS: --max-old-space-size=16384
 
 jobs:
   build:
-    runs-on: windows-latest
+    name: Windows x64 installer
+    runs-on: windows-2022
     timeout-minutes: 120
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ github.ref }}
-        
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: 9
-        run_install: false
-        
-    - name: Cache pnpm store
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.pnpm-store
-          node_modules
-          packages/desktop/node_modules
-          packages/web-host/node_modules
-        key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml', 'packages/desktop/pnpm-lock.yaml', 'packages/web-host/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-
-        
-    - name: Install dependencies with pnpm
-      run: pnpm install --frozen-lockfile --ignore-scripts
-      
-    - name: Build with memory limits
-      working-directory: packages/desktop
-      run: |
-        Write-Host '🚀 Starting build...' -ForegroundColor Green
-        bun run build
-        
-    - name: Verify installer
-      working-directory: packages/desktop
-      run: |
-        if (Test-Path 'out/AionUi-2.2.2-win-x64.exe') {
-          Write-Host '✅ Installer created successfully!' -ForegroundColor Green
-        } else {
-          Write-Host '❌ ERROR: Installer not found!' -ForegroundColor Red
-          Get-ChildItem 'out' -ErrorAction SilentlyContinue | Write-Host
-          exit 1
-        }
-        
-    - name: Upload installer artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: AionUi-Windows-Installer
-        path: packages/desktop/out/AionUi-2.2.2-win-x64.exe
-        retention-days: 7
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Point Electron caches at the runner temp dir
+        shell: pwsh
+        run: |
+          # packages/desktop/electron-builder.yml declares
+          # `electronDownload.cache: ${env.ELECTRON_CACHE}`. When the variable is
+          # empty, electron-builder creates a literal directory named
+          # "${env:ELECTRON_CACHE}", so it must always be set.
+          $electronCache = "$env:RUNNER_TEMP\.cache\electron"
+          $electronBuilderCache = "$env:RUNNER_TEMP\.cache\electron-builder"
+          Add-Content -Path $env:GITHUB_ENV -Value "ELECTRON_CACHE=$electronCache"
+          Add-Content -Path $env:GITHUB_ENV -Value "ELECTRON_BUILDER_CACHE=$electronBuilderCache"
+          Write-Host "ELECTRON_CACHE=$electronCache"
+          Write-Host "ELECTRON_BUILDER_CACHE=$electronBuilderCache"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # package.json engines: ">=22 <25"
+          node-version: '22'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          # node-gyp needs a Python interpreter if the native rebuild below has to
+          # compile better-sqlite3 from source instead of using a prebuild.
+          python-version: '3.12'
+
+      - name: Cache Electron artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.temp }}\.cache\electron
+            ${{ runner.temp }}\.cache\electron-builder
+            ${{ env.LOCALAPPDATA }}\electron-builder\Cache
+          key: electron-cache-windows-x64-${{ hashFiles('package.json', 'bun.lock') }}
+          restore-keys: |
+            electron-cache-windows-x64-
+
+      - name: Install workspace dependencies (bun install)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_wait_seconds: 30
+          # bash, because bun writes progress to stderr and Windows PowerShell
+          # 5.1 (the default shell of this action) turns native stderr output
+          # into a NativeCommandError, which would fail the install spuriously.
+          shell: bash
+          command: bun install --frozen-lockfile
+
+      - name: Run postinstall
+        shell: bash
+        run: bun run postinstall || true
+
+      - name: Setup Windows native toolchain
+        shell: pwsh
+        run: |
+          # node-gyp is only needed when the prebuild-install step below has to
+          # fall back to compiling from source, so a failure here must not stop
+          # the build.
+          try {
+            bun install --global node-gyp
+          } catch {
+            Write-Host "Warning: could not install node-gyp globally: $_"
+          }
+          Add-Content -Path $env:GITHUB_ENV -Value "WindowsTargetPlatformVersion=10.0.19041.0"
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: '17.0'
+
+      - name: Rebuild native modules for Electron
+        shell: pwsh
+        run: |
+          $arch = 'x64'
+          $electronVer = (node -p "require('./package.json').devDependencies.electron.replace(/[\^~]/g, '')").Trim()
+          $sqliteNode = 'node_modules\better-sqlite3\build\Release\better_sqlite3.node'
+
+          Write-Host "=========================================="
+          Write-Host "Rebuilding native modules for Electron $electronVer ($arch)"
+          Write-Host "=========================================="
+
+          # Step 1: prefer the prebuilt Electron binary (fast, no compiler needed).
+          # Run from inside the package so prebuild-install resolves better-sqlite3
+          # instead of the repository root package.json.
+          Write-Host '[Step 1] Trying prebuild-install...'
+          Push-Location 'node_modules\better-sqlite3'
+          try {
+            bun x --yes prebuild-install --runtime=electron --target=$electronVer --platform=win32 --arch=$arch --force
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host 'prebuild-install finished OK'
+            } else {
+              Write-Host "prebuild-install exited with code $LASTEXITCODE"
+            }
+          } catch {
+            Write-Host "prebuild-install failed: $_"
+          } finally {
+            Pop-Location
+          }
+
+          # Step 2: fall back to a real compile when no prebuild matched.
+          if (-not (Test-Path $sqliteNode)) {
+            Write-Host '[Step 2] No prebuilt binary found, falling back to electron-rebuild...'
+            try {
+              bunx electron-rebuild -f -w better-sqlite3
+            } catch {
+              Write-Host "electron-rebuild failed: $_"
+            }
+          }
+
+          # Step 3: the packaged app requires this file, so fail fast when missing.
+          if (Test-Path $sqliteNode) {
+            $size = [math]::Round((Get-Item $sqliteNode).Length / 1MB, 1)
+            Write-Host "better-sqlite3 native module ready: $sqliteNode ($size MB)"
+          } else {
+            Write-Error "better-sqlite3 native module not found at: $sqliteNode"
+            exit 1
+          }
+          exit 0
+
+      - name: Build Windows installer
+        shell: pwsh
+        env:
+          CI: true
+          NODE_OPTIONS: '--max-old-space-size=8192'
+          npm_config_arch: x64
+          npm_config_target_arch: x64
+          npm_config_runtime: electron
+          npm_config_disturl: https://electronjs.org/headers
+          npm_config_build_from_source: true
+          npm_config_cache: ${{ runner.temp }}\.npm
+          MSVS_VERSION: 2022
+          GYP_MSVS_VERSION: 2022
+          _WIN32_WINNT: 0x0A00
+          # prepareAioncore() resolves the pinned AionCore release
+          # (package.json > aioncoreVersion) and downloads its asset.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Sentry source-map upload is intentionally NOT enabled: the vite config
+          # only uploads when SENTRY_UPLOAD_SOURCE_MAPS === 'true' while CI is set,
+          # so no Sentry secrets are required to build an installer.
+        run: |
+          node scripts/build-with-builder.js x64 --win --x64
+
+      - name: Verify installer
+        shell: pwsh
+        run: |
+          $version = (node -p "require('./package.json').version").Trim()
+          $exe = "out\AionUi-$version-win-x64.exe"
+
+          Write-Host 'Build output:'
+          Get-ChildItem out -File -ErrorAction SilentlyContinue |
+            Select-Object Name, Length |
+            Format-Table -AutoSize
+
+          if (-not (Test-Path $exe)) {
+            Write-Error "Installer not found: $exe"
+            exit 1
+          }
+          if (-not (Test-Path 'out\latest.yml')) {
+            Write-Error 'Updater metadata out\latest.yml is missing: electron-builder did not finish.'
+            exit 1
+          }
+
+          $sizeMb = [math]::Round((Get-Item $exe).Length / 1MB, 1)
+          Write-Host "Installer ready: $exe ($sizeMb MB)"
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AionUi-Windows-Installer
+          path: |
+            out\*.exe
+            out\latest.yml
+            out\*.blockmap
+          if-no-files-found: error
+          retention-days: 7

@@ -37,7 +37,6 @@ import type {
 } from '@/common/kanban/kanbanTypes';
 import { useAssistantList } from '@renderer/hooks/assistant/useAssistantList';
 import { selectableAssistants } from '@renderer/utils/model/assistantSelection';
-import { useAgentTasks } from '@renderer/pages/agentTasks/useAgentTasks';
 import { BoardAutomationModal } from './BoardAutomationModal';
 import { useKanban } from './useKanban';
 
@@ -606,7 +605,8 @@ const KanbanPage: React.FC = () => {
   const navigate = useNavigate();
   const { assistants } = useAssistantList();
   const enabledAssistants = useMemo(() => selectableAssistants(assistants), [assistants]);
-  const { tasks, refresh: refreshTasks } = useAgentTasks();
+  const tasks: Task[] = [];
+  const refreshTasks = () => {};
   const {
     boards,
     loading,

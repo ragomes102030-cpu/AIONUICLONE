@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json.schemastore.org/claude-marketplace.json",
+  "name": "wassengerhq",
+  "displayName": "Wassenger",
+  "description": "Official plugins from Wassenger for automating WhatsApp Business with AI agents.",
+  "homepage": "https://wassenger.com",
+  "owner": {
+    "name": "Wassenger",
+    "url": "https://wassenger.com",
+    "github": "wassengerhq"
+  },
+  "plugins": [
+    {
+      "name": "wassenger-skills",
+      "displayName": "Wassenger Skills",
+      "description": "23 Agent Skills for automating WhatsApp Business on the official WABA — team setup with roles and per-device permissions, inbox triage with notes and archive, messaging with template handling, bulk campaigns, real-time webhooks, contacts management, label CRUD with namespacing, auto-assignment routing, canned quick replies, rule-based auto-replies, analytics and reporting, an AI agent that answers customers with a human handoff, plus 7 industry playbooks (e-commerce, sales, customer support, real estate, restaurants, logistics, marketing) and migration guides from Twilio and Wati.",
+      "source": "github:wassengerhq/whatsapp-skills",
+      "version": "0.1.0",
+      "license": "MIT",
+      "homepage": "https://github.com/wassengerhq/whatsapp-skills",
+      "tags": [
+        "whatsapp",
+        "whatsapp-business",
+        "waba",
+        "wassenger",
+        "mcp",
+        "agent-skills",
+        "automation",
+        "ai-agent",
+        "chatbot",
+        "customer-service",
+        "auto-reply",
+        "quick-replies",
+        "auto-assignment",
+        "routing",
+        "team-management",
+        "labels",
+        "sales",
+        "ecommerce",
+        "marketing",
+        "logistics",
+        "real-estate",
+        "restaurants",
+        "analytics",
+        "reporting",
+        "migration",
+        "twilio",
+        "wati"
+      ],
+      "categories": ["communication", "customer-service", "automation"],
+      "requires": {
+        "node": ">=18",
+        "mcpServers": ["mcp-wassenger"]
+      }
+    }
+  ]
+}
