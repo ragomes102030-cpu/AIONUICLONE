@@ -1,0 +1,12 @@
+{
+  "name": "budget-composition-service",
+  "version": "1.0.0",
+  "description": "Construction budgeting with service compositions: inputs, coefficients, unit cost, BDI, price versions with approval.",
+  "author": "AIONUICLONE",
+  "license": "MIT",
+  "permissions": ["filesystem"],
+  "entry": "instructions.md",
+  "tags": ["construction", "budget", "composition", "bdi"],
+  "models": ["claude-*", "gpt-*"],
+  "minOpenClawVersion": "0.8.0"
+}

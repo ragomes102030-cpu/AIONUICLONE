@@ -1,0 +1,12 @@
+{
+  "name": "cpm-network-validator",
+  "version": "1.0.0",
+  "description": "Validate construction schedule networks: detect cycles, compute CPM with FS/SS/FF/SF and lags, floats, critical path and orphans.",
+  "author": "AIONUICLONE",
+  "license": "MIT",
+  "permissions": ["filesystem"],
+  "entry": "instructions.md",
+  "tags": ["construction", "scheduling", "cpm", "critical-path"],
+  "models": ["claude-*", "gpt-*"],
+  "minOpenClawVersion": "0.8.0"
+}

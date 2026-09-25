@@ -1,0 +1,12 @@
+{
+  "name": "baseline-scurve-evm",
+  "version": "1.0.0",
+  "description": "Snapshot baselines, compute S-curves and Earned Value: PV/EV/AC, SPI/CPI, EAC/ETC/VAC, planned vs actual deviation.",
+  "author": "AIONUICLONE",
+  "license": "MIT",
+  "permissions": ["filesystem"],
+  "entry": "instructions.md",
+  "tags": ["construction", "baseline", "evm", "s-curve"],
+  "models": ["claude-*", "gpt-*"],
+  "minOpenClawVersion": "0.8.0"
+}

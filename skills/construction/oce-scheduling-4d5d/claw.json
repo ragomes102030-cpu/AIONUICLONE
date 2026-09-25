@@ -1,0 +1,12 @@
+{
+  "name": "oce-scheduling-4d5d",
+  "version": "1.0.0",
+  "description": "4D scheduling and 5D cost modelling in OpenConstructionERP: task schedules, BIM links, BOQ roll-up, Gantt views.",
+  "author": "AIONUICLONE",
+  "license": "MIT",
+  "permissions": ["filesystem", "network"],
+  "entry": "instructions.md",
+  "tags": ["construction", "scheduling", "4d", "5d"],
+  "models": ["claude-*", "gpt-*"],
+  "minOpenClawVersion": "0.8.0"
+}

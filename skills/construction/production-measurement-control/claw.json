@@ -1,0 +1,12 @@
+{
+  "name": "production-measurement-control",
+  "version": "1.0.0",
+  "description": "Daily production tracking and contractual measurement: field entries, crew productivity, approval workflow, bulletins with calc memory.",
+  "author": "AIONUICLONE",
+  "license": "MIT",
+  "permissions": ["filesystem"],
+  "entry": "instructions.md",
+  "tags": ["construction", "production", "measurement", "productivity"],
+  "models": ["claude-*", "gpt-*"],
+  "minOpenClawVersion": "0.8.0"
+}

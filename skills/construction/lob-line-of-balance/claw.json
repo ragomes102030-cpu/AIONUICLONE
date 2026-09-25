@@ -1,0 +1,12 @@
+{
+  "name": "lob-line-of-balance",
+  "version": "1.0.0",
+  "description": "Line of Balance for repetitive construction: pace, crews, rhythm, interference detection, rebalancing.",
+  "author": "AIONUICLONE",
+  "license": "MIT",
+  "permissions": ["filesystem"],
+  "entry": "instructions.md",
+  "tags": ["construction", "lob", "repetitive", "rhythm"],
+  "models": ["claude-*", "gpt-*"],
+  "minOpenClawVersion": "0.8.0"
+}

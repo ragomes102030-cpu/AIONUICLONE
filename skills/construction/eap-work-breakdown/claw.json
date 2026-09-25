@@ -1,0 +1,12 @@
+{
+  "name": "eap-work-breakdown",
+  "version": "1.0.0",
+  "description": "Build and validate construction Work Breakdown Structures: hierarchy, WBS codes, scope-activity linkage, roll-up.",
+  "author": "AIONUICLONE",
+  "license": "MIT",
+  "permissions": ["filesystem"],
+  "entry": "instructions.md",
+  "tags": ["construction", "eap", "wbs", "scope"],
+  "models": ["claude-*", "gpt-*"],
+  "minOpenClawVersion": "0.8.0"
+}

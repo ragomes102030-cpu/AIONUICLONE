@@ -1,0 +1,12 @@
+{
+  "name": "constraint-risk-action",
+  "version": "1.0.0",
+  "description": "Constraint, risk and decision loop: owner, deadline, action, evidence, resolution, reopen, schedule impact.",
+  "author": "AIONUICLONE",
+  "license": "MIT",
+  "permissions": ["filesystem"],
+  "entry": "instructions.md",
+  "tags": ["construction", "constraints", "risk", "decisions"],
+  "models": ["claude-*", "gpt-*"],
+  "minOpenClawVersion": "0.8.0"
+}
