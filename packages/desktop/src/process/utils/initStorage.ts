@@ -322,6 +322,79 @@ const cleanupLegacyBuiltinSkillsDir = () => {
 };
 
 /**
+ * Resolve the packaged factory-skills directory shipped via electron-builder
+ * extraResources (`factory-skills`). Layout in production:
+ *   <resourcesDir>/factory-skills/<skill-name>/SKILL.md...
+ * In dev the folder may sit at the repo root `skills/`.
+ */
+const resolveFactorySkillsDir = (): string | null => {
+  const candidates: string[] = [];
+  try {
+    const resourcesPath =
+      typeof process !== 'undefined' && typeof (process as unknown as { resourcesPath?: string }).resourcesPath === 'string'
+        ? (process as unknown as { resourcesPath: string }).resourcesPath
+        : null;
+    if (resourcesPath) candidates.push(path.join(resourcesPath, 'factory-skills'));
+  } catch {
+    /* ignore */
+  }
+  // Repo-root fallback for dev runs: <repo>/skills
+  const devGuess = path.resolve(__dirname, '..', '..', '..', '..', '..', '..', 'skills');
+  candidates.push(devGuess);
+
+  for (const candidate of candidates) {
+    try {
+      if (candidate && existsSync(candidate)) return candidate;
+    } catch {
+      /* ignore */
+    }
+  }
+  return null;
+};
+
+/**
+ * Copy only entries that do NOT already exist in the destination.
+ * Never overwrites user-modified skills — factory seed is additive.
+ */
+const copyMissingEntries = async (srcDir: string, destDir: string): Promise<number> => {
+  let seeded = 0;
+  const entries = await fs.readdir(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    // Skip VCS metadata accidentally bundled with a skill clone.
+    if (entry.name === '.git') continue;
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+    if (existsSync(destPath)) continue;
+    if (entry.isDirectory()) {
+      await copyDirectoryRecursively(srcPath, destPath);
+      seeded += 1;
+    } else if (entry.isFile()) {
+      await fs.copyFile(srcPath, destPath);
+      seeded += 1;
+    }
+  }
+  return seeded;
+};
+
+/**
+ * Seed clone-owned factory skills into the user skills dir.
+ * Additive only: existing user skills are never overwritten.
+ */
+const seedFactorySkills = async (userSkillsDir: string): Promise<void> => {
+  const factoryDir = resolveFactorySkillsDir();
+  if (!factoryDir) {
+    console.log('[AionUi] factory-skills dir not found; skipping skill seed');
+    return;
+  }
+  try {
+    const seeded = await copyMissingEntries(factoryDir, userSkillsDir);
+    console.log(`[AionUi] factory skills seeded: ${seeded} new entr${seeded === 1 ? 'y' : 'ies'} from ${factoryDir}`);
+  } catch (error) {
+    console.error('[AionUi] Failed to seed factory skills:', error);
+  }
+};
+
+/**
  * Ensure user-facing config directories exist. Built-in assistant rules and
  * skill files are now owned by the backend (see
  * `crates/aionui-app/assets/builtin-assistants/` and
@@ -338,6 +411,9 @@ const ensureAssistantDirs = async (): Promise<void> => {
   if (!existsSync(cronSkillsDir)) mkdirSync(cronSkillsDir);
 
   if (!existsSync(assistantsDir)) mkdirSync(assistantsDir);
+
+  // Clone factory skills (repo `skills/`, packaged as `factory-skills`).
+  await seedFactorySkills(userSkillsDir);
 };
 
 const getBuiltinMcpBaseDir = (): string => {

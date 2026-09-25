@@ -112,12 +112,12 @@ const AboutModalContent: React.FC = () => {
   const linkItems: LinkItem[] = [
     {
       title: t('settings.helpDocumentation'),
-      url: 'https://github.com/iOfficeAI/AionUi/wiki',
+      url: 'https://github.com/ragomes102030-cpu/AIONUICLONE/wiki',
       icon: <Right theme='outline' size='16' className='rtl-mirror' />,
     },
     {
       title: t('settings.updateLog'),
-      url: 'https://github.com/iOfficeAI/AionUi/releases',
+      url: 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases',
       icon: <Right theme='outline' size='16' className='rtl-mirror' />,
     },
     {
@@ -162,7 +162,7 @@ const AboutModalContent: React.FC = () => {
               <div
                 className='text-t-primary cursor-pointer hover:text-t-secondary transition-colors p-4px'
                 onClick={() =>
-                  openLink('https://github.com/iOfficeAI/AionUi').catch((error) =>
+                  openLink('https://github.com/ragomes102030-cpu/AIONUICLONE').catch((error) =>
                     console.error('Failed to open link:', error)
                   )
                 }

@@ -60,11 +60,11 @@ interface AutoUpdateCheckParams {
   includePrerelease?: boolean;
 }
 
-const DEFAULT_REPO = 'iOfficeAI/AionUi';
+const DEFAULT_REPO = 'ragomes102030-cpu/AIONUICLONE';
 const DEFAULT_USER_AGENT = 'AionUi';
 const ALLOWED_ASSET_EXTS = new Set(['.exe', '.msi', '.dmg', '.zip', '.deb', '.rpm']);
-const CDN_HOST = 'static.aionui.com';
-const CDN_BASE_URL = `https://${CDN_HOST}/releases`;
+const CDN_HOST = process.env.AIONUI_UPDATE_HOST || 'raw.githubusercontent.com';
+const CDN_BASE_URL = process.env.AIONUI_UPDATE_BASE_URL || 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases';
 const ALLOWED_DOWNLOAD_HOSTS = new Set<string>([
   CDN_HOST,
   'github.com',

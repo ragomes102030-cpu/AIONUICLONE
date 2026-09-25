@@ -107,6 +107,11 @@ extraResources:
     to: .
   - from: resources/app.png
     to: app.png
+  # Clone-owned bundled skills: shipped with the installer and seeded to the
+  # user skills dir on first run (see seedFactorySkills in initStorage.ts).
+  # Source of truth lives in the repo root `skills/` directory.
+  - from: ../../skills
+    to: factory-skills
   # aioncore binary (pre-compiled per platform/arch, ships its own bun runtime)
   - from: resources/bundled-aioncore
     to: bundled-aioncore
@@ -218,7 +223,7 @@ electronDownload:
 
 publish:
   provider: github
-  owner: iOfficeAI
-  repo: AionUi
+  owner: ragomes102030-cpu
+  repo: AIONUICLONE
   publishAutoUpdate: true
   releaseType: release
