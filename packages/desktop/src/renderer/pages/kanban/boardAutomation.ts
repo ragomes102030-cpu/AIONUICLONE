@@ -197,3 +197,15 @@ export function describeAction(action: KanbanAutomationAction, board: KanbanBoar
       return `Despachar “${card?.title || action.card_id}”.`;
   }
 }
+
+/** Feeds both the dispatch preview and the real dispatch, so the two can never diverge. */
+export function buildDispatchMission(card: KanbanCard, role?: KanbanRole): string {
+  return [
+    `Activity: ${card.title}`,
+    role?.responsibility ? `Owner responsibility: ${role.responsibility}` : '',
+    card.description,
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+    .trim();
+}

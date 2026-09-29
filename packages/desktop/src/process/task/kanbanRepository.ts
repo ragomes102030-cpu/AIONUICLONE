@@ -9,6 +9,7 @@
  */
 
 import { randomBytes } from 'node:crypto';
+import { join } from 'node:path';
 import type Database from 'better-sqlite3';
 import { createTask, getTask } from './taskRepository';
 import {
@@ -25,6 +26,7 @@ import {
   type KanbanColumn,
   type KanbanListOptions,
   type KanbanPriority,
+  type KanbanReasonCode,
   type KanbanRole,
   type MoveKanbanCardInput,
   type UpdateKanbanBoardInput,
@@ -77,10 +79,16 @@ type CardRow = {
   description: string;
   priority: KanbanPriority;
   role_id: string | null;
+  assignee: string | null;
   task_id: string | null;
   workspace: string | null;
   position: number;
   archived: number;
+  scheduled_for: number | null;
+  started_at: number | null;
+  finished_at: number | null;
+  reason_code: string | null;
+  not_done_reason: string | null;
   created_at: number;
   updated_at: number;
 };
@@ -90,7 +98,7 @@ const COLUMN_COLUMNS = 'id, board_id, key, name, position, color, system';
 const ROLE_COLUMNS =
   'id, board_id, name, assistant_id, team_id, responsibility, color, position, created_at, updated_at';
 const CARD_COLUMNS =
-  'id, board_id, column_id, title, description, priority, role_id, task_id, workspace, position, archived, created_at, updated_at';
+  'id, board_id, column_id, title, description, priority, role_id, assignee, task_id, workspace, position, archived, scheduled_for, started_at, finished_at, reason_code, not_done_reason, created_at, updated_at';
 
 function newId(prefix: string): string {
   return `${prefix}-${Date.now()}-${randomBytes(4).toString('hex')}`;
@@ -136,10 +144,16 @@ function toCard(row: CardRow): KanbanCard {
     description: row.description,
     priority: row.priority,
     role_id: row.role_id,
+    assignee: row.assignee,
     task_id: row.task_id,
     workspace: row.workspace,
     position: row.position,
     archived: row.archived === 1,
+    scheduled_for: row.scheduled_for,
+    started_at: row.started_at,
+    finished_at: row.finished_at,
+    reason_code: row.reason_code as KanbanReasonCode | null,
+    not_done_reason: row.not_done_reason,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -186,7 +200,7 @@ function readBoard(db: KanbanDatabase, id: string): KanbanBoard | null {
     manager_instructions: board.manager_instructions,
     columns: columns.map(toColumn),
     roles: roles.map(toRole),
-    cards: cards.map(toCard),
+    cards: cards.map((row) => ({ ...toCard(row), depends_on: readCardDependencies(db, row.id) })),
     created_at: board.created_at,
     updated_at: board.updated_at,
   };
@@ -257,11 +271,24 @@ export function ensureKanbanSchema(db: KanbanDatabase): void {
       workspace TEXT,
       position INTEGER NOT NULL,
       archived INTEGER NOT NULL DEFAULT 0,
+      assignee TEXT,
+      scheduled_for INTEGER,
+      started_at INTEGER,
+      finished_at INTEGER,
+      reason_code TEXT,
+      not_done_reason TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       FOREIGN KEY(board_id) REFERENCES kanban_boards(id) ON DELETE CASCADE,
       FOREIGN KEY(column_id) REFERENCES kanban_columns(id),
       FOREIGN KEY(role_id) REFERENCES kanban_roles(id) ON DELETE SET NULL
+    );
+    CREATE TABLE IF NOT EXISTS kanban_card_dependencies (
+      card_id TEXT NOT NULL,
+      depends_on_id TEXT NOT NULL,
+      PRIMARY KEY (card_id, depends_on_id),
+      FOREIGN KEY(card_id) REFERENCES kanban_cards(id) ON DELETE CASCADE,
+      FOREIGN KEY(depends_on_id) REFERENCES kanban_cards(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_kanban_columns_board ON kanban_columns(board_id, position);
     CREATE INDEX IF NOT EXISTS idx_kanban_roles_board ON kanban_roles(board_id, position);
@@ -275,6 +302,22 @@ export function ensureKanbanSchema(db: KanbanDatabase): void {
   if (!boardColumns.some((column) => column.name === 'manager_instructions')) {
     db.exec("ALTER TABLE kanban_boards ADD COLUMN manager_instructions TEXT NOT NULL DEFAULT ''");
   }
+  const cardColumns = db.prepare('PRAGMA table_info(kanban_cards)').all() as Array<{ name: string }>;
+  const cardAdditions: Array<[string, string]> = [
+    ['assignee', 'ALTER TABLE kanban_cards ADD COLUMN assignee TEXT'],
+    ['scheduled_for', 'ALTER TABLE kanban_cards ADD COLUMN scheduled_for INTEGER'],
+    ['started_at', 'ALTER TABLE kanban_cards ADD COLUMN started_at INTEGER'],
+    ['finished_at', 'ALTER TABLE kanban_cards ADD COLUMN finished_at INTEGER'],
+    ['reason_code', 'ALTER TABLE kanban_cards ADD COLUMN reason_code TEXT'],
+    ['not_done_reason', 'ALTER TABLE kanban_cards ADD COLUMN not_done_reason TEXT'],
+  ];
+  for (const [name, statement] of cardAdditions) {
+    if (!cardColumns.some((column) => column.name === name)) db.exec(statement);
+  }
+  // After the ALTERs: on a database created before these columns existed, an
+  // index over them cannot be created inside the block above.
+  db.exec('CREATE INDEX IF NOT EXISTS idx_kanban_cards_assignee ON kanban_cards(assignee)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_kanban_cards_reason ON kanban_cards(reason_code)');
 }
 
 function ensureDefaultBoard(db: KanbanDatabase): void {
@@ -284,6 +327,31 @@ function ensureDefaultBoard(db: KanbanDatabase): void {
   if (row) return;
   const create = db.transaction(() => insertBoard(db, 'Kanban', ''));
   create();
+}
+
+export function setKanbanCardDependencies(db: KanbanDatabase, cardId: string, dependsOn: string[]): void {
+  ensureKanbanSchema(db);
+  const clear = db.prepare('DELETE FROM kanban_card_dependencies WHERE card_id = ?');
+  const add = db.prepare('INSERT OR IGNORE INTO kanban_card_dependencies (card_id, depends_on_id) VALUES (?, ?)');
+  const replace = db.transaction(() => {
+    clear.run(cardId);
+    for (const dependencyId of dependsOn) {
+      if (dependencyId === cardId) continue;
+      if (!getCardRow(db, dependencyId)) throw new Error(`Kanban dependency not found: ${dependencyId}`);
+      add.run(cardId, dependencyId);
+    }
+  });
+  replace();
+}
+
+function readCardDependencies(db: KanbanDatabase, cardId: string): string[] {
+  return (
+    db
+      .prepare('SELECT depends_on_id FROM kanban_card_dependencies WHERE card_id = ? ORDER BY depends_on_id')
+      .all(cardId) as Array<{
+      depends_on_id: string;
+    }>
+  ).map((row) => row.depends_on_id);
 }
 
 export function listKanbanBoards(db: KanbanDatabase, options: KanbanListOptions = {}): KanbanBoard[] {
@@ -442,8 +510,8 @@ export function createKanbanCard(db: KanbanDatabase, input: CreateKanbanCardInpu
   ).next_position;
   db.prepare(
     `INSERT INTO kanban_cards
-       (id, board_id, column_id, title, description, priority, role_id, task_id, workspace, position, archived, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, 0, ?, ?)`
+       (id, board_id, column_id, title, description, priority, role_id, assignee, task_id, workspace, position, archived, scheduled_for, started_at, finished_at, reason_code, not_done_reason, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, 0, ?, NULL, NULL, NULL, NULL, ?, ?)`
   ).run(
     id,
     input.board_id,
@@ -452,8 +520,10 @@ export function createKanbanCard(db: KanbanDatabase, input: CreateKanbanCardInpu
     input.description?.trim() ?? '',
     input.priority ?? 'P2',
     input.role_id ?? null,
+    input.assignee?.trim() || null,
     input.workspace?.trim() || null,
     position,
+    input.scheduled_for ?? null,
     timestamp,
     timestamp
   );
@@ -473,7 +543,8 @@ export function updateKanbanCard(db: KanbanDatabase, input: UpdateKanbanCardInpu
   if (!title) throw new Error('Kanban card title must not be empty');
   db.prepare(
     `UPDATE kanban_cards
-     SET title = ?, description = ?, priority = ?, role_id = ?, column_id = ?, task_id = ?, workspace = ?, archived = ?, updated_at = ?
+     SET title = ?, description = ?, priority = ?, role_id = ?, column_id = ?, task_id = ?, workspace = ?, archived = ?,
+         assignee = ?, scheduled_for = ?, started_at = ?, finished_at = ?, reason_code = ?, not_done_reason = ?, updated_at = ?
      WHERE id = ?`
   ).run(
     title,
@@ -484,6 +555,12 @@ export function updateKanbanCard(db: KanbanDatabase, input: UpdateKanbanCardInpu
     input.task_id === undefined ? current.task_id : input.task_id,
     input.workspace === undefined ? current.workspace : input.workspace?.trim() || null,
     input.archived === undefined ? current.archived : input.archived ? 1 : 0,
+    input.assignee === undefined ? current.assignee : input.assignee?.trim() || null,
+    input.scheduled_for === undefined ? current.scheduled_for : input.scheduled_for,
+    input.started_at === undefined ? current.started_at : input.started_at,
+    input.finished_at === undefined ? current.finished_at : input.finished_at,
+    input.reason_code === undefined ? current.reason_code : input.reason_code,
+    input.not_done_reason === undefined ? current.not_done_reason : input.not_done_reason?.trim() || null,
     now(),
     input.id
   );
@@ -534,6 +611,22 @@ export function moveKanbanCard(db: KanbanDatabase, input: MoveKanbanCardInput): 
   return toCard(card);
 }
 
+function workspaceSegment(value: string): string {
+  const slug = value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+  return slug || 'sem-titulo';
+}
+
+/** One folder per card, so finished cards keep their output as a record of past work. */
+function cardWorkspacePath(root: string, boardName: string, cardId: string, cardTitle: string): string {
+  const title = workspaceSegment(cardTitle).slice(0, 48);
+  return join(root, workspaceSegment(boardName), title, cardId);
+}
+
 export function dispatchKanbanCard(db: KanbanDatabase, input: DispatchKanbanCardInput): DispatchKanbanCardResult {
   ensureKanbanSchema(db);
   const current = getCardRow(db, input.card_id);
@@ -553,15 +646,23 @@ export function dispatchKanbanCard(db: KanbanDatabase, input: DispatchKanbanCard
       const existing = getTask(db, fresh.task_id);
       if (existing) return { task: existing, reused: true };
     }
+    const board = getBoardRow(db, fresh.board_id);
+    const workspace =
+      input.workspace ??
+      fresh.workspace ??
+      (input.workspace_root && board
+        ? cardWorkspacePath(input.workspace_root, board.name, fresh.id, fresh.title)
+        : null);
     const task = createTask(db, {
       mission,
       assistant_id: input.assistant_id ?? null,
       team_id: input.team_id ?? null,
-      workspace: input.workspace ?? fresh.workspace,
+      workspace,
     });
-    db.prepare('UPDATE kanban_cards SET task_id = ?, column_id = ?, updated_at = ? WHERE id = ?').run(
+    db.prepare('UPDATE kanban_cards SET task_id = ?, column_id = ?, workspace = ?, updated_at = ? WHERE id = ?').run(
       task.id,
       columnId,
+      workspace,
       now(),
       fresh.id
     );

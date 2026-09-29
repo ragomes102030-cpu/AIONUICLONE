@@ -55,6 +55,8 @@ export type TaskServiceOptions = {
   getBackendPort: () => number;
   /** Workspace handed to conversations created without an explicit one. */
   defaultWorkspace: string;
+  /** Opens the LAN surface a phone uses to reach the board. */
+  kanbanHttp?: { token?: string; port?: number };
 };
 
 export type TaskServiceHandle = {
@@ -62,6 +64,8 @@ export type TaskServiceHandle = {
   stop: () => void;
   /** Cancel a running/pending task (interrupts the in-flight backend turn). */
   cancel: (id: string) => Promise<void>;
+  /** Port and token of the LAN board surface, when it is enabled. */
+  kanbanHttp?: { port: number; token: string };
 };
 
 const TASK_CHANNELS = ['task:create', 'task:list', 'task:get', 'task:cancel', 'task:delete'] as const;
@@ -157,7 +161,7 @@ export function startTaskService(options: TaskServiceOptions): TaskServiceHandle
   ipcMain.handle('kanban:card:update', (_event, input: UpdateKanbanCardInput) => updateKanbanCard(db, input));
   ipcMain.handle('kanban:card:move', (_event, input: MoveKanbanCardInput) => moveKanbanCard(db, input));
   ipcMain.handle('kanban:card:dispatch', (_event, input: DispatchKanbanCardInput) => {
-    const result = dispatchKanbanCard(db, input);
+    const result = dispatchKanbanCard(db, { ...input, workspace_root: options.defaultWorkspace });
     void runner.runNext();
     return result;
   });

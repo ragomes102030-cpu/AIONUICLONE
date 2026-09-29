@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { KanbanBoard } from '@/common/kanban/kanbanTypes';
-import { buildManagerPrompt, parseAutomationPlan } from '@renderer/pages/kanban/boardAutomation';
+import { buildDispatchMission, buildManagerPrompt, parseAutomationPlan } from '@renderer/pages/kanban/boardAutomation';
 
 const board: KanbanBoard = {
   id: 'board-1',
@@ -40,6 +40,10 @@ const board: KanbanBoard = {
       workspace: null,
       position: 0,
       archived: false,
+      scheduled_for: null,
+      started_at: null,
+      finished_at: null,
+      not_done_reason: null,
       created_at: 1,
       updated_at: 1,
     },
@@ -89,5 +93,28 @@ describe('boardAutomation', () => {
         board
       ).actions
     ).toHaveLength(1);
+  });
+});
+
+describe('buildDispatchMission', () => {
+  it('includes the role responsibility and card description', () => {
+    const card = { ...board.cards[0], description: 'Montar a EAP do apto 2.' };
+    const mission = buildDispatchMission(card, board.roles[0]);
+    expect(mission).toContain('Activity: Revisar Agents.md');
+    expect(mission).toContain('Owner responsibility: Planejar.');
+    expect(mission).toContain('Montar a EAP do apto 2.');
+  });
+
+  it('omits the responsibility line when the role has none', () => {
+    const mission = buildDispatchMission(board.cards[0], { ...board.roles[0], responsibility: '' });
+    expect(mission).not.toContain('Owner responsibility');
+    expect(mission).toBe('Activity: Revisar Agents.md');
+  });
+
+  it('works without a role and never emits stray blank separators', () => {
+    const card = { ...board.cards[0], description: 'Sem papel e com descricao.' };
+    const mission = buildDispatchMission(card, undefined);
+    expect(mission).toBe('Activity: Revisar Agents.md\n\nSem papel e com descricao.');
+    expect(mission).not.toContain('\n\n\n');
   });
 });

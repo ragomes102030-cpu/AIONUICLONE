@@ -224,7 +224,16 @@ export class TaskRunner {
         this.log(`[TaskRunner] ${task.id} -> team conversation ${teamConversationId}`);
         // Persist the mission mirror so the .aion/mission layer can
         // track progress even for team missions.
-        writeMissionState(workspace, { objective: task.mission, plan: [], turn_id: teamConversationId, workspace, project: null, target_url: '', evidence: {}, result: null });
+        writeMissionState(workspace, {
+          objective: task.mission,
+          plan: [],
+          turn_id: teamConversationId,
+          workspace,
+          project: null,
+          target_url: '',
+          evidence: {},
+          result: null,
+        });
         const teamReply = await this.awaitTurn(port, teamConversationId, task.id);
         const current = getTask(this.db, task.id);
         if (current?.status === 'cancelled') return;
@@ -252,7 +261,16 @@ export class TaskRunner {
       this.log(`[TaskRunner] ${task.id} -> conversation ${conversationId}`);
       // Persist the mission mirror so the .aion/mission layer can
       // track progress from the start of the turn.
-      writeMissionState(workspace, { objective: task.mission, plan: [], turn_id: conversationId, workspace, project: null, target_url: '', evidence: {}, result: null });
+      writeMissionState(workspace, {
+        objective: task.mission,
+        plan: [],
+        turn_id: conversationId,
+        workspace,
+        project: null,
+        target_url: '',
+        evidence: {},
+        result: null,
+      });
 
       // 2. Message — starts the agent turn (202 Accepted).
       await sendMessage(port, conversationId, task.mission);

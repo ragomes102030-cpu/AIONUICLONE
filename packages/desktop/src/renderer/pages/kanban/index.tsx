@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Button,
   Checkbox,
+  DatePicker,
   Dropdown,
   Empty,
   Input,
@@ -17,6 +18,8 @@ import {
   Message,
   Modal,
   Popconfirm,
+  Popover,
+  Radio,
   Select,
   Spin,
   Tag,
@@ -25,22 +28,32 @@ import {
 import { Delete, Edit, MoreOne, Plus, Refresh, Robot, Send } from '@icon-park/react';
 import type { Task } from '@/common/task/taskTypes';
 import type { Assistant } from '@/common/types/agent/assistantTypes';
-import type {
-  CreateKanbanCardInput,
-  KanbanAutomationPlan,
-  KanbanBoard,
-  KanbanCard,
-  KanbanColumn,
-  KanbanPriority,
-  KanbanRole,
-  UpdateKanbanCardInput,
+import {
+  deriveScheduleStatus,
+  type CreateKanbanCardInput,
+  type KanbanAutomationPlan,
+  type KanbanBoard,
+  type KanbanCard,
+  type KanbanColumn,
+  type KanbanPriority,
+  type KanbanReasonCode,
+  KANBAN_REASON_CODES,
+  isCardAtRisk,
+  rankByImpact,
+  type CardImpact,
+  type KanbanRole,
+  type KanbanScheduleStatus,
+  type UpdateKanbanCardInput,
 } from '@/common/kanban/kanbanTypes';
 import { useAssistantList } from '@renderer/hooks/assistant/useAssistantList';
 import { selectableAssistants } from '@renderer/utils/model/assistantSelection';
 import { BoardAutomationModal } from './BoardAutomationModal';
+import { buildDispatchMission } from './boardAutomation';
 import { useKanban } from './useKanban';
 
 const BUILTIN_COLUMN_KEYS = new Set(['triage', 'todo', 'scheduled', 'ready', 'running', 'review', 'done', 'blocked']);
+
+const DECISIONS_COLUMN_KEY = 'decisoes';
 const COLUMN_I18N_KEYS: Record<string, string> = {
   triage: 'agentTasks.kanban.columns.triage',
   todo: 'agentTasks.kanban.columns.todo',
@@ -59,6 +72,9 @@ type CardDraft = {
   priority: KanbanPriority;
   roleId: string | null;
   workspace: string;
+  scheduledFor: number | null;
+  assignee: string;
+  reasonCode: KanbanReasonCode | null;
 };
 
 type RoleDraft = {
@@ -90,8 +106,53 @@ function formatAge(timestamp: number, t: ReturnType<typeof useTranslation>['t'])
   return t('agentTasks.kanban.daysAgo', { count: Math.floor(hours / 24), defaultValue: `${Math.floor(hours / 24)}d` });
 }
 
+const SCHEDULE_STATUS_TAG: Record<KanbanScheduleStatus, string> = {
+  done: 'green',
+  archived: 'gray',
+  late_finish: 'red',
+  in_progress: 'blue',
+  overdue: 'red',
+  due_soon: 'orange',
+  scheduled: 'arcoblue',
+  not_started: 'gray',
+};
+
+function formatScheduleTime(timestamp: number, t: ReturnType<typeof useTranslation>['t']): string {
+  return t('agentTasks.kanban.at', {
+    value: new Date(timestamp).toLocaleString(undefined, {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+    defaultValue: new Date(timestamp).toLocaleString(undefined, {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  });
+}
+
+/**
+ * Ticks so a card crosses into `overdue` on its own. The board is often left
+ * open for hours, and a service that quietly became late must not wait for a
+ * manual refresh to show it.
+ */
+function useNow(intervalMs = 30_000): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(timer);
+  }, [intervalMs]);
+  return now;
+}
+
 function KanbanCardView({
   card,
+  columns,
+  now,
+  atRisk,
   role,
   task,
   t,
@@ -100,9 +161,15 @@ function KanbanCardView({
   onDispatch,
   onArchive,
   onDragStart,
+  onDragEnd,
+  dragging,
+  onReceipt,
   dispatching,
 }: {
   card: KanbanCard;
+  columns: KanbanColumn[];
+  now: number;
+  atRisk: boolean;
   role?: KanbanRole;
   task?: Task;
   t: ReturnType<typeof useTranslation>['t'];
@@ -111,8 +178,18 @@ function KanbanCardView({
   onDispatch: () => void;
   onArchive: () => void;
   onDragStart: () => void;
+  onDragEnd: () => void;
+  dragging: boolean;
+  onReceipt: (card: KanbanCard, patch: UpdateKanbanCardInput) => void;
   dispatching: boolean;
 }) {
+  const scheduleStatus = deriveScheduleStatus(card, columns, now);
+  const isOverdue = scheduleStatus === 'overdue';
+  const riskBorder = isOverdue
+    ? 'border-danger-5 hover:border-danger-5'
+    : atRisk
+      ? 'border-warning-5 hover:border-warning-5'
+      : 'border-[var(--color-border-2)] hover:border-primary';
   return (
     <article
       draggable
@@ -121,17 +198,60 @@ function KanbanCardView({
         event.dataTransfer.setData('text/kanban-card', card.id);
         onDragStart();
       }}
+      onDragEnd={() => onDragEnd()}
       onClick={onOpen}
-      className='group cursor-pointer rounded-10px border border-solid border-[var(--color-border-2)] bg-[var(--color-bg-2)] p-10px shadow-sm transition hover:-translate-y-1px hover:border-primary hover:shadow-md'
+      className={`group cursor-grab rounded-10px border border-solid bg-[var(--color-bg-2)] p-10px shadow-sm transition hover:-translate-y-1px hover:shadow-md active:cursor-grabbing ${
+        dragging ? 'rotate-1 opacity-50 shadow-lg' : ''
+      } ${riskBorder}`}
     >
       <div className='flex items-start gap-8px'>
         <span className='min-w-0 flex-1 text-13px leading-18px font-medium text-t-primary'>{card.title}</span>
+        {atRisk ? (
+          <Tag size='small' color='orange' className='shrink-0'>
+            {t('agentTasks.kanban.atRisk', { defaultValue: 'Em risco' })}
+          </Tag>
+        ) : null}
         <Tag size='small' color={priorityColor[card.priority]} className='shrink-0'>
           {card.priority}
         </Tag>
       </div>
       {card.description ? (
         <p className='mt-6px line-clamp-3 text-12px leading-17px text-t-secondary'>{card.description}</p>
+      ) : null}
+      {card.scheduled_for !== null || card.started_at !== null || card.finished_at !== null ? (
+        <div className='mt-8px flex flex-wrap items-center gap-5px'>
+          {card.scheduled_for !== null ? (
+            <Tag size='small' color={SCHEDULE_STATUS_TAG[scheduleStatus]} className='shrink-0'>
+              {scheduleStatus === 'due_soon'
+                ? t('agentTasks.kanban.dueSoon', { defaultValue: 'A vencer' })
+                : t('agentTasks.kanban.scheduledFor', { defaultValue: 'Marcado' })}{' '}
+              {formatScheduleTime(card.scheduled_for, t)}
+            </Tag>
+          ) : null}
+          {card.started_at !== null ? (
+            <Tag size='small' color='blue' className='shrink-0'>
+              {t('agentTasks.kanban.startedAt', { defaultValue: 'Iniciou' })} {formatScheduleTime(card.started_at, t)}
+            </Tag>
+          ) : null}
+          {card.finished_at !== null ? (
+            <Tag size='small' color={scheduleStatus === 'late_finish' ? 'red' : 'green'} className='shrink-0'>
+              {scheduleStatus === 'late_finish'
+                ? t('agentTasks.kanban.finishedLate', { defaultValue: 'Concluiu atrasado' })
+                : t('agentTasks.kanban.finishedAt', { defaultValue: 'Concluiu' })}{' '}
+              {formatScheduleTime(card.finished_at, t)}
+            </Tag>
+          ) : null}
+          {card.not_done_reason ? (
+            <Tooltip content={card.not_done_reason}>
+              <span className='line-clamp-1 text-11px text-danger-6'>{card.not_done_reason}</span>
+            </Tooltip>
+          ) : null}
+        </div>
+      ) : null}
+      {card.assignee ? (
+        <p className='mt-6px text-11px text-t-secondary'>
+          {t('agentTasks.kanban.fieldCrew', { defaultValue: 'Responsável' })}: {card.assignee}
+        </p>
       ) : null}
       {task?.result ? (
         <p className='mt-6px line-clamp-2 rounded-6px bg-[var(--color-fill-2)] px-6px py-4px text-11px leading-15px text-t-secondary'>
@@ -142,6 +262,53 @@ function KanbanCardView({
         <p className='mt-6px line-clamp-2 rounded-6px bg-danger-1 px-6px py-4px text-11px leading-15px text-danger-6'>
           {task.error}
         </p>
+      ) : null}
+      {card.scheduled_for !== null && card.finished_at === null ? (
+        <div className='mt-8px flex flex-wrap gap-6px' onClick={(event) => event.stopPropagation()}>
+          {card.started_at === null ? (
+            <Button
+              size='small'
+              type='primary'
+              className='min-h-32px flex-1'
+              onClick={() => onReceipt(card, { id: card.id, started_at: now, not_done_reason: null })}
+            >
+              {t('agentTasks.kanban.markStarted', { defaultValue: 'Iniciar' })}
+            </Button>
+          ) : (
+            <>
+              <Button
+                size='small'
+                type='primary'
+                className='min-h-32px flex-1'
+                onClick={() => onReceipt(card, { id: card.id, finished_at: now, not_done_reason: null })}
+              >
+                {t('agentTasks.kanban.markFinished', { defaultValue: 'Concluir' })}
+              </Button>
+              <Popover
+                trigger='click'
+                position='br'
+                content={
+                  <div className='flex flex-col gap-4px'>
+                    {KANBAN_REASON_CODES.map((code) => (
+                      <Button
+                        key={code}
+                        size='small'
+                        className='min-h-32px justify-start'
+                        onClick={() => onReceipt(card, { id: card.id, reason_code: code })}
+                      >
+                        {t(`agentTasks.kanban.reasons.${code}`, { defaultValue: code })}
+                      </Button>
+                    ))}
+                  </div>
+                }
+              >
+                <Button size='small' className='min-h-32px px-8px'>
+                  {t('agentTasks.kanban.markNotDone', { defaultValue: 'Não deu' })}
+                </Button>
+              </Popover>
+            </>
+          )}
+        </div>
       ) : null}
       <div className='mt-10px flex items-center justify-between gap-8px'>
         <div className='flex min-w-0 items-center gap-6px'>
@@ -185,10 +352,7 @@ function KanbanCardView({
             </span>
           )}
         </div>
-        <div
-          className='flex shrink-0 items-center gap-4px opacity-0 transition group-hover:opacity-100'
-          onClick={(event) => event.stopPropagation()}
-        >
+        <div className='flex shrink-0 items-center gap-4px' onClick={(event) => event.stopPropagation()}>
           {task?.agent_id ? (
             <Button
               type='text'
@@ -231,6 +395,9 @@ function KanbanCardView({
 function KanbanColumnView({
   column,
   cards,
+  columns,
+  now,
+  atRiskIds,
   roleById,
   taskById,
   t,
@@ -240,10 +407,16 @@ function KanbanColumnView({
   onDispatchCard,
   onArchiveCard,
   onDragStart,
+  onDragEnd,
+  draggedCardId,
+  onReceipt,
   dispatchingCardId,
 }: {
   column: KanbanColumn;
   cards: KanbanCard[];
+  columns: KanbanColumn[];
+  now: number;
+  atRiskIds: Set<string>;
   roleById: Map<string, KanbanRole>;
   taskById: Map<string, Task>;
   t: ReturnType<typeof useTranslation>['t'];
@@ -253,14 +426,67 @@ function KanbanColumnView({
   onDispatchCard: (card: KanbanCard) => void;
   onArchiveCard: (card: KanbanCard) => void;
   onDragStart: (cardId: string) => void;
+  onDragEnd: () => void;
+  draggedCardId: string | null;
+  onReceipt: (card: KanbanCard, patch: UpdateKanbanCardInput) => void;
   dispatchingCardId: string | null;
 }) {
+  const [dropActive, setDropActive] = useState(false);
+  const isArchive = column.key === 'finalizados';
+  if (isArchive) {
+    const done = [...cards].sort((a, b) => (b.finished_at ?? 0) - (a.finished_at ?? 0));
+    return (
+      <section className='flex w-full shrink-0 flex-col rounded-12px border border-solid border-[var(--color-border-2)] bg-[var(--color-fill-1)] md:h-full md:w-260px'>
+        <header className='flex items-center gap-8px border-b border-solid border-[var(--color-border-2)] px-12px py-10px'>
+          <span className='size-8px rounded-full' style={{ background: column.color }} />
+          <h2 className='m-0 min-w-0 flex-1 truncate text-13px font-semibold text-t-primary'>
+            {column.name || t('agentTasks.kanban.columnFinished', { defaultValue: 'Finalizados' })}
+          </h2>
+          <span className='rounded-full bg-[var(--color-fill-3)] px-7px py-2px text-11px text-t-secondary'>
+            {cards.length}
+          </span>
+        </header>
+        <div className='min-h-0 flex-1 space-y-6px overflow-y-auto p-8px'>
+          {done.length === 0 ? (
+            <p className='px-4px py-8px text-12px text-t-tertiary'>
+              {t('agentTasks.kanban.noFinished', { defaultValue: 'Serviços concluídos ficam aqui como histórico.' })}
+            </p>
+          ) : null}
+          {done.map((card) => (
+            <button
+              key={card.id}
+              type='button'
+              onClick={() => onOpenCard(card)}
+              className='w-full rounded-8px border border-solid border-[var(--color-border-3)] bg-[var(--color-bg-2)] px-10px py-8px text-left transition hover:border-primary'
+            >
+              <span className='block truncate text-13px text-t-secondary'>{card.title}</span>
+              <span className='mt-3px block truncate text-11px text-t-tertiary'>
+                {card.assignee || t('agentTasks.kanban.panelNoCrew', { defaultValue: 'Sem equipe' })}
+                {card.finished_at !== null ? ` · ${formatScheduleTime(card.finished_at, t)}` : ''}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
-      className='flex h-full min-h-280px w-260px shrink-0 flex-col rounded-12px border border-solid border-[var(--color-border-2)] bg-[var(--color-fill-1)]'
-      onDragOver={(event) => event.preventDefault()}
+      className={`flex w-full shrink-0 flex-col rounded-12px border border-solid bg-[var(--color-fill-1)] transition-colors md:h-full md:w-260px ${
+        dropActive ? 'border-primary bg-[var(--color-fill-2)]' : 'border-[var(--color-border-2)]'
+      }`}
+      onDragOver={(event) => {
+        event.preventDefault();
+        if (!dropActive) setDropActive(true);
+      }}
+      onDragLeave={(event) => {
+        if (event.currentTarget.contains(event.relatedTarget as Node)) return;
+        setDropActive(false);
+      }}
       onDrop={(event) => {
         event.preventDefault();
+        setDropActive(false);
         const cardId = event.dataTransfer.getData('text/kanban-card');
         if (cardId) onDropCard(cardId, column.id);
       }}
@@ -282,6 +508,9 @@ function KanbanColumnView({
             <KanbanCardView
               key={card.id}
               card={card}
+              columns={columns}
+              now={now}
+              atRisk={atRiskIds.has(card.id)}
               role={card.role_id ? roleById.get(card.role_id) : undefined}
               task={card.task_id ? taskById.get(card.task_id) : undefined}
               t={t}
@@ -293,12 +522,165 @@ function KanbanColumnView({
               onDispatch={() => onDispatchCard(card)}
               onArchive={() => onArchiveCard(card)}
               onDragStart={() => onDragStart(card.id)}
+              onDragEnd={onDragEnd}
+              dragging={draggedCardId === card.id}
+              onReceipt={onReceipt}
               dispatching={dispatchingCardId === card.id}
             />
           ))
         )}
       </div>
     </section>
+  );
+}
+
+function DispatchCardModal({
+  visible,
+  card,
+  role,
+  assistantName,
+  t,
+  onClose,
+  onConfirm,
+  sending,
+}: {
+  visible: boolean;
+  card: KanbanCard | null;
+  role?: KanbanRole;
+  assistantName: string | null;
+  t: ReturnType<typeof useTranslation>['t'];
+  onClose: () => void;
+  onConfirm: (mission: string) => Promise<void>;
+  sending: boolean;
+}) {
+  const [mission, setMission] = useState('');
+  useEffect(() => {
+    if (!visible || !card) return;
+    setMission(buildDispatchMission(card, role));
+  }, [card, role, visible]);
+
+  return (
+    <Modal
+      visible={visible}
+      title={t('agentTasks.kanban.dispatchTitle', { defaultValue: 'Despachar para o agente' })}
+      onCancel={onClose}
+      onOk={() => void onConfirm(mission)}
+      okText={t('agentTasks.kanban.dispatchConfirm', { defaultValue: 'Despachar' })}
+      confirmLoading={sending}
+      okButtonProps={{ disabled: !mission.trim() }}
+      style={{ width: 620, borderRadius: '12px' }}
+      alignCenter
+      getPopupContainer={() => document.body}
+    >
+      <div className='space-y-12px'>
+        <div className='rounded-8px bg-[var(--color-fill-2)] px-12px py-10px text-12px leading-18px text-t-secondary'>
+          <p>
+            {t('agentTasks.kanban.dispatchExplains', {
+              defaultValue:
+                'O card vira uma conversa real no AionCore. O agente recebe a missão abaixo, trabalha no workspace e a resposta volta para o card.',
+            })}
+          </p>
+        </div>
+        <div>
+          <label className='mb-6px block text-12px text-t-secondary'>
+            {t('agentTasks.kanban.dispatchTo', { defaultValue: 'Quem vai executar' })}
+          </label>
+          <div className='text-13px text-t-primary'>
+            {role ? role.name : t('agentTasks.kanban.unassigned', { defaultValue: 'Sem responsável' })}
+            {assistantName ? ` · ${assistantName}` : ''}
+          </div>
+        </div>
+        <div>
+          <label className='mb-6px block text-12px text-t-secondary'>
+            {t('agentTasks.kanban.dispatchWhere', { defaultValue: 'Onde o agente vai trabalhar' })}
+          </label>
+          <div className='text-13px text-t-primary'>
+            {card?.workspace || t('agentTasks.kanban.workspaceDefault', { defaultValue: 'Workspace padrão do app' })}
+          </div>
+        </div>
+        <div>
+          <label className='mb-6px block text-12px text-t-secondary'>
+            {t('agentTasks.kanban.dispatchMission', { defaultValue: 'Missão enviada ao agente' })}
+          </label>
+          <Input.TextArea
+            value={mission}
+            onChange={(value) => setMission(value)}
+            autoSize={{ minRows: 6, maxRows: 16 }}
+          />
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function DecisionPanel({
+  impacts,
+  cardsById,
+  t,
+  onOpenCard,
+}: {
+  impacts: readonly CardImpact[];
+  cardsById: ReadonlyMap<string, KanbanCard>;
+  t: ReturnType<typeof useTranslation>['t'];
+  onOpenCard: (cardId: string) => void;
+}) {
+  const blockers = impacts.filter((item) => item.blocksCount > 0);
+  const waiting = impacts.filter((item) => item.blocksCount === 0 && item.lateDependencies.length > 0);
+  if (blockers.length === 0 && waiting.length === 0) {
+    return (
+      <div className='rounded-10px border border-solid border-[var(--color-border-2)] bg-[var(--color-fill-1)] px-14px py-12px text-12px text-t-secondary'>
+        {t('agentTasks.kanban.panelClear', {
+          defaultValue: 'Nada atrasado segurando a obra. O que está em dia não precisa de decisão.',
+        })}
+      </div>
+    );
+  }
+
+  const line = (item: CardImpact, waitingOn: boolean) => {
+    const card = cardsById.get(item.card_id);
+    const scheduled = card?.scheduled_for;
+    return (
+      <button
+        key={item.card_id}
+        type='button'
+        onClick={() => onOpenCard(item.card_id)}
+        className={`group flex w-full items-center gap-10px rounded-8px px-12px py-10px text-left transition hover:bg-[var(--color-fill-2)] ${
+          waitingOn ? 'opacity-70' : ''
+        }`}
+      >
+        <span className={`size-8px shrink-0 rounded-full ${waitingOn ? 'bg-warning-5' : 'bg-danger-5'}`} aria-hidden />
+        <span className='min-w-0 flex-1'>
+          <span
+            className={`block truncate leading-20px ${
+              waitingOn ? 'text-13px text-t-secondary' : 'text-13px font-medium text-t-primary'
+            }`}
+          >
+            {item.title}
+          </span>
+          <span className='block truncate text-11px leading-16px text-t-tertiary'>
+            {item.assignee || t('agentTasks.kanban.panelNoCrew', { defaultValue: 'Sem equipe' })}
+            {scheduled ? ` · ${formatScheduleTime(scheduled, t)}` : ''}
+          </span>
+        </span>
+        {waitingOn ? (
+          <span className='shrink-0 text-12px text-t-tertiary'>
+            {t('agentTasks.kanban.panelWaiting', { defaultValue: 'esperando' })}
+          </span>
+        ) : (
+          <span className='shrink-0 text-12px font-medium text-t-secondary'>
+            {t('agentTasks.kanban.panelBlocks', { defaultValue: 'travando {{count}}', count: item.blocksCount })}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  return (
+    <div className='py-4px'>
+      {[...blockers.map((item) => [item, false] as const), ...waiting.map((item) => [item, true] as const)].map(
+        ([item, waitingOn]) => line(item, waitingOn)
+      )}
+    </div>
   );
 }
 
@@ -327,6 +709,9 @@ function CardEditorModal({
     priority: 'P2',
     roleId: null,
     workspace: '',
+    scheduledFor: null,
+    assignee: '',
+    reasonCode: null,
   });
   const [saving, setSaving] = useState(false);
 
@@ -338,8 +723,21 @@ function CardEditorModal({
       priority: card?.priority ?? 'P2',
       roleId: card?.role_id ?? roles[0]?.id ?? null,
       workspace: card?.workspace ?? '',
+      scheduledFor: card?.scheduled_for ?? null,
+      assignee: card?.assignee ?? '',
+      reasonCode: card?.reason_code ?? null,
     });
   }, [card, roles, visible]);
+
+  const recordReceipt = async (patch: Partial<UpdateKanbanCardInput>) => {
+    if (!card) return;
+    setSaving(true);
+    try {
+      await onSave({ id: card.id, ...patch });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const save = async () => {
     if (!draft.title.trim()) return;
@@ -354,6 +752,9 @@ function CardEditorModal({
               priority: draft.priority,
               role_id: draft.roleId,
               workspace: draft.workspace,
+              scheduled_for: draft.scheduledFor,
+              assignee: draft.assignee,
+              reason_code: draft.reasonCode,
             }
           : {
               board_id: board.id,
@@ -363,6 +764,8 @@ function CardEditorModal({
               priority: draft.priority,
               role_id: draft.roleId,
               workspace: draft.workspace,
+              scheduled_for: draft.scheduledFor,
+              assignee: draft.assignee,
             }
       );
       onClose();
@@ -404,6 +807,75 @@ function CardEditorModal({
             autoSize={{ minRows: 4, maxRows: 10 }}
           />
         </div>
+        <div>
+          <label className='mb-6px block text-12px text-t-secondary'>
+            {t('agentTasks.kanban.scheduledForLabel', { defaultValue: 'Marcado para' })}
+          </label>
+          <DatePicker
+            showTime
+            style={{ width: '100%' }}
+            value={draft.scheduledFor}
+            onChange={(value) => setDraft((prev) => ({ ...prev, scheduledFor: value ? Number(value) : null }))}
+          />
+        </div>
+        <div>
+          <label className='mb-6px block text-12px text-t-secondary'>
+            {t('agentTasks.kanban.fieldCrew', { defaultValue: 'Responsável de campo' })}
+          </label>
+          <Input
+            value={draft.assignee}
+            placeholder={t('agentTasks.kanban.fieldCrewPlaceholder', { defaultValue: 'Zezinho e Luizinho' })}
+            onChange={(value) => setDraft((prev) => ({ ...prev, assignee: value }))}
+          />
+        </div>
+        <div>
+          <label className='mb-6px block text-12px text-t-secondary'>
+            {t('agentTasks.kanban.reasonCode', { defaultValue: 'Motivo (catálogo)' })}
+          </label>
+          <Select
+            allowClear
+            value={draft.reasonCode ?? undefined}
+            placeholder={t('agentTasks.kanban.reasonCodePlaceholder', { defaultValue: 'Selecione um motivo' })}
+            options={KANBAN_REASON_CODES.map((code) => ({
+              value: code,
+              label: t(`agentTasks.kanban.reasons.${code}`, { defaultValue: code }),
+            }))}
+            onChange={(value) => setDraft((prev) => ({ ...prev, reasonCode: (value as KanbanReasonCode) ?? null }))}
+          />
+        </div>
+        {card ? (
+          <div>
+            <label className='mb-6px block text-12px text-t-secondary'>
+              {t('agentTasks.kanban.receipt', { defaultValue: 'Recibo do campo' })}
+            </label>
+            <div className='flex flex-wrap items-center gap-8px'>
+              <Button
+                size='small'
+                type='primary'
+                disabled={card.started_at !== null}
+                onClick={() => void recordReceipt({ started_at: Date.now(), not_done_reason: null })}
+              >
+                {t('agentTasks.kanban.markStarted', { defaultValue: 'Iniciar' })}
+              </Button>
+              <Button
+                size='small'
+                disabled={card.finished_at !== null}
+                onClick={() => void recordReceipt({ finished_at: Date.now(), not_done_reason: null })}
+              >
+                {t('agentTasks.kanban.markFinished', { defaultValue: 'Concluir' })}
+              </Button>
+              <Input
+                style={{ maxWidth: '240px' }}
+                placeholder={t('agentTasks.kanban.notDoneReason', { defaultValue: 'Motivo de não conclusão' })}
+                defaultValue={card.not_done_reason ?? ''}
+                onBlur={(event) => {
+                  const reason = event.target.value.trim() || null;
+                  if (reason !== card.not_done_reason) void recordReceipt({ not_done_reason: reason });
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
         <div className='grid grid-cols-2 gap-10px'>
           <div>
             <label className='mb-6px block text-12px text-t-secondary'>
@@ -628,6 +1100,8 @@ const KanbanPage: React.FC = () => {
   const [showArchived, setShowArchived] = useState(false);
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
   const [dispatchingCardId, setDispatchingCardId] = useState<string | null>(null);
+  const [dispatchModalVisible, setDispatchModalVisible] = useState(false);
+  const [dispatchingCard, setDispatchingCard] = useState<KanbanCard | null>(null);
   const [cardEditorVisible, setCardEditorVisible] = useState(false);
   const [editingCard, setEditingCard] = useState<KanbanCard | null>(null);
   const [roleManagerVisible, setRoleManagerVisible] = useState(false);
@@ -650,6 +1124,43 @@ const KanbanPage: React.FC = () => {
   );
   const taskById = useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks]);
   const roleById = useMemo(() => new Map((board?.roles ?? []).map((role) => [role.id, role])), [board?.roles]);
+  const assistantNameById = useMemo(() => new Map(assistants.map((item) => [item.id, item.name])), [assistants]);
+  const now = useNow();
+  const [focus, setFocus] = useState<'all' | 'due_soon' | 'overdue' | 'risk' | 'impact'>('all');
+  const onlyOverdue = focus === 'overdue';
+  const boardColumns = board?.columns ?? [];
+  const atRiskCardIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!board) return ids;
+    const byId = new Map(board.cards.map((card) => [card.id, card]));
+    for (const card of board.cards) {
+      if (isCardAtRisk(card, byId, board.columns, now)) ids.add(card.id);
+    }
+    return ids;
+  }, [board, now]);
+  const overdueCardIds = useMemo(() => {
+    if (!board) return new Set<string>();
+    return new Set(
+      board.cards
+        .filter((card) => !card.archived && deriveScheduleStatus(card, board.columns, now) === 'overdue')
+        .map((card) => card.id)
+    );
+  }, [board, now]);
+  const dueSoonCardIds = useMemo(() => {
+    if (!board) return new Set<string>();
+    return new Set(
+      board.cards
+        .filter((card) => !card.archived && deriveScheduleStatus(card, board.columns, now) === 'due_soon')
+        .map((card) => card.id)
+    );
+  }, [board, now]);
+  const cardsById = useMemo(() => new Map((board?.cards ?? []).map((card) => [card.id, card])), [board?.cards]);
+  const impacts = useMemo(() => (board ? rankByImpact(board.cards, board.columns, now) : []), [board, now]);
+  const impactCardIds = useMemo(() => new Set(impacts.map((item) => item.card_id)), [impacts]);
+  const blockerCount = useMemo(
+    () => impacts.filter((item) => item.blocksCount > 0 || item.lateDependencies.length > 0).length,
+    [impacts]
+  );
 
   useEffect(() => {
     if (!board && visibleBoards[0]) setSelectedBoardId(visibleBoards[0].id);
@@ -708,7 +1219,19 @@ const KanbanPage: React.FC = () => {
     Message.success(t('agentTasks.kanban.archived', { defaultValue: 'Card archived' }));
   };
 
-  const dispatchCard = async (card: KanbanCard) => {
+  const openDispatch = (card: KanbanCard) => {
+    const role = card.role_id ? roleById.get(card.role_id) : undefined;
+    if (!role || (!role.assistant_id && !role.team_id)) {
+      Message.error(
+        t('agentTasks.kanban.assignBeforeDispatch', { defaultValue: 'Assign an owner before dispatching this card.' })
+      );
+      return;
+    }
+    setDispatchingCard(card);
+    setDispatchModalVisible(true);
+  };
+
+  const dispatchCard = async (card: KanbanCard, missionOverride?: string) => {
     const role = card.role_id ? roleById.get(card.role_id) : undefined;
     if (!role || (!role.assistant_id && !role.team_id)) {
       Message.error(
@@ -718,13 +1241,11 @@ const KanbanPage: React.FC = () => {
     }
     setDispatchingCardId(card.id);
     try {
-      const mission = [
-        `Activity: ${card.title}`,
-        role.responsibility ? `Owner responsibility: ${role.responsibility}` : '',
-        card.description,
-      ]
-        .filter(Boolean)
-        .join('\n\n');
+      const mission = (missionOverride ?? buildDispatchMission(card, role)).trim();
+      if (!mission) {
+        Message.error(t('agentTasks.kanban.dispatchEmptyMission', { defaultValue: 'A missão não pode ficar vazia.' }));
+        return;
+      }
       const runningColumn = board?.columns.find((column) => column.key === 'running');
       const result = await dispatchKanbanCard({
         card_id: card.id,
@@ -844,7 +1365,7 @@ const KanbanPage: React.FC = () => {
           priority: action.priority,
           workspace: action.workspace,
         });
-        workingCards.set(created.id, created);
+        workingCards.set(created.id, { ...created, depends_on: [] });
         continue;
       }
       const current = workingCards.get(action.card_id);
@@ -852,11 +1373,11 @@ const KanbanPage: React.FC = () => {
       if (action.type === 'move_card') {
         // eslint-disable-next-line no-await-in-loop
         const moved = await moveCard({ id: current.id, column_id: action.column_id });
-        workingCards.set(moved.id, moved);
+        workingCards.set(moved.id, { ...moved, depends_on: current.depends_on });
       } else if (action.type === 'assign_card') {
         // eslint-disable-next-line no-await-in-loop
         const updated = await updateCard({ id: current.id, role_id: action.role_id });
-        workingCards.set(updated.id, updated);
+        workingCards.set(updated.id, { ...updated, depends_on: current.depends_on });
       } else if (action.type === 'update_card') {
         // eslint-disable-next-line no-await-in-loop
         const updated = await updateCard({
@@ -866,11 +1387,11 @@ const KanbanPage: React.FC = () => {
           priority: action.priority,
           role_id: action.role_id,
         });
-        workingCards.set(updated.id, updated);
+        workingCards.set(updated.id, { ...updated, depends_on: current.depends_on });
       } else if (action.type === 'archive_card') {
         // eslint-disable-next-line no-await-in-loop
         const archived = await updateCard({ id: current.id, archived: true });
-        workingCards.set(archived.id, archived);
+        workingCards.set(archived.id, { ...archived, depends_on: current.depends_on });
       } else if (action.type === 'dispatch_card') {
         const role = current.role_id ? roleById.get(current.role_id) : undefined;
         if (!role || (!role.assistant_id && !role.team_id))
@@ -1019,7 +1540,28 @@ const KanbanPage: React.FC = () => {
           <Button type='text' size='small' icon={<Plus size={13} />} onClick={() => setBoardModalVisible(true)}>
             {t('agentTasks.kanban.newBoard', { defaultValue: 'Novo board' })}
           </Button>
-          <Checkbox checked={showArchived} onChange={setShowArchived} className='ms-auto shrink-0'>
+          <Radio.Group
+            type='button'
+            size='small'
+            className='ms-auto shrink-0'
+            value={focus}
+            onChange={(value) => setFocus(value as 'all' | 'due_soon' | 'overdue' | 'risk' | 'impact')}
+          >
+            <Radio value='all'>{t('agentTasks.kanban.filterAll', { defaultValue: 'Todos' })}</Radio>
+            <Radio value='due_soon'>
+              {t('agentTasks.kanban.onlyDueSoon', { defaultValue: 'A vencer' })} ({dueSoonCardIds.size})
+            </Radio>
+            <Radio value='overdue'>
+              {t('agentTasks.kanban.onlyOverdue', { defaultValue: 'Atrasados' })} ({overdueCardIds.size})
+            </Radio>
+            <Radio value='impact'>
+              {t('agentTasks.kanban.onlyImpact', { defaultValue: 'Travando' })} ({impactCardIds.size})
+            </Radio>
+            <Radio value='risk'>
+              {t('agentTasks.kanban.onlyAtRisk', { defaultValue: 'Em risco' })} ({atRiskCardIds.size})
+            </Radio>
+          </Radio.Group>
+          <Checkbox checked={showArchived} onChange={setShowArchived} className='shrink-0'>
             {t('agentTasks.kanban.showArchived', { defaultValue: 'Mostrar arquivados' })}
           </Checkbox>
         </div>
@@ -1046,26 +1588,67 @@ const KanbanPage: React.FC = () => {
         </div>
       ) : null}
       {board ? (
-        <div className='min-h-0 flex-1 overflow-x-auto overflow-y-hidden p-16px md:p-24px'>
-          <div className='flex h-full min-w-max gap-12px'>
+        <div className='min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-16px md:overflow-x-auto md:overflow-y-hidden md:p-24px'>
+          <div className='flex flex-col gap-12px md:h-full md:min-w-max md:flex-row'>
             {board.columns.map((column) => {
+              if (column.key === DECISIONS_COLUMN_KEY) {
+                return (
+                  <section
+                    key={column.id}
+                    className='flex w-full shrink-0 flex-col self-start rounded-12px border border-solid border-[var(--color-border-2)] bg-[var(--color-fill-1)] md:w-280px'
+                  >
+                    <div className='flex items-center gap-8px px-12px pt-10px pb-4px'>
+                      <span className='text-13px font-semibold text-t-primary'>
+                        {column.name || t('agentTasks.kanban.panelTitle', { defaultValue: 'Decisões' })}
+                      </span>
+                      <span className='rounded-full bg-[var(--color-fill-3)] px-7px py-2px text-11px text-t-secondary'>
+                        {blockerCount}
+                      </span>
+                    </div>
+                    <div className='px-6px pb-8px'>
+                      <DecisionPanel
+                        impacts={impacts}
+                        cardsById={cardsById}
+                        t={t}
+                        onOpenCard={(cardId) => {
+                          const card = cardsById.get(cardId);
+                          if (card) openCard(card);
+                        }}
+                      />
+                    </div>
+                  </section>
+                );
+              }
               const cards = board.cards.filter(
-                (card) => card.column_id === column.id && (showArchived || !card.archived)
+                (card) =>
+                  card.column_id === column.id &&
+                  (showArchived || !card.archived) &&
+                  (focus === 'all' ||
+                    (focus === 'due_soon' && dueSoonCardIds.has(card.id)) ||
+                    (focus === 'overdue' && overdueCardIds.has(card.id)) ||
+                    (focus === 'impact' && impactCardIds.has(card.id)) ||
+                    (focus === 'risk' && atRiskCardIds.has(card.id)))
               );
               return (
                 <KanbanColumnView
                   key={column.id}
                   column={column}
                   cards={cards}
+                  columns={boardColumns}
+                  now={now}
+                  atRiskIds={atRiskCardIds}
                   roleById={roleById}
                   taskById={taskById}
                   t={t}
                   onDropCard={(cardId, columnId) => void dropCard(cardId, columnId)}
                   onOpenCard={openCard}
                   onOpenConversation={openConversation}
-                  onDispatchCard={(card) => void dispatchCard(card)}
+                  onDispatchCard={openDispatch}
                   onArchiveCard={(card) => void archiveCard(card)}
                   onDragStart={setDraggedCardId}
+                  onDragEnd={() => setDraggedCardId(null)}
+                  draggedCardId={draggedCardId}
+                  onReceipt={(card, patch) => void updateCard(patch)}
                   dispatchingCardId={dispatchingCardId}
                 />
               );
@@ -1086,6 +1669,22 @@ const KanbanPage: React.FC = () => {
             onClose={() => setCardEditorVisible(false)}
             onSave={saveCard}
             onArchive={archiveCard}
+          />
+          <DispatchCardModal
+            visible={dispatchModalVisible}
+            card={dispatchingCard}
+            role={dispatchingCard?.role_id ? roleById.get(dispatchingCard.role_id) : undefined}
+            assistantName={assistantNameById.get(
+              dispatchingCard?.role_id ? (roleById.get(dispatchingCard.role_id)?.assistant_id ?? '') : ''
+            )}
+            t={t}
+            sending={dispatchingCardId !== null}
+            onClose={() => setDispatchModalVisible(false)}
+            onConfirm={async (mission) => {
+              if (!dispatchingCard) return;
+              await dispatchCard(dispatchingCard, mission);
+              setDispatchModalVisible(false);
+            }}
           />
           <RoleManagerModal
             visible={roleManagerVisible}

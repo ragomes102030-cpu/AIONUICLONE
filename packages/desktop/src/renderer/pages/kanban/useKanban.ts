@@ -6,6 +6,7 @@ import type {
   CreateKanbanColumnInput,
   CreateKanbanRoleInput,
   DispatchKanbanCardInput,
+  KanbanAPI,
   KanbanBoard,
   KanbanCard,
   KanbanColumn,
@@ -16,20 +17,24 @@ import type {
   UpdateKanbanColumnInput,
   UpdateKanbanRoleInput,
 } from '@/common/kanban/kanbanTypes';
+import { kanbanHttpApi } from './kanbanHttp';
 
 const KANBAN_SWR_KEY = 'kanban/boards';
 
-function requireApi() {
+// The browser has no Electron preload, so it reaches the board over the same
+// aioncore API the rest of the WebUI uses, authenticated by its session cookie.
+function resolveApi(): KanbanAPI {
   const api = typeof window !== 'undefined' ? window.kanbanAPI : undefined;
-  if (!api) throw new Error('Kanban API is unavailable in this runtime');
-  return api;
+  if (api) return api;
+  if (typeof window !== 'undefined') return kanbanHttpApi;
+  throw new Error('Kanban API is unavailable in this runtime');
 }
 
 export function useKanban() {
-  const hasApi = typeof window !== 'undefined' && Boolean(window.kanbanAPI);
+  const hasApi = typeof window !== 'undefined';
   const { data, error, isLoading, mutate } = useSWR<KanbanBoard[]>(
     hasApi ? KANBAN_SWR_KEY : null,
-    () => requireApi().list({ include_archived: true }),
+    () => resolveApi().list({ include_archived: true }),
     {
       refreshInterval: 2500,
       revalidateOnFocus: true,
@@ -42,7 +47,7 @@ export function useKanban() {
 
   const createBoard = useCallback(
     async (input: CreateKanbanBoardInput) => {
-      const result = await requireApi().createBoard(input);
+      const result = await resolveApi().createBoard(input);
       await mutate();
       return result;
     },
@@ -51,7 +56,7 @@ export function useKanban() {
 
   const updateBoard = useCallback(
     async (input: UpdateKanbanBoardInput) => {
-      const result = await requireApi().updateBoard(input);
+      const result = await resolveApi().updateBoard(input);
       await mutate();
       return result;
     },
@@ -60,7 +65,7 @@ export function useKanban() {
 
   const deleteBoard = useCallback(
     async (id: string) => {
-      const result = await requireApi().deleteBoard({ id });
+      const result = await resolveApi().deleteBoard({ id });
       await mutate();
       return result;
     },
@@ -69,7 +74,7 @@ export function useKanban() {
 
   const createRole = useCallback(
     async (input: CreateKanbanRoleInput) => {
-      const result = await requireApi().createRole(input);
+      const result = await resolveApi().createRole(input);
       await mutate();
       return result;
     },
@@ -78,7 +83,7 @@ export function useKanban() {
 
   const updateRole = useCallback(
     async (input: UpdateKanbanRoleInput) => {
-      const result = await requireApi().updateRole(input);
+      const result = await resolveApi().updateRole(input);
       await mutate();
       return result;
     },
@@ -87,7 +92,7 @@ export function useKanban() {
 
   const deleteRole = useCallback(
     async (id: string) => {
-      const result = await requireApi().deleteRole({ id });
+      const result = await resolveApi().deleteRole({ id });
       await mutate();
       return result;
     },
@@ -96,7 +101,7 @@ export function useKanban() {
 
   const createCard = useCallback(
     async (input: CreateKanbanCardInput) => {
-      const result = await requireApi().createCard(input);
+      const result = await resolveApi().createCard(input);
       await mutate();
       return result;
     },
@@ -105,7 +110,7 @@ export function useKanban() {
 
   const updateCard = useCallback(
     async (input: UpdateKanbanCardInput) => {
-      const result = await requireApi().updateCard(input);
+      const result = await resolveApi().updateCard(input);
       await mutate();
       return result;
     },
@@ -114,7 +119,7 @@ export function useKanban() {
 
   const moveCard = useCallback(
     async (input: MoveKanbanCardInput) => {
-      const result = await requireApi().moveCard(input);
+      const result = await resolveApi().moveCard(input);
       await mutate();
       return result;
     },
@@ -123,7 +128,7 @@ export function useKanban() {
 
   const dispatchCard = useCallback(
     async (input: DispatchKanbanCardInput) => {
-      const result = await requireApi().dispatchCard(input);
+      const result = await resolveApi().dispatchCard(input);
       await mutate();
       return result;
     },
@@ -132,7 +137,7 @@ export function useKanban() {
 
   const createColumn = useCallback(
     async (input: CreateKanbanColumnInput) => {
-      const result = await requireApi().createColumn(input);
+      const result = await resolveApi().createColumn(input);
       await mutate();
       return result;
     },
@@ -141,7 +146,7 @@ export function useKanban() {
 
   const updateColumn = useCallback(
     async (input: UpdateKanbanColumnInput) => {
-      const result = await requireApi().updateColumn(input);
+      const result = await resolveApi().updateColumn(input);
       await mutate();
       return result;
     },
@@ -150,7 +155,7 @@ export function useKanban() {
 
   const deleteColumn = useCallback(
     async (id: string) => {
-      const result = await requireApi().deleteColumn({ id });
+      const result = await resolveApi().deleteColumn({ id });
       await mutate();
       return result;
     },

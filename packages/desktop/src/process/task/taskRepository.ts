@@ -38,6 +38,8 @@ function toTask(row: TaskRow): Task {
 
 /** Create the `tasks` table and its status index when missing. Idempotent. */
 export function ensureTaskSchema(db: TaskDatabase): void {
+  // Required for the WebUI to read and write this file while the app is running.
+  db.pragma('journal_mode = WAL');
   db.exec(
     `CREATE TABLE IF NOT EXISTS tasks (
        id TEXT PRIMARY KEY,
