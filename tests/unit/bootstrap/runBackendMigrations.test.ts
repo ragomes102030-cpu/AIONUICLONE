@@ -10,6 +10,7 @@ const {
   configFileSetMock,
   httpRequestMock,
   listServersMock,
+  repairMcpServerTimestampsMock,
   testMcpConnectionMock,
   updateServerMock,
 } = vi.hoisted(() => ({
@@ -18,8 +19,13 @@ const {
   configFileSetMock: vi.fn(),
   httpRequestMock: vi.fn(),
   listServersMock: vi.fn(),
+  repairMcpServerTimestampsMock: vi.fn(),
   testMcpConnectionMock: vi.fn(),
   updateServerMock: vi.fn(),
+}));
+
+vi.mock('@/process/services/database/repairMcpServerTimestamps', () => ({
+  repairMcpServerTimestamps: repairMcpServerTimestampsMock,
 }));
 
 vi.mock('@/common/adapter/httpBridge', () => ({
@@ -106,6 +112,14 @@ beforeEach(() => {
   configFileGetMock.mockResolvedValue(undefined);
   configFileSetMock.mockResolvedValue(undefined);
   batchImportServersMock.mockResolvedValue([]);
+  repairMcpServerTimestampsMock.mockResolvedValue({
+    dbPath: '/mock/aionui-backend.db',
+    skipped: true,
+    repairedColumns: [],
+    convertedCreatedAt: 0,
+    convertedUpdatedAt: 0,
+    repairedUserIds: 0,
+  });
   updateServerMock.mockImplementation(async ({ id, data }) => ({
     ...imageServer(),
     id,
@@ -186,11 +200,13 @@ describe('runBackendMigrations', () => {
     expect(updateServerMock).not.toHaveBeenCalled();
     expect(testMcpConnectionMock).not.toHaveBeenCalled();
     expect(infoSpy).toHaveBeenCalledWith(
-      '[Migration] image MCP bootstrap decision, server id: %s, transport changed: %s, json changed: %s, will update: %s',
+      '[Migration] image MCP bootstrap decision, server id: %s, script path changed: %s, transport changed: %s, json changed: %s, will update: %s, provider resolved: %s',
       'image-server-id',
       'no',
       'no',
-      'no'
+      'no',
+      'no',
+      'yes'
     );
   });
 
@@ -208,11 +224,94 @@ describe('runBackendMigrations', () => {
     expect(updateServerMock).toHaveBeenCalledOnce();
     expect(testMcpConnectionMock).not.toHaveBeenCalled();
     expect(infoSpy).toHaveBeenCalledWith(
-      '[Migration] image MCP bootstrap decision, server id: %s, transport changed: %s, json changed: %s, will update: %s',
+      '[Migration] image MCP bootstrap decision, server id: %s, script path changed: %s, transport changed: %s, json changed: %s, will update: %s, provider resolved: %s',
       'image-server-id',
       'no',
+      'no',
+      'yes',
       'yes',
       'yes'
     );
+  });
+
+  /**
+   * Regression: the stale image-MCP script path used to be gated behind
+   * `imageEnvResolution.ok`. A user with no image provider configured therefore
+   * kept a permanently dead absolute path — the single most silent failure in
+   * this file, because it survives every restart and self-heals only by luck.
+   */
+  it('repairs a stale image MCP script path even when no image provider resolves', async () => {
+    listServersMock.mockResolvedValue([
+      {
+        ...imageServer(),
+        transport: {
+          type: 'stdio' as const,
+          command: 'node',
+          // Path from a previous install location that no longer exists.
+          args: ['/old/install/resources/app.asar.unpacked/out/main/builtin-mcp-image-gen.js'],
+          env: { PRESERVED: 'yes' },
+        },
+        original_json: '{"stale":true}',
+      },
+    ]);
+    httpRequestMock.mockImplementation(async (method: string, path: string) => {
+      if (method === 'GET' && path === '/api/settings/client') return {};
+      if (method === 'GET' && path === '/api/providers') return [];
+      return undefined;
+    });
+
+    await runBackendMigrations(configFile as never);
+
+    expect(updateServerMock).toHaveBeenCalledOnce();
+    const call = updateServerMock.mock.calls[0][0];
+    expect(call.id).toBe('image-server-id');
+    expect(call.data.transport.args).toEqual(['/mock/builtin-mcp-image-gen.js']);
+    // Provider could not be resolved, so the env already on record must survive.
+    expect(call.data.transport.env).toEqual({ PRESERVED: 'yes' });
+  });
+
+  it('repairs the mcp_servers catalog before the first MCP API call', async () => {
+    const order: string[] = [];
+    repairMcpServerTimestampsMock.mockImplementation(async () => {
+      order.push('repair');
+      return {
+        dbPath: '/mock/aionui-backend.db',
+        skipped: false,
+        repairedColumns: ['created_at', 'updated_at'],
+        convertedCreatedAt: 4,
+        convertedUpdatedAt: 15,
+        repairedUserIds: 1,
+      };
+    });
+    listServersMock.mockImplementation(async () => {
+      order.push('listServers');
+      return [];
+    });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await runBackendMigrations(configFile as never);
+
+    // The whole point: the repair must precede any /api/mcp/* traffic, because
+    // that traffic is exactly what returns HTTP 500 on malformed rows.
+    expect(order[0]).toBe('repair');
+    expect(repairMcpServerTimestampsMock).toHaveBeenCalledOnce();
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[Migration] repaired malformed mcp_servers rows before first API call (created_at: %d, updated_at: %d, user_id: %d)',
+      4,
+      15,
+      1
+    );
+  });
+
+  it('keeps running the migration when the catalog repair fails', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    repairMcpServerTimestampsMock.mockRejectedValue(new Error('db locked'));
+    listServersMock.mockResolvedValue([imageServer()]);
+
+    await runBackendMigrations(configFile as never);
+
+    // A repair failure must never abort the whole migration pipeline.
+    expect(listServersMock).toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalled();
   });
 });

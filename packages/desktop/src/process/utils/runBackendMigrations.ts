@@ -18,6 +18,7 @@ import {
 import { BUILTIN_IMAGE_GEN_NAME, type IMcpServer, type IProvider } from '@/common/config/storage';
 import { getBuiltinMcpScriptPath, type ProcessConfig as ProcessConfigType } from './initStorage';
 import { migrateAssistantsToBackend } from './migrateAssistants';
+import { repairMcpServerTimestamps } from '@process/services/database/repairMcpServerTimestamps';
 
 type ConfigFile = typeof ProcessConfigType;
 type MigrationStepResult = boolean;
@@ -54,10 +55,45 @@ async function cleanupLegacyClientPreferences(): Promise<void> {
   await httpRequest<void>('PUT', '/api/settings/client', payload);
 }
 
+/**
+ * Heal `mcp_servers` rows that the strict backend deserializer rejects BEFORE
+ * any MCP endpoint is called.
+ *
+ * The backend maps `created_at` / `updated_at` to `i64`. A single row still
+ * holding a TEXT date makes the whole `GET /api/mcp/servers` query fail to
+ * deserialize and returns HTTP 500, which takes down the MCP settings page and
+ * the agent tool catalog. Because the very first migration step already calls
+ * `mcpService.listServers`, the repair has to run before that — otherwise the
+ * migration itself is the first casualty of the broken data.
+ */
+async function repairMcpServerCatalog(): Promise<void> {
+  const result = await repairMcpServerTimestamps();
+  if (result.skipped) {
+    return;
+  }
+
+  if (result.convertedCreatedAt > 0 || result.convertedUpdatedAt > 0 || result.repairedUserIds > 0) {
+    console.warn(
+      '[Migration] repaired malformed mcp_servers rows before first API call (created_at: %d, updated_at: %d, user_id: %d)',
+      result.convertedCreatedAt,
+      result.convertedUpdatedAt,
+      result.repairedUserIds
+    );
+    return;
+  }
+
+  console.info('[Migration] mcp_servers catalog is already well-formed (columns: %s)', result.repairedColumns.join(','));
+}
+
 const CLEANUP_STEPS: Array<{
   name: string;
   run: () => Promise<void>;
-}> = [{ name: 'cleanupLegacyClientPreferences', run: async () => cleanupLegacyClientPreferences() }];
+}> = [
+  // Must stay first: every later step (and the renderer) calls /api/mcp/*,
+  // which returns HTTP 500 while any mcp_servers row has a TEXT timestamp.
+  { name: 'repairMcpServerCatalog', run: async () => repairMcpServerCatalog() },
+  { name: 'cleanupLegacyClientPreferences', run: async () => cleanupLegacyClientPreferences() },
+];
 
 async function fetchBackendClientPreferences(): Promise<BackendClientPreferences> {
   try {
@@ -460,16 +496,27 @@ async function ensureBootstrapMcpServersInDb(configFile: ConfigFile): Promise<vo
   const chromeDevtoolsServer = refreshedServers.find((server) => server.name === BUILTIN_CHROME_DEVTOOLS_NAME);
   await ensureBuiltinChromeDevtoolsAvailability(chromeDevtoolsServer);
 
-  if (
-    imageEnvResolution.ok === true &&
-    existingImageServer &&
-    existingImageServer.transport.type === 'stdio' &&
-    imageServer.transport.type === 'stdio'
-  ) {
-    const mergedEnv = {
-      ...removeImageGenerationEnvKeys(existingImageServer.transport.env || {}),
-      ...imageEnvResolution.env,
-    };
+  /**
+   * The image MCP script path is baked into `transport.args` on first insert,
+   * exactly like the browser one. It is a pure filesystem fact — it does not
+   * depend on whether an image provider could be resolved — so it must be
+   * reconciled independently. Gating it behind `imageEnvResolution.ok` meant a
+   * user with no API key configured kept a permanently stale path forever, and
+   * the MCP stayed dead even after they added the key in a later session.
+   *
+   * 图像 MCP 的脚本绝对路径与 provider 能否解析无关，必须独立对齐。
+   */
+  if (existingImageServer && existingImageServer.transport.type === 'stdio' && imageServer.transport.type === 'stdio') {
+    const desiredArgs = imageServer.transport.args || [];
+    const currentArgs = existingImageServer.transport.args || [];
+    const imageScriptPathChanged = !areStringArraysEqual(currentArgs, desiredArgs);
+
+    // Preserve whatever env the record already carries when the provider could
+    // not be resolved this run: dropping it would wipe a working configuration.
+    const mergedEnv =
+      imageEnvResolution.ok === true
+        ? { ...removeImageGenerationEnvKeys(existingImageServer.transport.env || {}), ...imageEnvResolution.env }
+        : { ...existingImageServer.transport.env };
     const updatedTransport = {
       ...imageServer.transport,
       env: mergedEnv,
@@ -491,11 +538,13 @@ async function ensureBootstrapMcpServersInDb(configFile: ConfigFile): Promise<vo
     const imageOriginalJsonChanged = existingImageServer.original_json !== original_json;
     const imageServerChanged = imageTransportChanged || imageOriginalJsonChanged;
     console.info(
-      '[Migration] image MCP bootstrap decision, server id: %s, transport changed: %s, json changed: %s, will update: %s',
+      '[Migration] image MCP bootstrap decision, server id: %s, script path changed: %s, transport changed: %s, json changed: %s, will update: %s, provider resolved: %s',
       existingImageServer.id,
+      imageScriptPathChanged ? 'yes' : 'no',
       imageTransportChanged ? 'yes' : 'no',
       imageOriginalJsonChanged ? 'yes' : 'no',
-      imageServerChanged ? 'yes' : 'no'
+      imageServerChanged ? 'yes' : 'no',
+      imageEnvResolution.ok === true ? 'yes' : 'no'
     );
     if (imageServerChanged) {
       await mcpService.updateServer.invoke({
@@ -509,7 +558,7 @@ async function ensureBootstrapMcpServersInDb(configFile: ConfigFile): Promise<vo
     }
   } else if (existingImageServer && imageEnvResolution.ok === false) {
     console.warn(
-      '[Migration] skipped image MCP env update because provider could not be resolved, server id: %s, reason: %s',
+      '[Migration] image MCP env not refreshed because provider could not be resolved, server id: %s, reason: %s (existing env preserved)',
       existingImageServer.id,
       imageEnvResolution.reason
     );
