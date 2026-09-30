@@ -12,6 +12,7 @@
 
 const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 
@@ -701,6 +702,44 @@ const packageJsonPath = path.resolve(__dirname, '../package.json');
 let restorePackageVersionOverride = () => {};
 let buildFailed = false;
 
+// ---------------------------------------------------------------------------
+// Reproducible build environment (mission 03).
+//
+// 1) Heap. The renderer bundle transforms ~8.4k modules and exceeds Node's
+//    default ~2 GB old-space, aborting with
+//    "FATAL ERROR: Ineffective mark-compacts near heap limit".
+//    The 8192 MB ceiling is the same one scripts/build-webui.ps1 uses. Setting
+//    it here makes `npm run package` / `npm run dist:*` work without the caller
+//    having to remember an env var.
+// 2) Electron download cache. electron-builder.yml reads
+//    `electronDownload.cache: ${env.ELECTRON_CACHE}`. When the variable is
+//    empty the macro resolves to a LITERAL relative path and electron-builder
+//    creates a stray `${env.ELECTRON_CACHE}/` folder in the repo root,
+//    re-downloading ~127 MB on every run. Default it to the platform cache
+//    directory (same location scripts/build-fast-debug-worktrees.ps1 uses), so
+//    the macro expands to a real path. CI already exports ELECTRON_CACHE and is
+//    therefore unaffected.
+// ---------------------------------------------------------------------------
+const REQUIRED_NODE_HEAP_MB = 8192;
+const currentHeapMatch = /--max-old-space-size=(\d+)/.exec(process.env.NODE_OPTIONS || '');
+const currentHeapMb = currentHeapMatch ? Number(currentHeapMatch[1]) : 0;
+if (currentHeapMb < REQUIRED_NODE_HEAP_MB) {
+  const others = (process.env.NODE_OPTIONS || '')
+    .split(/\s+/)
+    .filter((token) => token && !token.startsWith('--max-old-space-size'));
+  process.env.NODE_OPTIONS = [...others, `--max-old-space-size=${REQUIRED_NODE_HEAP_MB}`].join(' ');
+  console.log(`[build] NODE_OPTIONS heap -> ${REQUIRED_NODE_HEAP_MB} MB`);
+}
+if (!process.env.ELECTRON_CACHE || !process.env.ELECTRON_CACHE.trim()) {
+  const cacheRoot = process.platform === 'win32'
+    ? process.env.LOCALAPPDATA
+    : process.platform === 'darwin'
+      ? path.join(os.homedir(), 'Library', 'Caches')
+      : process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
+  process.env.ELECTRON_CACHE = path.join(cacheRoot || os.tmpdir(), 'electron', 'Cache');
+  console.log(`[build] ELECTRON_CACHE -> ${process.env.ELECTRON_CACHE}`);
+}
+
 try {
   restorePackageVersionOverride = applyDebugAutoUpdateVersionOverride(packageJsonPath);
 
@@ -764,6 +803,11 @@ try {
   }
 
   // 5. Prepare aioncore binary (for packaged runtime usage)
+  //
+  // prepare-aioncore prefers a locally built AionCore (AIONCORE_BIN_PATH, or a
+  // sibling `AionCore/target/release`) over the upstream release download: the
+  // upstream binary can predate this fork's schema and then refuse to open local
+  // data (stage `database.newer_than_app`). See prepare-aioncore.js.
   const { prepareAioncore } = require('../packages/shared-scripts/src/prepare-aioncore.js');
   const { resolveAioncoreVersion } = require('./resolveAioncoreVersion.js');
   const projectRoot = path.resolve(__dirname, '..');

@@ -440,6 +440,32 @@ function downloadAndExtract(platform, arch, tag) {
  * @param {string} options.version - Backend version (default: 'latest')
  * @returns {{ prepared: true; dir: string; sourceType: string }}
  */
+/**
+ * Resolve a locally built aioncore binary, if one is available.
+ *
+ * Order: AIONCORE_BIN_PATH, then a sibling `AionCore` checkout with a cargo
+ * release build (…/AionCore/target/release/<binary>). Returns null when nothing
+ * is found so the caller can fall back to the normal download.
+ */
+function resolveLocalAioncoreBuild(projectRoot, binaryName) {
+  const explicit = (process.env.AIONCORE_BIN_PATH || '').trim();
+  if (explicit) {
+    const resolved = path.resolve(explicit);
+    return fs.existsSync(resolved) ? resolved : null;
+  }
+  const siblings = [
+    path.resolve(projectRoot, '..', 'AionCore'),
+    path.resolve(projectRoot, '..', '..', 'AionCore'),
+  ];
+  for (const dir of siblings) {
+    for (const profile of ['release', 'debug']) {
+      const candidate = path.join(dir, 'target', profile, binaryName);
+      if (fs.existsSync(candidate)) return candidate;
+    }
+  }
+  return null;
+}
+
 function prepareAioncore(options) {
   const { projectRoot, platform, arch, version = 'latest' } = options;
   const runtimeKey = `${platform}-${arch}`;
@@ -467,6 +493,46 @@ function prepareAioncore(options) {
   console.log(
     `Preparing aioncore for ${runtimeKey} (${actionsRunId ? `actions run: ${actionsRunId}` : `version: ${tag}`})`
   );
+
+  // 0. Prefer a locally built AionCore over any download.
+  //
+  // The download default (GITHUB_OWNER) points at the UPSTREAM release, which can
+  // be older than the schema this repo's AionCore expects. Shipping it makes the
+  // packaged app refuse to open local data created by this fork:
+  //   BOOTSTRAP_DATA_INIT_FAILED stage=database.newer_than_app
+  // and the UI shows "a newer version of AionUi is required".
+  //
+  // Resolution order: AIONCORE_BIN_PATH, then a sibling `AionCore` checkout with
+  // a cargo release build. Requires managed-resources/ to already be present
+  // (that runtime ships with the download bundle); otherwise we fall through to
+  // the download so a fresh clone and CI keep working.
+  const localBuildBinary = resolveLocalAioncoreBuild(projectRoot, binaryName);
+  if (localBuildBinary) {
+    const managedResourcesDir = path.join(targetDir, 'managed-resources');
+    if (fs.existsSync(managedResourcesDir)) {
+      copyFileSafe(localBuildBinary, targetBinaryPath);
+      ensureExecutableMode(targetBinaryPath);
+      const localBuildManifest = {
+        platform,
+        arch,
+        version: tag || 'local-build',
+        generatedAt: new Date().toISOString(),
+        sourceType: 'local-build',
+        source: {
+          path: localBuildBinary,
+          reason:
+            'Local build preferred over the upstream download: the upstream binary can predate the schema this repo expects.',
+        },
+        files: [binaryName, 'managed-resources/'],
+      };
+      writeJson(path.join(targetDir, 'manifest.json'), localBuildManifest);
+      console.log(`  Using local aioncore build: ${localBuildBinary}`);
+      return { prepared: true, dir: targetDir, sourceType: 'local-build' };
+    }
+    console.warn(
+      `  Local aioncore build found (${localBuildBinary}) but managed-resources/ is missing; using the download bundle instead.`
+    );
+  }
 
   removeDirectorySafe(targetDir);
   ensureDirectory(targetDir);
@@ -521,7 +587,7 @@ function prepareAioncore(options) {
   }
 
   // 2. Download from GitHub releases.
-  if (!sourcePath && tag) {
+  if (!sourcePath && tag && tag !== '__none__') {
     try {
       const result = downloadAndExtract(platform, arch, tag);
       sourcePath = result.binaryPath;

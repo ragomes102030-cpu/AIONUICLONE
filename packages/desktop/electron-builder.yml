@@ -211,15 +211,23 @@ asarUnpack:
   # Builtin MCP server scripts must be unpacked so external node processes can execute them
   - 'out/main/builtin-mcp-image-gen.js'
   - 'out/main/builtin-mcp-browser.js'
-  - 'out/main/team-mcp-stdio.js'
+  # NOTE: 'out/main/team-mcp-stdio.js' was removed here. No source file produced
+  # that bundle (scripts/build-mcp-servers.js only emits the two builtin-mcp-*
+  # entries) and no runtime code referenced it — the team MCP server is provided
+  # by the bundled AionCore binary (`cmd_team-stdio`).
 
 # Compression level: normal for faster builds, maximum for smallest size
 # Note: electron-builder doesn't support YAML template syntax for env vars
 # The build script sets ELECTRON_BUILDER_COMPRESSION_LEVEL env var which takes precedence
 compression: normal
 removePackageScripts: true
-electronDownload:
-  cache: ${env.ELECTRON_CACHE}
+# NOTE: the previous `electronDownload: cache: ${env.ELECTRON_CACHE}` was removed
+# (mission 03). When ELECTRON_CACHE is not exported, electron-builder resolves the
+# macro as a LITERAL relative path and creates a stray `${env.ELECTRON_CACHE}/`
+# folder in the repo root, re-downloading ~127 MB of the Electron zip on every
+# build. With the field absent electron-builder uses its standard cache location
+# (and still honours ELECTRON_CACHE when the variable IS exported, as the CI
+# workflows do).
 
 publish:
   provider: github

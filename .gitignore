@@ -251,3 +251,6 @@ graphify-out/
 .analysis/
 temp/
 .playwright-mcp/
+
+# Cofre de binarios nativos do better-sqlite3 (ver scripts/switch-native-abi.mjs)
+.native-abi/
