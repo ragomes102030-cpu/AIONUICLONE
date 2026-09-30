@@ -103,7 +103,7 @@ describe('Kanban de ponta a ponta com atividades de obra', () => {
     rmSync(`${dbPath}-shm`, { force: true });
   });
 
-  it('1. cria o quadro com 8 colunas, papeis e as 6 atividades', () => {
+  it('1. cria o quadro com 8 colunas, papeis e as 7 atividades', () => {
     expect(board.columns.map((c) => c.key)).toEqual([
       'triage', 'todo', 'scheduled', 'ready', 'running', 'review', 'done', 'blocked',
     ]);
