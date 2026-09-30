@@ -1,0 +1,74 @@
+[
+  {
+    "name": "excel-mcp-server",
+    "description": "Excel e planilha Piemarta via excel-mcp-server (negokaz)",
+    "transport": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["excel-mcp-server"]
+    },
+    "builtin": false,
+    "enabled": true,
+    "original_json": "{}"
+  },
+  {
+    "name": "whatsapp-mcp",
+    "description": "WhatsApp Business via whatsapp-mcp (verygoodplugins, Go+Python)",
+    "transport": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "whatsapp_mcp.server"]
+    },
+    "builtin": false,
+    "enabled": true,
+    "original_json": "{}"
+  },
+  {
+    "name": "lean-planning-mcp",
+    "description": "Leitura de cronograma MS Project/Primavera (lean-planning-mcp)",
+    "transport": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "lean_planning_mcp"]
+    },
+    "builtin": false,
+    "enabled": true,
+    "original_json": "{}"
+  },
+  {
+    "name": "saga-mcp",
+    "description": "Acompanhamento de projetos e tarefas (saga-mcp)",
+    "transport": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "saga_mcp"]
+    },
+    "builtin": false,
+    "enabled": true,
+    "original_json": "{}"
+  },
+  {
+    "name": "osmmcp",
+    "description": "OpenStreetMap 기반 ferramentas (osmmcp, requer Python 3.13)",
+    "transport": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "osmmcp"]
+    },
+    "builtin": false,
+    "enabled": false,
+    "original_json": "{}"
+  },
+  {
+    "name": "pdf-tools",
+    "description": "Geração e manipulação de PDF (pacote não encontrado publicamente, código a instalar)",
+    "transport": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "pdf_tools_mcp"]
+    },
+    "builtin": false,
+    "enabled": false,
+    "original_json": "{}"
+  }
+]
