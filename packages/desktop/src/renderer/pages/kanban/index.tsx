@@ -38,6 +38,7 @@ import {
   type KanbanPriority,
   type KanbanReasonCode,
   KANBAN_REASON_CODES,
+  blockedAgeDays,
   isCardAtRisk,
   rankByImpact,
   type CardImpact,
@@ -218,8 +219,20 @@ function KanbanCardView({
       {card.description ? (
         <p className='mt-6px line-clamp-3 text-12px leading-17px text-t-secondary'>{card.description}</p>
       ) : null}
-      {card.scheduled_for !== null || card.started_at !== null || card.finished_at !== null ? (
+      {card.scheduled_for !== null ||
+      card.started_at !== null ||
+      card.finished_at !== null ||
+      card.blocked_reason !== null ? (
         <div className='mt-8px flex flex-wrap items-center gap-5px'>
+          {card.blocked_reason !== null ? (
+            // The impediment and how long it has been standing are the two facts
+            // that turn "blocked" into something to act on: two days is a phone
+            // call, three weeks is an escalation.
+            <Tag size='small' color='red' className='shrink-0'>
+              {t(`agentTasks.kanban.reasons.${card.blocked_reason}`, { defaultValue: card.blocked_reason })}
+              {blockedAgeDays(card, now) !== null ? ` · ${blockedAgeDays(card, now)}d` : ''}
+            </Tag>
+          ) : null}
           {card.scheduled_for !== null ? (
             <Tag size='small' color={SCHEDULE_STATUS_TAG[scheduleStatus]} className='shrink-0'>
               {scheduleStatus === 'due_soon'
@@ -308,6 +321,42 @@ function KanbanCardView({
               </Popover>
             </>
           )}
+          {card.finished_at === null ? (
+            card.blocked_reason !== null ? (
+              <Button
+                size='small'
+                className='min-h-32px px-8px'
+                onClick={() => onReceipt(card, { id: card.id, blocked_reason: null, blocked_since: null })}
+              >
+                {t('agentTasks.kanban.clearImpediment', { defaultValue: 'Liberar' })}
+              </Button>
+            ) : (
+              <Popover
+                trigger='click'
+                position='br'
+                content={
+                  <div className='flex flex-col gap-4px'>
+                    {KANBAN_REASON_CODES.map((code) => (
+                      <Button
+                        key={code}
+                        size='small'
+                        className='min-h-32px justify-start'
+                        // The clock starts when the impediment is declared, not
+                        // when it is eventually noticed.
+                        onClick={() => onReceipt(card, { id: card.id, blocked_reason: code, blocked_since: now })}
+                      >
+                        {t(`agentTasks.kanban.reasons.${code}`, { defaultValue: code })}
+                      </Button>
+                    ))}
+                  </div>
+                }
+              >
+                <Button size='small' className='min-h-32px px-8px'>
+                  {t('agentTasks.kanban.markImpediment', { defaultValue: 'Impedir' })}
+                </Button>
+              </Popover>
+            )
+          ) : null}
         </div>
       ) : null}
       <div className='mt-10px flex items-center justify-between gap-8px'>
