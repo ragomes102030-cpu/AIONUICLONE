@@ -21,6 +21,7 @@ import {
   Popover,
   Radio,
   Select,
+  Option,
   Spin,
   Tag,
   Tooltip,
@@ -39,6 +40,8 @@ import {
   type KanbanReasonCode,
   KANBAN_REASON_CODES,
   blockedAgeDays,
+  filterByLookahead,
+  KANBAN_LOOKAHEAD_WEEKS,
   isCardAtRisk,
   rankByImpact,
   type CardImpact,
@@ -74,6 +77,7 @@ type CardDraft = {
   roleId: string | null;
   workspace: string;
   scheduledFor: number | null;
+  startFor: number | null;
   assignee: string;
   reasonCode: KanbanReasonCode | null;
 };
@@ -231,6 +235,12 @@ function KanbanCardView({
             <Tag size='small' color='red' className='shrink-0'>
               {t(`agentTasks.kanban.reasons.${card.blocked_reason}`, { defaultValue: card.blocked_reason })}
               {blockedAgeDays(card, now) !== null ? ` · ${blockedAgeDays(card, now)}d` : ''}
+            </Tag>
+          ) : null}
+          {card.start_for !== null ? (
+            <Tag size='small' className='shrink-0'>
+              {t('agentTasks.kanban.startsAt', { defaultValue: 'Começa' })}{' '}
+              {formatScheduleTime(card.start_for, t)}
             </Tag>
           ) : null}
           {card.scheduled_for !== null ? (
@@ -759,6 +769,7 @@ function CardEditorModal({
     roleId: null,
     workspace: '',
     scheduledFor: null,
+    startFor: null,
     assignee: '',
     reasonCode: null,
   });
@@ -773,6 +784,7 @@ function CardEditorModal({
       roleId: card?.role_id ?? roles[0]?.id ?? null,
       workspace: card?.workspace ?? '',
       scheduledFor: card?.scheduled_for ?? null,
+      startFor: card?.start_for ?? null,
       assignee: card?.assignee ?? '',
       reasonCode: card?.reason_code ?? null,
     });
@@ -802,6 +814,7 @@ function CardEditorModal({
               role_id: draft.roleId,
               workspace: draft.workspace,
               scheduled_for: draft.scheduledFor,
+              start_for: draft.startFor,
               assignee: draft.assignee,
               reason_code: draft.reasonCode,
             }
@@ -814,6 +827,7 @@ function CardEditorModal({
               role_id: draft.roleId,
               workspace: draft.workspace,
               scheduled_for: draft.scheduledFor,
+              start_for: draft.startFor,
               assignee: draft.assignee,
             }
       );
@@ -854,6 +868,16 @@ function CardEditorModal({
             value={draft.description}
             onChange={(value) => setDraft((prev) => ({ ...prev, description: value }))}
             autoSize={{ minRows: 4, maxRows: 10 }}
+          />
+        </div>
+        <div>
+          <label className='mb-6px block text-12px text-t-secondary'>
+            {t('agentTasks.kanban.startForLabel', { defaultValue: 'Início planejado' })}
+          </label>
+          <DatePicker
+            style={{ width: '100%' }}
+            value={draft.startFor}
+            onChange={(value) => setDraft((prev) => ({ ...prev, startFor: value ? Number(value) : null }))}
           />
         </div>
         <div>
@@ -1176,6 +1200,20 @@ const KanbanPage: React.FC = () => {
   const assistantNameById = useMemo(() => new Map(assistants.map((item) => [item.id, item.name])), [assistants]);
   const now = useNow();
   const [focus, setFocus] = useState<'all' | 'due_soon' | 'overdue' | 'risk' | 'impact'>('all');
+  /**
+   * Weekly lookahead window, in weeks. `null` means no window.
+   *
+   * Deliberately a separate control from `focus`: the tabs answer "what is
+   * wrong", the window answers "what is this week's meeting about". Collapsing
+   * them into one list would make them fight — you cannot filter by "atrasado"
+   * AND "próximas 2 semanas" in a single-choice group, and that combination is
+   * exactly the one the weekly planning conversation runs on.
+   */
+  const [lookaheadWeeks, setLookaheadWeeks] = useState<number | null>(null);
+  const lookaheadCardIds = useMemo(() => {
+    if (!board || lookaheadWeeks === null) return null;
+    return new Set(filterByLookahead(board.cards, now, lookaheadWeeks).map((card) => card.id));
+  }, [board, now, lookaheadWeeks]);
   const onlyOverdue = focus === 'overdue';
   const boardColumns = board?.columns ?? [];
   const atRiskCardIds = useMemo(() => {
@@ -1610,6 +1648,20 @@ const KanbanPage: React.FC = () => {
               {t('agentTasks.kanban.onlyAtRisk', { defaultValue: 'Em risco' })} ({atRiskCardIds.size})
             </Radio>
           </Radio.Group>
+          <Select
+            size='small'
+            className='w-140px shrink-0'
+            value={lookaheadWeeks === null ? 'all' : String(lookaheadWeeks)}
+            onChange={(value) => setLookaheadWeeks(value === 'all' ? null : Number(value))}
+          >
+            <Option value='all'>{t('agentTasks.kanban.lookaheadAll', { defaultValue: 'Tudo' })}</Option>
+            {KANBAN_LOOKAHEAD_WEEKS.map((weeks) => (
+              <Option key={weeks} value={String(weeks)}>
+                {t('agentTasks.kanban.lookaheadWeeks', { defaultValue: 'Próximas' })} {weeks}
+                {weeks > 1 ? t('agentTasks.kanban.weeksSuffix', { defaultValue: 'semanas' }) : ''}
+              </Option>
+            ))}
+          </Select>
           <Checkbox checked={showArchived} onChange={setShowArchived} className='shrink-0'>
             {t('agentTasks.kanban.showArchived', { defaultValue: 'Mostrar arquivados' })}
           </Checkbox>
@@ -1672,6 +1724,9 @@ const KanbanPage: React.FC = () => {
                 (card) =>
                   card.column_id === column.id &&
                   (showArchived || !card.archived) &&
+                  // The window narrows whatever the tab already selected, so the
+                  // two can be combined (atrasados + próximas 2 semanas).
+                  (lookaheadCardIds === null || lookaheadCardIds.has(card.id)) &&
                   (focus === 'all' ||
                     (focus === 'due_soon' && dueSoonCardIds.has(card.id)) ||
                     (focus === 'overdue' && overdueCardIds.has(card.id)) ||
