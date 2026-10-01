@@ -142,6 +142,55 @@ When opening a PR, fill in the PR body using [.github/pull_request_template.md](
 
 **NEVER add AI signatures** (Co-Authored-By, Generated with, etc.).
 
+## Verificação no Windows (fork local)
+
+O `AGENTS.md` documenta o fluxo do upstream. **Estas são as diferenças medidas nesta máquina** — ler antes de tentar qualquer build, instalação ou push.
+
+### O que a documentação pede e aqui não existe
+
+| Documentado em AGENTS.md | Realidade local | Faça |
+| --- | --- | --- |
+| `just push` (obrigatório) | **`just` não instalado** | `bun run lint && bunx tsc --noEmit && node node_modules/vitest/vitest.mjs run` e só então `git push` |
+| `prek run` (check de PR) | **`prek` não instalado** | pule, ou instale com `npm i -g @j178/prek` |
+| `prettier` | não instalado global | `bun run format` (usa oxfmt) |
+| `bun run test` | `bun` existe ✅ | funciona; `npx oxlint` também |
+
+`just push` ser inexecutável **não** é permissão para pular a verificação. Rode as três etapas à mão, na mesma ordem, e só então dê push.
+
+### Build → instalar → verificar
+
+```powershell
+npm run native:node                       # 1. a build recompila os nativos para Electron; sem isso a suíte quebra
+npm run dist:win                          # 2. ~13 min; o instalador sai em out\, NÃO em dist\
+```
+
+Desinstalar **antes** de instalar — NSIS por cima de instalação existente sai sem copiar nada, sem erro visível:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\AionUi\Uninstall AionUi.exe" /S /KEEP_APP_DATA
+Start-Process -FilePath ".\out\AionUi-<versao>-win-x64.exe" -ArgumentList '/S'
+```
+
+Verificar pelo **log do arquivo**, nunca pelo stdout, e **filtrando pelo horário da execução atual** — o log diário acumula as de dias anteriores, com erros que não são seus:
+
+```
+%APPDATA%\AionUi\logs\<ano>\<mês>\<dia>\<ano>-<mês>-<dia>.log
+```
+
+### As três armadilhas que mais custam tempo
+
+1. **`tsc` verde não é build verde.** Typecheck lê `.d.ts`; o bundle lê o JS de runtime. `import { Option }` do Arco compila e quebra o bundle — o correto é `Select.Option`. Falha em ~25 s, muito antes de empacotar.
+2. **`npm run dist:win` recompila o nativo para Electron.** Depois dele, a suíte quebra com `ERR_DLOPEN_FAILED` em `better_sqlite3.node`. Volte com `npm run native:node` antes de testar.
+3. **O shell mata o que você dorme.** Comando acima de ~30 s derruba a árvore de processos, build incluso. Lance desacoplado (`Start-Process ... -WindowStyle Hidden -PassThru`) e volte depois para checar — por `Get-Process`, não por "o log parou de crescer".
+
+O detalhamento completo, com sintoma e correção medidos, está na skill **empacotamento**. Leia antes do primeiro build; ela também cobre diagnóstico de boot, dual ABI e leitura de logs.
+
+### WebUI e acesso por celular
+
+O WebUI sobe em `25808` e é alcançável de outro dispositivo em `http://<ip-da-rede>:25808`. Rotas de primeira classe (board, card, move) precisam estar em `hostRoutes` — o proxy `/api/*` do `web-host` **não** alcança o `tasks.db`, que é um SQLite do processo desktop, não do AionCore. Por isso um recurso novo do Kanban só aparece no celular se a rota for registrada explicitamente.
+
+---
+
 ## Skills Index
 
 | Skill            | Purpose                                                                     | Triggers                                                                                               |
@@ -150,5 +199,6 @@ When opening a PR, fill in the PR body using [.github/pull_request_template.md](
 | **i18n**         | Internationalization workflow and standards                                 | Adding or changing user-facing text, modifying `locales/` or `packages/desktop/src/common/config/i18n` |
 | **testing**      | Testing workflow and quality standards                                      | Writing tests, changing runtime behavior, fixing bugs, or claiming behavior is verified                |
 | **bump-version** | Version bump workflow: update package.json, checks, branch, PR, tag release | Bumping version, `/bump-version`                                                                       |
+| **empacotamento** | Empacotar, instalar e diagnosticar o app no Windows; armadilhas de build/ABI/log | `dist:win`, instalar/atualizar o app, ler logs, preparar testes, acesso via WebUI/celular                 |
 
-> Skills are located in `.claude/skills/` and contain project conventions that apply to **all** agents and contributors.
+> Skills are located in `.claude/skills/` (project conventions) and `skills/` (workflows locais do fork). Both contain knowledge that applies to **all** agents and contributors.

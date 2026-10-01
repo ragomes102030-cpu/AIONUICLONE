@@ -1,6 +1,6 @@
 ---
 name: empacotamento-aionui
-description: "Regras verificadas para empacotar, instalar e diagnosticar o AionUi clone sem repetir erros conhecidos. Use ao rodar npm run dist:win / build-with-builder / prepare-aioncore, ao instalar ou atualizar o app no Windows, ao ler logs do processo principal, ao descobrir a porta da API, ou ao preparar o ambiente de testes (ABI nativa). Cobre: variável de compressão do electron-builder, resolução de caminhos extraResources, cache do Electron, instalação NSIS sobreposta, dual ABI do better-sqlite3, AionCore local vs release do upstream, diagnóstico BOOTSTRAP_DATA_INIT_FAILED/database.newer_than_app, leitura de logs e armadilhas de teste. NÃO substitui a validação: sempre confira o artefato gerado por hash."
+description: "Regras verificadas para empacotar, instalar e diagnosticar o AionUi clone sem repetir erros conhecidos. Use ao rodar npm run dist:win / build-with-builder / prepare-aioncore, ao instalar ou atualizar o app no Windows, ao ler logs do processo principal, ao descobrir a porta da API, ou ao preparar o ambiente de testes (ABI nativa). Cobre: variável de compressão do electron-builder, resolução de caminhos extraResources, cache do Electron, instalação NSIS sobreposta, dual ABI do better-sqlite3, tsc verde que quebra o bundle, limite de 30s que mata build em background, AionCore local vs release do upstream, diagnóstico BOOTSTRAP_DATA_INIT_FAILED/database.newer_than_app, leitura de logs e armadilhas de teste. NÃO substitui a validação: sempre confira o artefato gerado por hash."
 ---
 
 # Empacotamento e diagnóstico — AionUi clone
@@ -38,6 +38,75 @@ Ausência silenciosa é o modo de falha padrão do empacotador.
 ### `electronDownload.cache` com variável não exportada cria pasta espúria
 
 `cache: ${env.ELECTRON_CACHE}` sem a variável exportada vira um caminho **literal** chamado `${env.ELECTRON_CACHE}` na raiz do repo, e o Electron (~127 MB) é baixado toda build. Remova o campo; o empacotador usa o cache padrão e ainda respeita a variável quando ela existe (é assim que o CI usa).
+
+### `tsc --noEmit` VERDE NÃO É BUILD VERDE
+
+O typecheck passa e o bundle quebra. A superfície de tipos de um pacote pode ser um **superset** do que o entry point ESM realmente exporta — e o `tsc` não tem como detectar isso, porque ele só lê `.d.ts`.
+
+Caso medido: `import { Option } from '@arco-design/web-react'`.
+
+```
+packages/.../kanban/index.tsx (24:2): "Option" is not exported by "@arco-design/web-react"
+```
+
+Mas `tsc --noEmit` retornou **exit 0** antes disso. Por quê, lendo o pacote:
+
+```
+declare const Option: <T extends OptionProps>(props) => JSX.Element   # existe como estático
+Option: typeof Option;                                                # Select.Option
+```
+
+`Option` é membro **estático de `Select`**. O *namespace merging* faz `import { Option }` compilar, porque o `.d.ts` declara o nome no escopo do módulo. O JS de runtime só o expõe como `Select.Option`.
+
+**Regra:** import nomeado só é seguro se o pacote de fato exporta o nome. Antes de confiar no typecheck, **confirme o padrão no repositório** — é mais rápido e mais confiável que confiar em `.d.ts`:
+
+```powershell
+Select-String -Path 'packages\desktop\src\**\*.tsx' -Pattern 'Select\.Option'
+```
+
+Este repo usa `<Select.Option>`. O build de 13 min é o custo de descobrir isso sozinho — e ele falha em ~25 s, na fase de bundle, muito antes de empacotar.
+
+### O shell mata o que você dorme
+
+Cada comando tem limite de ~30 s. Um `Start-Sleep 300` no mesmo comando que lançou o build estoura o limite, e o timeout derruba a **árvore de processos inteira** — incluindo o build que você jurou ter deixado rodando.
+
+Foi assim que um build morreu às 15:53 sem `dist` e quase foi reportado como "ainda rodando" por mais dez minutos.
+
+**Regra:** nunca durma no mesmo comando que lança trabalho longo. Lance desacoplado e volte depois:
+
+```powershell
+$b = Start-Process -FilePath 'cmd.exe' `
+  -ArgumentList '/c','npm run dist:win > build.log 2>&1' `
+  -WorkingDirectory (Get-Location).Path -WindowStyle Hidden -PassThru
+```
+
+`-Wait` também estoura o limite e mata o instalador; use o mesmo padrão.
+
+**E prove que está vivo, não que não reclamou.** Um log que parou de crescer é ambiguo — empacotador bem-sucedido também para de escrever:
+
+```powershell
+Get-Process -Id $b.Id -ErrorAction SilentlyContinue   # VIVO  |  MORREU (ou TERMINOU)
+```
+
+Para build, o sinal de sucesso é a linha `✅ Build completed!` no log, não a ausência de erro. Para o instalador, é o `.exe` em `out\`.
+
+> O instalador vai para `out\`, **não** `dist\`. Vigiar `dist` dá "sem exe" para sempre.
+
+---
+
+## 0.1 Onde o build falha mais cedo (economiza 13 min)
+
+A ordem real é: **bundle do renderer → typecheck → empacotamento → NSIS**. Erro de bundle aparece em ~25 s; empacotamento leva 10+ min.
+
+Se o build morrer cedo, leia o log **antes** de relançar:
+
+```powershell
+$c = Get-Content build.log -Encoding UTF8
+$i = ($c | Select-String 'error during build' | Select-Object -First 1).LineNumber
+$c[($i-1)..($i+8)]
+```
+
+Relançar sem ler transforma um erro de 5 segundos em 13 minutos.
 
 ---
 
@@ -216,6 +285,8 @@ Apague apenas o que o dry-run listar **e** o `git status` não reclamar.
 
 ```
 [ ] npm run dist:win terminou com "✅ Build completed!"
+[ ] log lido ANTES de qualquer relançamento (falha de bundle aparece em ~25 s)
+[ ] instalação baixada de out\, não de dist\
 [ ] out\win-unpacked\resources\factory-skills\ existe (e tem conteúdo)
 [ ] hash do aioncore empacotado == hash do build local
 [ ] nome removido no bundle = 0 ocorrências
@@ -228,6 +299,8 @@ Apague apenas o que o dry-run listar **e** o `git status` não reclamar.
 ```
 
 O item que mais falha é **o diretório que deveria estar no pacote**. Verifique no disco, não no YAML — o empacotador pula entrada inválida em silêncio.
+
+O segundo que mais falha é **`tsc` verde**. Typecheck não é build: ele lê `.d.ts`, e tipos Mentem o que o runtime exporta. Import nomeado não usado em lugar nenhum do repo é sempre suspeito.
 
 ---
 
