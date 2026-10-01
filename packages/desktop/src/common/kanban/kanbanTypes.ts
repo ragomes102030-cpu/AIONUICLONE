@@ -38,6 +38,62 @@ export type KanbanRole = {
 };
 
 /**
+ * How long a service has been standing still.
+ *
+ * Returns null when nothing is blocking it. The day count is what turns a
+ * "blocked" column into a queue you can sort: two days is a phone call, three
+ * weeks is an escalation to whoever buys the material.
+ */
+export function blockedAgeDays(card: Pick<KanbanCard, 'blocked_since'>, now: number): number | null {
+  if (card.blocked_since === null) return null;
+  return Math.max(0, Math.floor((now - card.blocked_since) / DAY_MS));
+}
+
+/** Week windows offered in the board. Three is the common one in lean planning. */
+export const KANBAN_LOOKAHEAD_WEEKS: readonly number[] = [1, 2, 3, 4, 6];
+
+/**
+ * The date a service belongs to on a calendar: when it is meant to start, or
+ * failing that when it is due. A service with neither cannot be placed in a time
+ * window, so it stays out of the lookahead instead of polluting it.
+ */
+export function lookaheadAnchor(card: Pick<KanbanCard, 'start_for' | 'scheduled_for'>): number | null {
+  return card.start_for ?? card.scheduled_for;
+}
+
+/**
+ * Whether a service belongs in the weekly lookahead.
+ *
+ * The window is measured forward from now, but it deliberately also admits
+ * anything already past its date: an overdue service is the first item of every
+ * planning conversation, and a lookahead that hid them would be exactly the
+ * reassuring board that lets a delay rot.
+ *
+ * Finished and archived services are left out — the meeting is about what is
+ * still moving.
+ */
+export function isWithinLookahead(
+  card: Pick<KanbanCard, 'archived' | 'finished_at' | 'start_for' | 'scheduled_for'>,
+  now: number,
+  weeks: number
+): boolean {
+  if (card.archived) return false;
+  if (card.finished_at !== null) return false;
+  const anchor = lookaheadAnchor(card);
+  if (anchor === null) return false;
+  return anchor <= now + weeks * 7 * DAY_MS;
+}
+
+/** The cards the weekly meeting is about, in the order the board already has. */
+export function filterByLookahead<T extends Pick<KanbanCard, 'archived' | 'finished_at' | 'start_for' | 'scheduled_for'>>(
+  cards: readonly T[],
+  now: number,
+  weeks: number
+): T[] {
+  return cards.filter((card) => isWithinLookahead(card, now, weeks));
+}
+
+/**
  * Why a service did not finish. A closed vocabulary is what lets the board say
  * "your delays are 70% material" — free text cannot be counted.
  */
@@ -83,11 +139,41 @@ export type KanbanCard = {
    * from this: the request is issued for a day, not for a week.
    */
   scheduled_for: number | null;
+  /**
+   * When the service is planned to START, epoch ms.
+   *
+   * One date is not enough to plan a service: "vence sexta" says nothing about
+   * whether the crew is on site Monday or Thursday, and a service that started
+   * late looks identical to one that started on time but ran over. With a planned
+   * start the board can tell "começou atrasado" from "começou e estourou", which
+   * is the difference between chasing the crew and chasing the predecessor.
+   *
+   * Optional on purpose: a board that only ever tracked a deadline keeps working.
+   */
+  start_for: number | null;
   started_at: number | null;
   finished_at: number | null;
   reason_code: KanbanReasonCode | null;
   /** Why the service was not finished, per the receipt handed back from site. */
   not_done_reason: string | null;
+  /**
+   * What is stopping this service RIGHT NOW, epoch-free vocabulary shared with
+   * `reason_code` so the board speaks one language: material, mão de obra,
+   * clima, impedimento anterior, bloqueio de frente, ferramenta, outro.
+   *
+   * `reason_code` answers "why did it not finish" (after the fact). This answers
+   * "why is it not moving" (right now). They are different questions, and a
+   * service can be both blocked now and closed late later.
+   */
+  blocked_reason: KanbanReasonCode | null;
+  /**
+   * When the current impediment appeared, epoch ms. Paired with
+   * `blocked_reason` this is the single most useful number in the board: a block
+   * that lasted two days is a conversation, one that lasted three weeks is an
+   * escalation. Duration is what makes an impediment actionable instead of just
+   * recorded.
+   */
+  blocked_since: number | null;
   created_at: number;
   updated_at: number;
 };
@@ -383,6 +469,9 @@ export type CreateKanbanCardInput = {
   assignee?: string | null;
   workspace?: string | null;
   scheduled_for?: number | null;
+  start_for?: number | null;
+  blocked_reason?: KanbanReasonCode | null;
+  blocked_since?: number | null;
 };
 
 export type UpdateKanbanCardInput = {
@@ -397,10 +486,13 @@ export type UpdateKanbanCardInput = {
   workspace?: string | null;
   archived?: boolean;
   scheduled_for?: number | null;
+  start_for?: number | null;
   started_at?: number | null;
   finished_at?: number | null;
   reason_code?: KanbanReasonCode | null;
   not_done_reason?: string | null;
+  blocked_reason?: KanbanReasonCode | null;
+  blocked_since?: number | null;
 };
 
 export type SetKanbanCardDependenciesInput = {

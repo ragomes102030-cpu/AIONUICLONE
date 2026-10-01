@@ -85,10 +85,13 @@ type CardRow = {
   position: number;
   archived: number;
   scheduled_for: number | null;
+  start_for: number | null;
   started_at: number | null;
   finished_at: number | null;
   reason_code: string | null;
   not_done_reason: string | null;
+  blocked_reason: string | null;
+  blocked_since: number | null;
   created_at: number;
   updated_at: number;
 };
@@ -98,7 +101,7 @@ const COLUMN_COLUMNS = 'id, board_id, key, name, position, color, system';
 const ROLE_COLUMNS =
   'id, board_id, name, assistant_id, team_id, responsibility, color, position, created_at, updated_at';
 const CARD_COLUMNS =
-  'id, board_id, column_id, title, description, priority, role_id, assignee, task_id, workspace, position, archived, scheduled_for, started_at, finished_at, reason_code, not_done_reason, created_at, updated_at';
+  'id, board_id, column_id, title, description, priority, role_id, assignee, task_id, workspace, position, archived, scheduled_for, start_for, started_at, finished_at, reason_code, not_done_reason, blocked_reason, blocked_since, created_at, updated_at';
 
 function newId(prefix: string): string {
   return `${prefix}-${Date.now()}-${randomBytes(4).toString('hex')}`;
@@ -150,10 +153,13 @@ function toCard(row: CardRow): KanbanCard {
     position: row.position,
     archived: row.archived === 1,
     scheduled_for: row.scheduled_for,
+    start_for: row.start_for,
     started_at: row.started_at,
     finished_at: row.finished_at,
     reason_code: row.reason_code as KanbanReasonCode | null,
     not_done_reason: row.not_done_reason,
+    blocked_reason: row.blocked_reason as KanbanReasonCode | null,
+    blocked_since: row.blocked_since,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -273,10 +279,13 @@ export function ensureKanbanSchema(db: KanbanDatabase): void {
       archived INTEGER NOT NULL DEFAULT 0,
       assignee TEXT,
       scheduled_for INTEGER,
+      start_for INTEGER,
       started_at INTEGER,
       finished_at INTEGER,
       reason_code TEXT,
       not_done_reason TEXT,
+      blocked_reason TEXT,
+      blocked_since INTEGER,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       FOREIGN KEY(board_id) REFERENCES kanban_boards(id) ON DELETE CASCADE,
@@ -310,6 +319,9 @@ export function ensureKanbanSchema(db: KanbanDatabase): void {
     ['finished_at', 'ALTER TABLE kanban_cards ADD COLUMN finished_at INTEGER'],
     ['reason_code', 'ALTER TABLE kanban_cards ADD COLUMN reason_code TEXT'],
     ['not_done_reason', 'ALTER TABLE kanban_cards ADD COLUMN not_done_reason TEXT'],
+    ['start_for', 'ALTER TABLE kanban_cards ADD COLUMN start_for INTEGER'],
+    ['blocked_reason', 'ALTER TABLE kanban_cards ADD COLUMN blocked_reason TEXT'],
+    ['blocked_since', 'ALTER TABLE kanban_cards ADD COLUMN blocked_since INTEGER'],
   ];
   for (const [name, statement] of cardAdditions) {
     if (!cardColumns.some((column) => column.name === name)) db.exec(statement);
@@ -510,8 +522,8 @@ export function createKanbanCard(db: KanbanDatabase, input: CreateKanbanCardInpu
   ).next_position;
   db.prepare(
     `INSERT INTO kanban_cards
-       (id, board_id, column_id, title, description, priority, role_id, assignee, task_id, workspace, position, archived, scheduled_for, started_at, finished_at, reason_code, not_done_reason, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, 0, ?, NULL, NULL, NULL, NULL, ?, ?)`
+       (id, board_id, column_id, title, description, priority, role_id, assignee, task_id, workspace, position, archived, scheduled_for, start_for, started_at, finished_at, reason_code, not_done_reason, blocked_reason, blocked_since, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, 0, ?, ?, NULL, NULL, NULL, NULL, ?, ?, ?, ?)`
   ).run(
     id,
     input.board_id,
@@ -524,6 +536,9 @@ export function createKanbanCard(db: KanbanDatabase, input: CreateKanbanCardInpu
     input.workspace?.trim() || null,
     position,
     input.scheduled_for ?? null,
+    input.start_for ?? null,
+    input.blocked_reason ?? null,
+    input.blocked_since ?? null,
     timestamp,
     timestamp
   );
@@ -544,7 +559,8 @@ export function updateKanbanCard(db: KanbanDatabase, input: UpdateKanbanCardInpu
   db.prepare(
     `UPDATE kanban_cards
      SET title = ?, description = ?, priority = ?, role_id = ?, column_id = ?, task_id = ?, workspace = ?, archived = ?,
-         assignee = ?, scheduled_for = ?, started_at = ?, finished_at = ?, reason_code = ?, not_done_reason = ?, updated_at = ?
+         assignee = ?, scheduled_for = ?, start_for = ?, started_at = ?, finished_at = ?, reason_code = ?, not_done_reason = ?,
+         blocked_reason = ?, blocked_since = ?, updated_at = ?
      WHERE id = ?`
   ).run(
     title,
@@ -557,10 +573,13 @@ export function updateKanbanCard(db: KanbanDatabase, input: UpdateKanbanCardInpu
     input.archived === undefined ? current.archived : input.archived ? 1 : 0,
     input.assignee === undefined ? current.assignee : input.assignee?.trim() || null,
     input.scheduled_for === undefined ? current.scheduled_for : input.scheduled_for,
+    input.start_for === undefined ? current.start_for : input.start_for,
     input.started_at === undefined ? current.started_at : input.started_at,
     input.finished_at === undefined ? current.finished_at : input.finished_at,
     input.reason_code === undefined ? current.reason_code : input.reason_code,
     input.not_done_reason === undefined ? current.not_done_reason : input.not_done_reason?.trim() || null,
+    input.blocked_reason === undefined ? current.blocked_reason : input.blocked_reason,
+    input.blocked_since === undefined ? current.blocked_since : input.blocked_since,
     now(),
     input.id
   );
