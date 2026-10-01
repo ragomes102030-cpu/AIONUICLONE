@@ -10,9 +10,10 @@
  * provar persistencia de ponta a ponta.
  */
 import BetterSqlite3 from 'better-sqlite3';
-import { rmSync } from 'node:fs';
+import { rmSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   deriveScheduleStatus,
@@ -35,7 +36,12 @@ import { ensureTaskSchema, getTask, listTasks, type TaskDatabase } from '@proces
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
-const dbPath = join(tmpdir(), `kanban-e2e-${process.pid}.db`);
+// Diretorio proprio por execucao: dois workers do vitest compartilham o mesmo
+// process.pid, entao o nome do banco precisa de um sufixo unico por processo de
+// teste. Sem isso, arquivos temporarios colidem e o Node derruba o worker com
+// um crash nativo. Tambem por isso o afterAll fecha o banco antes de apagar.
+const dbDir = mkdtempSync(join(tmpdir(), 'kanban-e2e-'));
+const dbPath = join(dbDir, `kanban-${randomUUID()}.db`);
 
 describe('Kanban de ponta a ponta com atividades de obra', () => {
   let db: TaskDatabase;
@@ -43,7 +49,11 @@ describe('Kanban de ponta a ponta com atividades de obra', () => {
   let ids: Record<string, string>;
   let roleId: string;
 
-  const now = Date.now();
+  // Relogio fixo: segunda-feira 28/09/2026 12:00 UTC. Testes de prazo que
+  // derivam datas de Date.now() quebram quando a janela due_soon (24 h) ou a
+  // regra de dias uteis desloca o prazo efetivo. Aqui o "agora" e uma
+  // constante, entao o calendario nao move nada entre execucoes.
+  const now = Date.UTC(2026, 8, 28, 12, 0, 0);
   const by = (id: string) => board.cards.find((c) => c.id === id)!;
   const reload = () => {
     board = listKanbanBoards(db)[0];
@@ -51,7 +61,6 @@ describe('Kanban de ponta a ponta com atividades de obra', () => {
   };
 
   beforeAll(() => {
-    rmSync(dbPath, { force: true });
     db = new BetterSqlite3(dbPath);
     ensureTaskSchema(db);
     ensureKanbanSchema(db);
@@ -84,6 +93,7 @@ describe('Kanban de ponta a ponta com atividades de obra', () => {
         scheduled_for: now - 5 * DAY,
         assignee: 'Braga',
       }).id,
+      argamassa: mk('Argamassa - vencendo', { priority: 'P1', scheduled_for: now + 10 * HOUR }).id,
     };
 
     setKanbanCardDependencies(db, ids.pilares, [ids.fundacao]);
@@ -98,18 +108,16 @@ describe('Kanban de ponta a ponta com atividades de obra', () => {
 
   afterAll(() => {
     db?.close();
-    rmSync(dbPath, { force: true });
-    rmSync(`${dbPath}-wal`, { force: true });
-    rmSync(`${dbPath}-shm`, { force: true });
+    rmSync(dbDir, { recursive: true, force: true });
   });
 
-  it('1. cria o quadro com 8 colunas, papeis e as 7 atividades', () => {
+  it('1. cria o quadro com 8 colunas, papeis e as 8 atividades', () => {
     expect(board.columns.map((c) => c.key)).toEqual([
       'triage', 'todo', 'scheduled', 'ready', 'running', 'review', 'done', 'blocked',
     ]);
     expect(board.roles.map((r) => r.name)).toEqual(['Planejador']);
     expect(roleId).toBeTruthy();
-    expect(board.cards).toHaveLength(7);
+    expect(board.cards).toHaveLength(8);
     const fundacao = by(ids.fundacao);
     expect(fundacao.priority).toBe('P0');
     expect(fundacao.assignee).toBe('Braga');
@@ -128,9 +136,13 @@ describe('Kanban de ponta a ponta com atividades de obra', () => {
     reload();
     // prazo passado e sem inicio -> atrasada
     expect(deriveScheduleStatus(by(ids.fundacao), board.columns, now)).toBe('overdue');
-    // dentro do prazo
-    expect(deriveScheduleStatus(by(ids.pilares), board.columns, now)).toBe('scheduled');
-    expect(deriveScheduleStatus(by(ids.pintura), board.columns, now)).toBe('scheduled');
+    // dentro do prazo, com a janela explicita: 3 dias ainda e "agendado"
+    expect(deriveScheduleStatus(by(ids.pilares), board.columns, now, 24)).toBe('scheduled');
+    expect(deriveScheduleStatus(by(ids.pintura), board.columns, now, 24)).toBe('scheduled');
+    // dentro da janela de aviso (24 h): "vencendo", nao "agendado"
+    expect(deriveScheduleStatus(by(ids.argamassa), board.columns, now, 24)).toBe('due_soon');
+    // janela desligada: o mesmo cartao volta a ser "agendado"
+    expect(deriveScheduleStatus(by(ids.argamassa), board.columns, now, 0)).toBe('scheduled');
 
     // em execucao
     updateKanbanCard(db, { id: ids.pintura, started_at: now - HOUR });
@@ -249,7 +261,7 @@ describe('Kanban de ponta a ponta com atividades de obra', () => {
     const depois = listKanbanBoards(db2)[0];
     const find = (id: string) => depois.cards.find((c) => c.id === id)!;
 
-    expect(depois.cards).toHaveLength(7);
+    expect(depois.cards).toHaveLength(8);
     expect(find(ids.pilares).depends_on).toEqual([ids.fundacao]);
     expect(find(ids.cobertura).depends_on.slice().sort()).toEqual([ids.vigas, ids.eletrica].slice().sort());
     expect(find(ids.vigas).task_id).toBeTruthy();
