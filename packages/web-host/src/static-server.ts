@@ -14,12 +14,15 @@ import http, { type IncomingMessage, type Server, type ServerResponse } from 'no
 import { networkInterfaces } from 'node:os';
 import net, { type Socket } from 'node:net';
 import serveHandler from 'serve-handler';
+import type { HostRouteHandler } from './types.js';
 
 export type StaticServerOptions = {
   staticDir: string;
   backendPort: number;
   port?: number;
   allowRemote?: boolean;
+  /** See `HostRouteHandler` in types.ts. */
+  hostRoutes?: HostRouteHandler;
 };
 
 export type StaticServerHandle = {
@@ -178,6 +181,15 @@ export async function startStaticServer(opts: StaticServerOptions): Promise<Stat
       if (!req.url || !req.method) {
         res.writeHead(400).end();
         return;
+      }
+
+      // Paths the host application owns (currently /api/kanban/*, whose board
+      // lives in tasks.db and not in aioncore). Tried BEFORE the proxy below:
+      // everything under /api/* is otherwise forwarded to the backend, which
+      // answers 404 NOT_FOUND for routes it does not implement.
+      if (opts.hostRoutes) {
+        const handled = await opts.hostRoutes(req, res);
+        if (handled) return;
       }
 
       // /api/* — reverse proxy to backend (includes /api/auth/*).

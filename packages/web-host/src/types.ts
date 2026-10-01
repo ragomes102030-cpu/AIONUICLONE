@@ -27,6 +27,25 @@ export type BackendSystemDirs = {
   logDir: string;
 };
 
+import type { IncomingMessage, ServerResponse } from 'node:http';
+
+/**
+ * Serves `/api/kanban/*` on behalf of the host application.
+ *
+ * The Kanban does not live in aioncore: its board lives in `tasks.db`, a SQLite
+ * file owned by the desktop process. So the WebUI reverse-proxies everything
+ * under `/api/*` to the backend, where the Kanban route does not exist and the
+ * browser gets `404 NOT_FOUND`.
+ *
+ * Rather than duplicating the board logic here — or porting it to Rust — the host
+ * hands over a handler bound to the connection it already has open. web-host
+ * stays unaware of the Kanban; it just stops forwarding these paths.
+ *
+ * Returning without writing a response is treated as "not mine": the request
+ * falls through to the normal proxy behaviour.
+ */
+export type HostRouteHandler = (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
+
 /**
  * Options for starting WebHost
  */
@@ -39,6 +58,12 @@ export type WebHostOptions = {
   logDir?: string;
   dirs?: BackendSystemDirs;
   backend: { kind: 'ownBackend'; resolveBackend: BackendBinaryResolver } | { kind: 'useExistingBackend'; port: number };
+  /**
+   * Paths the host serves itself instead of proxying to aioncore. Injected by the
+   * desktop app; absent when web-host runs standalone (`bun run webui`), which
+   * has no Kanban to expose.
+   */
+  hostRoutes?: HostRouteHandler;
 };
 
 /**

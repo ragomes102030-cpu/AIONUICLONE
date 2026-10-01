@@ -11,6 +11,7 @@ import { networkInterfaces } from 'os';
 import { getSystemDir } from './initStorage';
 import { httpRequest } from '@/common/adapter/httpBridge';
 import { startWebHost, type WebHostHandle } from '@aionui/web-host';
+import { createKanbanDbProvider, createKanbanHostRoutes } from '@process/task/kanbanHostRoutes';
 import { getDataPath } from './utils';
 
 const WEBUI_CONFIG_FILE = 'webui.config.json';
@@ -251,6 +252,10 @@ export async function startDesktopWebUI(opts: { port?: number; allowRemote?: boo
     // users see divergent SQLite state between desktop app and bundled WebUI.
     dataDir: getDataPath(),
     logDir: sysDir.logDir,
+    // The board lives in tasks.db, which aioncore does not know about. Without
+    // this, every /api/kanban/* call is proxied to the backend and the phone
+    // gets 404 NOT_FOUND with an empty board.
+    hostRoutes: createKanbanHostRoutes(createKanbanDbProvider(getDataPath())),
     dirs: {
       cacheDir: sysDir.cacheDir,
       workDir: sysDir.workDir,
