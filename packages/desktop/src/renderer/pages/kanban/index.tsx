@@ -21,7 +21,6 @@ import {
   Popover,
   Radio,
   Select,
-  Option,
   Spin,
   Tag,
   Tooltip,
@@ -1654,12 +1653,12 @@ const KanbanPage: React.FC = () => {
             value={lookaheadWeeks === null ? 'all' : String(lookaheadWeeks)}
             onChange={(value) => setLookaheadWeeks(value === 'all' ? null : Number(value))}
           >
-            <Option value='all'>{t('agentTasks.kanban.lookaheadAll', { defaultValue: 'Tudo' })}</Option>
+            <Select.Option value='all'>{t('agentTasks.kanban.lookaheadAll', { defaultValue: 'Tudo' })}</Select.Option>
             {KANBAN_LOOKAHEAD_WEEKS.map((weeks) => (
-              <Option key={weeks} value={String(weeks)}>
+              <Select.Option key={weeks} value={String(weeks)}>
                 {t('agentTasks.kanban.lookaheadWeeks', { defaultValue: 'Próximas' })} {weeks}
                 {weeks > 1 ? t('agentTasks.kanban.weeksSuffix', { defaultValue: 'semanas' }) : ''}
-              </Option>
+              </Select.Option>
             ))}
           </Select>
           <Checkbox checked={showArchived} onChange={setShowArchived} className='shrink-0'>
