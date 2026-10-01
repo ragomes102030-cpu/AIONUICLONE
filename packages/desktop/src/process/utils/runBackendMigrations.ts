@@ -236,48 +236,26 @@ function buildBuiltinBrowserServer(): McpImportServer {
   };
 }
 
+/**
+ * Servers the app installs by itself on first run.
+ *
+ * Deliberately small: only the ones that work with zero configuration. The
+ * previous list also seeded excel-mcp-server, lean-planning-mcp, aiven, render,
+ * postgres, osmmcp and saga-mcp. Those need a local `python -m ...` package or a
+ * cloud token to connect, so on a machine without them every launch showed a
+ * board of permanently "disconnected" entries. Keeping them here also made
+ * deletion impossible: ensureBootstrapMcpServersInDb re-imports any default that
+ * is missing by name, so removing one from the UI only lasted until the next
+ * start.
+ *
+ * If one of them is wanted later, install it from the MCP settings page (or add
+ * it back here). Reference commands for the removed ones are preserved in the
+ * repo-root `mcp.config.json`.
+ */
 function buildDefaultMcpServers(): McpImportServer[] {
   const chromeConfig = {
     command: 'npx',
     args: ['-y', 'chrome-devtools-mcp@latest'],
-  };
-
-  const excelConfig = {
-    command: 'python',
-    args: ['-m', 'excel_mcp_server'],
-  };
-
-  const leanPlanningConfig = {
-    command: 'python',
-    args: ['-m', 'lean_planning_mcp'],
-  };
-
-  const aivenConfig = {
-    command: 'npx',
-    args: ['-y', '@modelcontextprotocol/server-http', '--url', 'https://mcp.aiven.live/mcp'],
-  };
-
-  const renderConfig = {
-    command: 'npx',
-    args: ['-y', '@niyogi/render-mcp'],
-    env: {
-      RENDER_API_KEY: process.env.RENDER_API_KEY || '',
-    },
-  };
-
-  const postgresConfig = {
-    command: 'npx',
-    args: ['-y', '@modelcontextprotocol/server-postgres', process.env.DATABASE_URL || 'postgresql://localhost:5432/postgres'],
-  };
-
-  const osmConfig = {
-    command: 'python',
-    args: ['-m', 'osm_mcp_server'],
-  };
-
-  const sagaConfig = {
-    command: 'python',
-    args: ['-m', 'saga_mcp_server'],
   };
 
   return [
@@ -294,91 +272,6 @@ function buildDefaultMcpServers(): McpImportServer[] {
       original_json: JSON.stringify({ mcpServers: { [BUILTIN_CHROME_DEVTOOLS_NAME]: chromeConfig } }, null, 2),
     },
     buildBuiltinBrowserServer(),
-    {
-      name: 'excel-mcp-server',
-      description: 'Le/cria/edita Excel via openpyxl. Formatação, fórmulas, charts. Gera planilhas Piemarta automaticamente.',
-      enabled: true,
-      builtin: true,
-      transport: {
-        type: 'stdio',
-        command: excelConfig.command,
-        args: excelConfig.args,
-      },
-      original_json: JSON.stringify({ mcpServers: { 'excel-mcp-server': excelConfig } }, null, 2),
-    },
-    {
-      name: 'lean-planning-mcp',
-      description: 'Le MS Project (.mpp), Primavera P6 (.xer), Synchro. 49 ferramentas: caminho crítico, recursos, AWP, Last Planner System',
-      enabled: true,
-      builtin: true,
-      transport: {
-        type: 'stdio',
-        command: leanPlanningConfig.command,
-        args: leanPlanningConfig.args,
-      },
-      original_json: JSON.stringify({ mcpServers: { 'lean-planning-mcp': leanPlanningConfig } }, null, 2),
-    },
-    {
-      name: 'aiven',
-      description: 'Aiven Cloud MCP integration for managing cloud databases and services.',
-      enabled: true,
-      builtin: true,
-      transport: {
-        type: 'stdio',
-        command: aivenConfig.command,
-        args: aivenConfig.args,
-      },
-      original_json: JSON.stringify({ mcpServers: { 'aiven': aivenConfig } }, null, 2),
-    },
-    {
-      name: 'render',
-      description: 'Render Cloud Deployment & Service Management MCP server.',
-      enabled: true,
-      builtin: true,
-      transport: {
-        type: 'stdio',
-        command: renderConfig.command,
-        args: renderConfig.args,
-        env: renderConfig.env,
-      },
-      original_json: JSON.stringify({ mcpServers: { 'render': renderConfig } }, null, 2),
-    },
-    {
-      name: 'postgres',
-      description: 'PostgreSQL Database MCP Server for direct SQL queries and schema inspection.',
-      enabled: true,
-      builtin: true,
-      transport: {
-        type: 'stdio',
-        command: postgresConfig.command,
-        args: postgresConfig.args,
-      },
-      original_json: JSON.stringify({ mcpServers: { 'postgres': postgresConfig } }, null, 2),
-    },
-    {
-      name: 'osmmcp',
-      description: 'OpenStreetMap: POIs, geocoding, rotas para logística de obra. Localização de fornecedores, equipamentos, canteiro.',
-      enabled: true,
-      builtin: true,
-      transport: {
-        type: 'stdio',
-        command: osmConfig.command,
-        args: osmConfig.args,
-      },
-      original_json: JSON.stringify({ mcpServers: { 'osmmcp': osmConfig } }, null, 2),
-    },
-    {
-      name: 'saga-mcp',
-      description: 'Task tracking Jira-like: Projects → Epics → Tasks → Subtasks. SQLite backend.',
-      enabled: true,
-      builtin: true,
-      transport: {
-        type: 'stdio',
-        command: sagaConfig.command,
-        args: sagaConfig.args,
-      },
-      original_json: JSON.stringify({ mcpServers: { 'saga-mcp': sagaConfig } }, null, 2),
-    },
   ];
 }
 
