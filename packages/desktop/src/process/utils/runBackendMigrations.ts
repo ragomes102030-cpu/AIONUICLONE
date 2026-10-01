@@ -19,6 +19,8 @@ import { BUILTIN_IMAGE_GEN_NAME, type IMcpServer, type IProvider } from '@/commo
 import { getBuiltinMcpScriptPath, type ProcessConfig as ProcessConfigType } from './initStorage';
 import { migrateAssistantsToBackend } from './migrateAssistants';
 import { repairMcpServerTimestamps } from '@process/services/database/repairMcpServerTimestamps';
+import { backupBackendDatabase } from '@process/services/database/backupBackendDatabase';
+import { checkProviderReadiness } from '@process/services/providerReadiness';
 
 type ConfigFile = typeof ProcessConfigType;
 type MigrationStepResult = boolean;
@@ -85,12 +87,36 @@ async function repairMcpServerCatalog(): Promise<void> {
   console.info('[Migration] mcp_servers catalog is already well-formed (columns: %s)', result.repairedColumns.join(','));
 }
 
+/**
+ * Snapshot the backend database before anything below mutates it.
+ *
+ * Runs ahead of `repairMcpServerCatalog` on purpose: the snapshot must capture
+ * the file exactly as the previous version left it, so a failed upgrade can be
+ * rolled back by restoring it. It reads the raw file and calls no API, so it
+ * cannot be affected by — or affect — the MCP catalog problem below.
+ *
+ * Throttled inside (no more than one per few hours) and never throws: a backup
+ * that fails must not stop the app from starting.
+ */
+async function snapshotBackendDatabase(): Promise<void> {
+  const result = backupBackendDatabase();
+  if (result.skipped) {
+    console.info('[Migration] backend backup skipped: %s', result.reason);
+    return;
+  }
+  console.info('[Migration] backend backup written: %s (pruned %d)', result.backupPath, result.prunedCount);
+}
+
 const CLEANUP_STEPS: Array<{
   name: string;
   run: () => Promise<void>;
 }> = [
-  // Must stay first: every later step (and the renderer) calls /api/mcp/*,
-  // which returns HTTP 500 while any mcp_servers row has a TEXT timestamp.
+  // Absolute first: everything after this point (repair, migrations, API calls)
+  // writes to state that the snapshot protects.
+  { name: 'snapshotBackendDatabase', run: async () => snapshotBackendDatabase() },
+  // Must stay first among the repairing steps: every later step (and the
+  // renderer) calls /api/mcp/*, which returns HTTP 500 while any mcp_servers row
+  // has a TEXT timestamp.
   { name: 'repairMcpServerCatalog', run: async () => repairMcpServerCatalog() },
   { name: 'cleanupLegacyClientPreferences', run: async () => cleanupLegacyClientPreferences() },
 ];
@@ -587,5 +613,21 @@ export async function runBackendMigrations(configFile: ConfigFile): Promise<void
     console.info(`[AionUi] Backend migration step completed: syncBuiltinMcpConfig (${Date.now() - syncStart}ms)`);
   } catch (error) {
     console.error(`[AionUi] Backend migration step failed: syncBuiltinMcpConfig (${Date.now() - syncStart}ms)`, error);
+  }
+
+  // Runs last, on purpose: `migrateProviders` moves providers over from the old
+  // settings format, so checking any earlier would report "no provider" on a
+  // machine that actually has one.
+  try {
+    const readiness = await checkProviderReadiness();
+    if (readiness.ready) {
+      console.info('[AionUi] Provider check: %s', readiness.message);
+    } else if (readiness.reason === 'no-providers') {
+      console.warn('[AionUi] Provider check: %s', readiness.message);
+    } else {
+      console.info('[AionUi] Provider check skipped: %s', readiness.message);
+    }
+  } catch (error) {
+    console.info('[AionUi] Provider check unavailable:', error instanceof Error ? error.message : String(error));
   }
 }

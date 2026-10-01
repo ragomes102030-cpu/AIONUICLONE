@@ -110,7 +110,13 @@ extraResources:
   # Clone-owned bundled skills: shipped with the installer and seeded to the
   # user skills dir on first run (see seedFactorySkills in initStorage.ts).
   # Source of truth lives in the repo root `skills/` directory.
-  - from: ../../skills
+  #
+  # NOTE: `from` is resolved from the PROJECT ROOT (the directory holding
+  # package.json), not from this config file. The previous `../../skills` pointed
+  # at <parent-of-repo>/skills, which does not exist, so electron-builder skipped
+  # it silently and no factory skill reached the package. Every other `from` here
+  # (public, resources/*, out/main/static) is project-root relative.
+  - from: skills
     to: factory-skills
   # aioncore binary (pre-compiled per platform/arch, ships its own bun runtime)
   - from: resources/bundled-aioncore

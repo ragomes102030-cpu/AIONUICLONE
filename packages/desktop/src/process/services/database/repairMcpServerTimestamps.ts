@@ -7,12 +7,12 @@
 import { existsSync } from 'fs';
 import path from 'path';
 import { getDataPath } from '@process/utils';
+import { BACKEND_DATABASE_FILENAME } from './backendDatabase';
 
-/**
- * Backend (aioncore) SQLite catalog filename. Owned by the Rust backend, but
- * reachable from the main process through the same data directory it uses.
- */
-export const BACKEND_DATABASE_FILENAME = 'aionui-backend.db';
+// Re-exported so existing importers of this module keep working; the constant
+// itself now lives in `backendDatabase.ts` so it can be shared without dragging
+// this (mockable) module along.
+export { BACKEND_DATABASE_FILENAME };
 
 export type McpTimestampRepairResult = {
   dbPath: string;
