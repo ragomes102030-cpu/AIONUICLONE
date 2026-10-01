@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/neurobin/MergeX/refs/heads/main/schema/mergex.json",
+  "conflict": "block",
+  "files": {
+    "packages/shared-scripts/src/prepare-aioncore.js": "The local AionCore build always wins over the upstream release download. Do not let an upstream merge erase the resolveLocalAioncoreBuild fallback or the local-build manifest path.",
+    "scripts/build-with-builder.js": "Delegates backend preparation to prepare-aioncore. Do not restore a direct upstream download here.",
+    "packages/desktop/electron-builder.yml": "Bundled AionCore must ship from resources/bundled-aioncore. Keep the repository pinned to the fork release feed.",
+    "package.json": "Keep the 8 GB heap build scripts and the native:node / native:electron ABI helpers.",
+    "packages/desktop/src/process/utils/runBackendMigrations.ts": "buildDefaultMcpServers must stay minimal: chrome-devtools plus the built-in browser only. External sample servers cause permanent disconnected entries because bootstrap reseeds any missing default by name.",
+    "tests/unit/process/task/kanban-e2e-atividades.test.ts": "Keep the fixed reference clock, explicit due-soon window, seeded card offsets, and per-run isolated temporary database directory.",
+    "packages/desktop/src/renderer/pages/kanban/kanbanHttp.ts": "Renderer Kanban client aligned with the real repository column names.",
+    "mcp.config.json": "Machine-local MCP server catalog backup. Never wire it as an automatically consumed app config.",
+    "scripts/upgrade-seguro.ps1": "Safe upgrade flow: never use reset, clean, or force. Abort on the first problem."
+  }
+}
