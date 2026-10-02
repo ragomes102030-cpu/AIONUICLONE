@@ -38,12 +38,6 @@ import {
   type KanbanPriority,
   type KanbanReasonCode,
   KANBAN_REASON_CODES,
-  blockedAgeDays,
-  filterByLookahead,
-  KANBAN_LOOKAHEAD_WEEKS,
-  isCardAtRisk,
-  rankByImpact,
-  type CardImpact,
   type KanbanRole,
   type KanbanScheduleStatus,
   type UpdateKanbanCardInput,
@@ -156,7 +150,6 @@ function KanbanCardView({
   card,
   columns,
   now,
-  atRisk,
   role,
   task,
   t,
@@ -173,7 +166,6 @@ function KanbanCardView({
   card: KanbanCard;
   columns: KanbanColumn[];
   now: number;
-  atRisk: boolean;
   role?: KanbanRole;
   task?: Task;
   t: ReturnType<typeof useTranslation>['t'];
@@ -191,9 +183,7 @@ function KanbanCardView({
   const isOverdue = scheduleStatus === 'overdue';
   const riskBorder = isOverdue
     ? 'border-danger-5 hover:border-danger-5'
-    : atRisk
-      ? 'border-warning-5 hover:border-warning-5'
-      : 'border-[var(--color-border-2)] hover:border-primary';
+    : 'border-[var(--color-border-2)] hover:border-primary';
   return (
     <article
       draggable
@@ -210,11 +200,6 @@ function KanbanCardView({
     >
       <div className='flex items-start gap-8px'>
         <span className='min-w-0 flex-1 text-13px leading-18px font-medium text-t-primary'>{card.title}</span>
-        {atRisk ? (
-          <Tag size='small' color='orange' className='shrink-0'>
-            {t('agentTasks.kanban.atRisk', { defaultValue: 'Em risco' })}
-          </Tag>
-        ) : null}
         <Tag size='small' color={priorityColor[card.priority]} className='shrink-0'>
           {card.priority}
         </Tag>
@@ -222,20 +207,8 @@ function KanbanCardView({
       {card.description ? (
         <p className='mt-6px line-clamp-3 text-12px leading-17px text-t-secondary'>{card.description}</p>
       ) : null}
-      {card.scheduled_for !== null ||
-      card.started_at !== null ||
-      card.finished_at !== null ||
-      card.blocked_reason !== null ? (
+      {card.scheduled_for !== null || card.start_for !== null || card.started_at !== null || card.finished_at !== null ? (
         <div className='mt-8px flex flex-wrap items-center gap-5px'>
-          {card.blocked_reason !== null ? (
-            // The impediment and how long it has been standing are the two facts
-            // that turn "blocked" into something to act on: two days is a phone
-            // call, three weeks is an escalation.
-            <Tag size='small' color='red' className='shrink-0'>
-              {t(`agentTasks.kanban.reasons.${card.blocked_reason}`, { defaultValue: card.blocked_reason })}
-              {blockedAgeDays(card, now) !== null ? ` · ${blockedAgeDays(card, now)}d` : ''}
-            </Tag>
-          ) : null}
           {card.start_for !== null ? (
             <Tag size='small' className='shrink-0'>
               {t('agentTasks.kanban.startsAt', { defaultValue: 'Começa' })}{' '}
@@ -330,42 +303,6 @@ function KanbanCardView({
               </Popover>
             </>
           )}
-          {card.finished_at === null ? (
-            card.blocked_reason !== null ? (
-              <Button
-                size='small'
-                className='min-h-32px px-8px'
-                onClick={() => onReceipt(card, { id: card.id, blocked_reason: null, blocked_since: null })}
-              >
-                {t('agentTasks.kanban.clearImpediment', { defaultValue: 'Liberar' })}
-              </Button>
-            ) : (
-              <Popover
-                trigger='click'
-                position='br'
-                content={
-                  <div className='flex flex-col gap-4px'>
-                    {KANBAN_REASON_CODES.map((code) => (
-                      <Button
-                        key={code}
-                        size='small'
-                        className='min-h-32px justify-start'
-                        // The clock starts when the impediment is declared, not
-                        // when it is eventually noticed.
-                        onClick={() => onReceipt(card, { id: card.id, blocked_reason: code, blocked_since: now })}
-                      >
-                        {t(`agentTasks.kanban.reasons.${code}`, { defaultValue: code })}
-                      </Button>
-                    ))}
-                  </div>
-                }
-              >
-                <Button size='small' className='min-h-32px px-8px'>
-                  {t('agentTasks.kanban.markImpediment', { defaultValue: 'Impedir' })}
-                </Button>
-              </Popover>
-            )
-          ) : null}
         </div>
       ) : null}
       <div className='mt-10px flex items-center justify-between gap-8px'>
@@ -455,7 +392,6 @@ function KanbanColumnView({
   cards,
   columns,
   now,
-  atRiskIds,
   roleById,
   taskById,
   t,
@@ -474,7 +410,6 @@ function KanbanColumnView({
   cards: KanbanCard[];
   columns: KanbanColumn[];
   now: number;
-  atRiskIds: Set<string>;
   roleById: Map<string, KanbanRole>;
   taskById: Map<string, Task>;
   t: ReturnType<typeof useTranslation>['t'];
@@ -568,7 +503,6 @@ function KanbanColumnView({
               card={card}
               columns={columns}
               now={now}
-              atRisk={atRiskIds.has(card.id)}
               role={card.role_id ? roleById.get(card.role_id) : undefined}
               task={card.task_id ? taskById.get(card.task_id) : undefined}
               t={t}
@@ -668,77 +602,6 @@ function DispatchCardModal({
         </div>
       </div>
     </Modal>
-  );
-}
-
-function DecisionPanel({
-  impacts,
-  cardsById,
-  t,
-  onOpenCard,
-}: {
-  impacts: readonly CardImpact[];
-  cardsById: ReadonlyMap<string, KanbanCard>;
-  t: ReturnType<typeof useTranslation>['t'];
-  onOpenCard: (cardId: string) => void;
-}) {
-  const blockers = impacts.filter((item) => item.blocksCount > 0);
-  const waiting = impacts.filter((item) => item.blocksCount === 0 && item.lateDependencies.length > 0);
-  if (blockers.length === 0 && waiting.length === 0) {
-    return (
-      <div className='rounded-10px border border-solid border-[var(--color-border-2)] bg-[var(--color-fill-1)] px-14px py-12px text-12px text-t-secondary'>
-        {t('agentTasks.kanban.panelClear', {
-          defaultValue: 'Nada atrasado segurando a obra. O que está em dia não precisa de decisão.',
-        })}
-      </div>
-    );
-  }
-
-  const line = (item: CardImpact, waitingOn: boolean) => {
-    const card = cardsById.get(item.card_id);
-    const scheduled = card?.scheduled_for;
-    return (
-      <button
-        key={item.card_id}
-        type='button'
-        onClick={() => onOpenCard(item.card_id)}
-        className={`group flex w-full items-center gap-10px rounded-8px px-12px py-10px text-left transition hover:bg-[var(--color-fill-2)] ${
-          waitingOn ? 'opacity-70' : ''
-        }`}
-      >
-        <span className={`size-8px shrink-0 rounded-full ${waitingOn ? 'bg-warning-5' : 'bg-danger-5'}`} aria-hidden />
-        <span className='min-w-0 flex-1'>
-          <span
-            className={`block truncate leading-20px ${
-              waitingOn ? 'text-13px text-t-secondary' : 'text-13px font-medium text-t-primary'
-            }`}
-          >
-            {item.title}
-          </span>
-          <span className='block truncate text-11px leading-16px text-t-tertiary'>
-            {item.assignee || t('agentTasks.kanban.panelNoCrew', { defaultValue: 'Sem equipe' })}
-            {scheduled ? ` · ${formatScheduleTime(scheduled, t)}` : ''}
-          </span>
-        </span>
-        {waitingOn ? (
-          <span className='shrink-0 text-12px text-t-tertiary'>
-            {t('agentTasks.kanban.panelWaiting', { defaultValue: 'esperando' })}
-          </span>
-        ) : (
-          <span className='shrink-0 text-12px font-medium text-t-secondary'>
-            {t('agentTasks.kanban.panelBlocks', { defaultValue: 'travando {{count}}', count: item.blocksCount })}
-          </span>
-        )}
-      </button>
-    );
-  };
-
-  return (
-    <div className='py-4px'>
-      {[...blockers.map((item) => [item, false] as const), ...waiting.map((item) => [item, true] as const)].map(
-        ([item, waitingOn]) => line(item, waitingOn)
-      )}
-    </div>
   );
 }
 
@@ -1198,32 +1061,8 @@ const KanbanPage: React.FC = () => {
   const roleById = useMemo(() => new Map((board?.roles ?? []).map((role) => [role.id, role])), [board?.roles]);
   const assistantNameById = useMemo(() => new Map(assistants.map((item) => [item.id, item.name])), [assistants]);
   const now = useNow();
-  const [focus, setFocus] = useState<'all' | 'due_soon' | 'overdue' | 'risk' | 'impact'>('all');
-  /**
-   * Weekly lookahead window, in weeks. `null` means no window.
-   *
-   * Deliberately a separate control from `focus`: the tabs answer "what is
-   * wrong", the window answers "what is this week's meeting about". Collapsing
-   * them into one list would make them fight — you cannot filter by "atrasado"
-   * AND "próximas 2 semanas" in a single-choice group, and that combination is
-   * exactly the one the weekly planning conversation runs on.
-   */
-  const [lookaheadWeeks, setLookaheadWeeks] = useState<number | null>(null);
-  const lookaheadCardIds = useMemo(() => {
-    if (!board || lookaheadWeeks === null) return null;
-    return new Set(filterByLookahead(board.cards, now, lookaheadWeeks).map((card) => card.id));
-  }, [board, now, lookaheadWeeks]);
-  const onlyOverdue = focus === 'overdue';
+  const [focus, setFocus] = useState<'all' | 'due_soon' | 'overdue'>('all');
   const boardColumns = board?.columns ?? [];
-  const atRiskCardIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (!board) return ids;
-    const byId = new Map(board.cards.map((card) => [card.id, card]));
-    for (const card of board.cards) {
-      if (isCardAtRisk(card, byId, board.columns, now)) ids.add(card.id);
-    }
-    return ids;
-  }, [board, now]);
   const overdueCardIds = useMemo(() => {
     if (!board) return new Set<string>();
     return new Set(
@@ -1240,13 +1079,6 @@ const KanbanPage: React.FC = () => {
         .map((card) => card.id)
     );
   }, [board, now]);
-  const cardsById = useMemo(() => new Map((board?.cards ?? []).map((card) => [card.id, card])), [board?.cards]);
-  const impacts = useMemo(() => (board ? rankByImpact(board.cards, board.columns, now) : []), [board, now]);
-  const impactCardIds = useMemo(() => new Set(impacts.map((item) => item.card_id)), [impacts]);
-  const blockerCount = useMemo(
-    () => impacts.filter((item) => item.blocksCount > 0 || item.lateDependencies.length > 0).length,
-    [impacts]
-  );
 
   useEffect(() => {
     if (!board && visibleBoards[0]) setSelectedBoardId(visibleBoards[0].id);
@@ -1631,7 +1463,7 @@ const KanbanPage: React.FC = () => {
             size='small'
             className='ms-auto shrink-0'
             value={focus}
-            onChange={(value) => setFocus(value as 'all' | 'due_soon' | 'overdue' | 'risk' | 'impact')}
+            onChange={(value) => setFocus(value as 'all' | 'due_soon' | 'overdue')}
           >
             <Radio value='all'>{t('agentTasks.kanban.filterAll', { defaultValue: 'Todos' })}</Radio>
             <Radio value='due_soon'>
@@ -1640,27 +1472,7 @@ const KanbanPage: React.FC = () => {
             <Radio value='overdue'>
               {t('agentTasks.kanban.onlyOverdue', { defaultValue: 'Atrasados' })} ({overdueCardIds.size})
             </Radio>
-            <Radio value='impact'>
-              {t('agentTasks.kanban.onlyImpact', { defaultValue: 'Travando' })} ({impactCardIds.size})
-            </Radio>
-            <Radio value='risk'>
-              {t('agentTasks.kanban.onlyAtRisk', { defaultValue: 'Em risco' })} ({atRiskCardIds.size})
-            </Radio>
           </Radio.Group>
-          <Select
-            size='small'
-            className='w-140px shrink-0'
-            value={lookaheadWeeks === null ? 'all' : String(lookaheadWeeks)}
-            onChange={(value) => setLookaheadWeeks(value === 'all' ? null : Number(value))}
-          >
-            <Select.Option value='all'>{t('agentTasks.kanban.lookaheadAll', { defaultValue: 'Tudo' })}</Select.Option>
-            {KANBAN_LOOKAHEAD_WEEKS.map((weeks) => (
-              <Select.Option key={weeks} value={String(weeks)}>
-                {t('agentTasks.kanban.lookaheadWeeks', { defaultValue: 'Próximas' })} {weeks}
-                {weeks > 1 ? t('agentTasks.kanban.weeksSuffix', { defaultValue: 'semanas' }) : ''}
-              </Select.Option>
-            ))}
-          </Select>
           <Checkbox checked={showArchived} onChange={setShowArchived} className='shrink-0'>
             {t('agentTasks.kanban.showArchived', { defaultValue: 'Mostrar arquivados' })}
           </Checkbox>
@@ -1691,46 +1503,21 @@ const KanbanPage: React.FC = () => {
         <div className='min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-16px md:overflow-x-auto md:overflow-y-hidden md:p-24px'>
           <div className='flex flex-col gap-12px md:h-full md:min-w-max md:flex-row'>
             {board.columns.map((column) => {
-              if (column.key === DECISIONS_COLUMN_KEY) {
-                return (
-                  <section
-                    key={column.id}
-                    className='flex w-full shrink-0 flex-col self-start rounded-12px border border-solid border-[var(--color-border-2)] bg-[var(--color-fill-1)] md:w-280px'
-                  >
-                    <div className='flex items-center gap-8px px-12px pt-10px pb-4px'>
-                      <span className='text-13px font-semibold text-t-primary'>
-                        {column.name || t('agentTasks.kanban.panelTitle', { defaultValue: 'Decisões' })}
-                      </span>
-                      <span className='rounded-full bg-[var(--color-fill-3)] px-7px py-2px text-11px text-t-secondary'>
-                        {blockerCount}
-                      </span>
-                    </div>
-                    <div className='px-6px pb-8px'>
-                      <DecisionPanel
-                        impacts={impacts}
-                        cardsById={cardsById}
-                        t={t}
-                        onOpenCard={(cardId) => {
-                          const card = cardsById.get(cardId);
-                          if (card) openCard(card);
-                        }}
-                      />
-                    </div>
-                  </section>
-                );
-              }
+              // The decisions column held the blocking/impact model. It is gone:
+              // this board answers "is this service late", not "why".
+              if (column.key === DECISIONS_COLUMN_KEY) return null;
               const cards = board.cards.filter(
                 (card) =>
                   card.column_id === column.id &&
                   (showArchived || !card.archived) &&
-                  // The window narrows whatever the tab already selected, so the
-                  // two can be combined (atrasados + próximas 2 semanas).
-                  (lookaheadCardIds === null || lookaheadCardIds.has(card.id)) &&
+                  // Three tabs, and only three: what is fine, what is about to
+                  // be late, what is already late. A card that depends on
+                  // another is not this board's job to reason about — the
+                  // field tells us the service slipped, not a network model of
+                  // why. Scheduling lives here, precedence does not.
                   (focus === 'all' ||
                     (focus === 'due_soon' && dueSoonCardIds.has(card.id)) ||
-                    (focus === 'overdue' && overdueCardIds.has(card.id)) ||
-                    (focus === 'impact' && impactCardIds.has(card.id)) ||
-                    (focus === 'risk' && atRiskCardIds.has(card.id)))
+                    (focus === 'overdue' && overdueCardIds.has(card.id)))
               );
               return (
                 <KanbanColumnView
@@ -1739,7 +1526,6 @@ const KanbanPage: React.FC = () => {
                   cards={cards}
                   columns={boardColumns}
                   now={now}
-                  atRiskIds={atRiskCardIds}
                   roleById={roleById}
                   taskById={taskById}
                   t={t}
