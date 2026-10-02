@@ -264,10 +264,20 @@ export function deriveScheduleStatus(
     return deadline !== null && card.finished_at > deadline ? 'late_finish' : 'done';
   }
   if (column?.key === 'done') return 'done';
+  // Lateness outranks "in progress".
+  //
+  // This order used to be the other way round: `started_at` returned
+  // in_progress before the deadline was ever compared, so a service that had
+  // started and then blown past its date was reported as healthy — forever. On
+  // site that is the worst case there is, and it was the quiet one.
+  //
+  // Nothing is lost by checking the date first: the card carries its own blue
+  // "Iniciou dd/mm" tag, so "underway" stays visible without hiding the
+  // warning.
+  if (deadline !== null && now >= deadline) return 'overdue';
+  if (deadline !== null && now >= deadline - dueSoonHours * 60 * 60 * 1000) return 'due_soon';
   if (card.started_at !== null) return 'in_progress';
   if (deadline === null) return 'not_started';
-  if (now >= deadline) return 'overdue';
-  if (now >= deadline - dueSoonHours * 60 * 60 * 1000) return 'due_soon';
   return 'scheduled';
 }
 

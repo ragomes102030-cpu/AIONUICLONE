@@ -161,7 +161,7 @@ describe('kanbanRepository', () => {
       expect(deriveScheduleStatus(card, columns, at + 3 * HOUR)).toBe('overdue');
     });
 
-    it('stops reporting overdue once the receipt records a real start', () => {
+    it('keeps warning when a service started and then ran past its date', () => {
       const { board, scheduled } = boardWithColumn();
       const at = 1_800_000_000_000;
       const created = createKanbanCard(db, {
@@ -171,8 +171,44 @@ describe('kanbanRepository', () => {
         scheduled_for: at,
       });
 
-      const started = updateKanbanCard(db, { id: created.id, started_at: at + 30 * 60 * 1000 });
-      expect(deriveScheduleStatus(started, listKanbanBoards(db)[0].columns, at + 2 * HOUR)).toBe('in_progress');
+      // Started before the date, checked two hours after it. This is the case
+      // that used to be swallowed: `started_at` returned in_progress before the
+      // deadline was ever compared, so a service could start on time and then
+      // drift for weeks while the board reported it healthy.
+      const started = updateKanbanCard(db, { id: created.id, started_at: at - 30 * 60 * 1000 });
+      expect(deriveScheduleStatus(started, listKanbanBoards(db)[0].columns, at + 2 * HOUR)).toBe('overdue');
+    });
+
+    it('leaves a started service that is still inside its window as in progress', () => {
+      const { board, scheduled } = boardWithColumn();
+      const at = 1_800_000_000_000;
+      const created = createKanbanCard(db, {
+        board_id: board.id,
+        column_id: scheduled.id,
+        title: 'Iniciado dentro da janela',
+        scheduled_for: at,
+      });
+      const started = updateKanbanCard(db, { id: created.id, started_at: at - 30 * 60 * 1000 });
+
+      // Two days out, so the 24h warning has not opened. Starting work must not
+      // mean the service is due soon — that would flag the whole board.
+      expect(deriveScheduleStatus(started, listKanbanBoards(db)[0].columns, at - 40 * HOUR)).toBe('in_progress');
+    });
+
+    it('warns a started service that is about to run out of time', () => {
+      const { board, scheduled } = boardWithColumn();
+      const at = 1_800_000_000_000;
+      const created = createKanbanCard(db, {
+        board_id: board.id,
+        column_id: scheduled.id,
+        title: 'Iniciado e vencendo',
+        scheduled_for: at,
+      });
+      const started = updateKanbanCard(db, { id: created.id, started_at: at - 2 * HOUR });
+
+      // Underway with an hour left is the warning the site actually needs, so
+      // being started no longer suppresses it.
+      expect(deriveScheduleStatus(started, listKanbanBoards(db)[0].columns, at - 60 * 60 * 1000)).toBe('due_soon');
     });
 
     it('keeps the reason when a service is closed without finishing', () => {
@@ -208,20 +244,6 @@ describe('kanbanRepository', () => {
       expect(deriveScheduleStatus(card, columns, at - 25 * HOUR)).toBe('scheduled');
       expect(deriveScheduleStatus(card, columns, at - 23 * HOUR)).toBe('due_soon');
       expect(deriveScheduleStatus(card, columns, at + HOUR)).toBe('overdue');
-    });
-
-    it('never warns about a service that already started', () => {
-      const { board, scheduled } = boardWithColumn();
-      const at = 1_800_000_000_000;
-      const created = createKanbanCard(db, {
-        board_id: board.id,
-        column_id: scheduled.id,
-        title: 'Iniciado dentro da janela',
-        scheduled_for: at,
-      });
-      const started = updateKanbanCard(db, { id: created.id, started_at: at - 30 * 60 * 1000 });
-
-      expect(deriveScheduleStatus(started, listKanbanBoards(db)[0].columns, at - 60 * 60 * 1000)).toBe('in_progress');
     });
 
     it('separates a service that finished after its time from one that finished on time', () => {
@@ -467,7 +489,7 @@ describe('kanbanRepository', () => {
       expect(isCardAtRisk(byId.get(dependent.id)!, byId, reloaded.columns, NOW)).toBe(true);
     });
 
-    it('clears the risk once the delayed predecessor starts', () => {
+    it('keeps the risk while a delayed predecessor is still running', () => {
       const { board, byKey } = seed();
       const predecessor = createKanbanCard(db, {
         board_id: board.id,
@@ -484,12 +506,16 @@ describe('kanbanRepository', () => {
       setKanbanCardDependencies(db, dependent.id, [predecessor.id]);
       updateKanbanCard(db, { id: predecessor.id, started_at: NOW - 30 * 60 * 1000 });
 
+      // A crew picking up a two-hour-late job does not unblock whoever is
+      // waiting on it. It used to: starting flipped the predecessor to
+      // in_progress, which is not `overdue`, so the dependency silently stopped
+      // counting as a blocker.
       const reloaded = listKanbanBoards(db)[0];
       const byId = new Map(reloaded.cards.map((card) => [card.id, card]));
-      expect(isCardAtRisk(byId.get(dependent.id)!, byId, reloaded.columns, NOW)).toBe(false);
+      expect(isCardAtRisk(byId.get(dependent.id)!, byId, reloaded.columns, NOW)).toBe(true);
     });
 
-    it('never flags a service that is already running or finished', () => {
+    it('flags a running service that is late and waiting on something late', () => {
       const { board, byKey } = seed();
       const predecessor = createKanbanCard(db, {
         board_id: board.id,
@@ -506,6 +532,35 @@ describe('kanbanRepository', () => {
       setKanbanCardDependencies(db, running.id, [predecessor.id]);
       updateKanbanCard(db, { id: running.id, started_at: NOW - HOUR });
 
+      // Being in the running column is not a reason to stay quiet: this one is
+      // two hours late and blocked on something two hours late. The old rule
+      // bailed out on `own === 'in_progress'` before ever looking at the
+      // dependencies, which is the same suppression as the status bug one layer
+      // up.
+      const reloaded = listKanbanBoards(db)[0];
+      const byId = new Map(reloaded.cards.map((card) => [card.id, card]));
+      expect(isCardAtRisk(byId.get(running.id)!, byId, reloaded.columns, NOW)).toBe(true);
+    });
+
+    it('does not flag a running service that is still inside its window', () => {
+      const { board, byKey } = seed();
+      const predecessor = createKanbanCard(db, {
+        board_id: board.id,
+        column_id: byKey.get('scheduled')!,
+        title: 'Contrapiso atrasado',
+        scheduled_for: NOW - 2 * HOUR,
+      });
+      const running = createKanbanCard(db, {
+        board_id: board.id,
+        column_id: byKey.get('running')!,
+        title: 'Em execução dentro do prazo',
+        scheduled_for: NOW + 3 * 24 * HOUR,
+      });
+      setKanbanCardDependencies(db, running.id, [predecessor.id]);
+      updateKanbanCard(db, { id: running.id, started_at: NOW - HOUR });
+
+      // Underway and not late: the late predecessor still does not make this one
+      // late. The warning follows the service's own date, not its column.
       const reloaded = listKanbanBoards(db)[0];
       const byId = new Map(reloaded.cards.map((card) => [card.id, card]));
       expect(isCardAtRisk(byId.get(running.id)!, byId, reloaded.columns, NOW)).toBe(false);

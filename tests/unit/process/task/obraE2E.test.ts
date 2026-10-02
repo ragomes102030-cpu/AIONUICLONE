@@ -58,7 +58,11 @@ describe('a obra vista de ponta a ponta', () => {
 
     updateKanbanCard(db, { id: contrapiso.id, started_at: now - HOUR });
     b = listKanbanBoards(db)[0];
-    expect(status(contrapiso.id)).toBe('in_progress');
+    // Starting work does not undo the lateness. It used to: the board went
+    // quiet the moment a crew touched the card, which meant the alert died
+    // exactly when the service was still behind. It stays overdue until it is
+    // finished, and then it is judged as a late finish.
+    expect(status(contrapiso.id)).toBe('overdue');
 
     updateKanbanCard(db, { id: contrapiso.id, finished_at: now + HOUR });
     b = listKanbanBoards(db)[0];
