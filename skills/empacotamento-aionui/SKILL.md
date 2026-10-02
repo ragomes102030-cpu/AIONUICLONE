@@ -281,9 +281,81 @@ Apague apenas o que o dry-run listar **e** o `git status` não reclamar.
 
 ---
 
-## 8. Checklist antes de dizer "pronto"
+## 8. Antes de dizer "pronto": os erros que eu já cometi
+
+Esta seção é diferente das outras: as outras descrevem **o sistema**. Esta descreve **o meu comportamento**, que foi a fonte de quase todo defeito real encontrado.
+
+### Teste sentado na borda de uma constante global
+
+Mudei `KANBAN_DUE_SOON_HOURS` de 24 para 72, commitei e pushei **sem rodar a suíte**. Seis asserções quebraram em dois arquivos, todas com a mesma cara:
 
 ```
+expected 'due_soon' to be 'scheduled'
+```
+
+Cinco delas fixavam "ainda está bem" a 25h, 30h, 40h ou **exatamente 72h**. Com a janela maior, todas passaram a `due_soon`.
+
+O código estava certo. **Os testes é que estavam errados** — e estavam errados antes da minha mudança, só que a janela de 24h os escondia.
+
+**Regra:** quando um teste valida "ainda bem" / "não atrasado" / "sem risco", ele **não pode depender de uma constante global**. Passe a constante explicitamente, ou posicione o caso com folga **fora** da janela.
+
+```bash
+# sempre que mexer numa constante usada por deriveScheduleStatus / isCardAtRisk:
+Select-String -Path 'tests\**\*.ts' -Pattern "toBe\('scheduled'\)|toBe\('due_soon'\)|toBe\('in_progress'\)"
+```
+
+E a checagem que faltou: **rodar a suíte antes do commit**, não depois de achar o problema.
+
+**Não corrija mudando o `Expected`.** Mudar a expectativa para `due_soon` faz o teste passar e deixa de testar a coisa que ele existe para testar.
+
+### Afirmar antes de medir
+
+Três vezes na mesma sessão falei como se tivesse medido, sem ter medido:
+
+| eu disse | o que era |
+| --- | --- |
+| "está tudo bem com o clone" | o `tsc` **da raiz** acusava 3 erros num arquivo que eu tinha criado |
+| "14 cartões duplicados" | 23 abertos viraram **15** — meu filtro incluía concluídos |
+| "os 8 atrasados" | contagem com filtro diferente, sem avisar que mudou |
+
+**Regra:** número que vai para a conversa sai de uma medição visível, com o filtro escrito. Se a contagem muda de uma frase para a outra, **diga isso**.
+
+### Lixo de teste no dado do usuário
+
+Três cartões que eu criei em verificação (`id` com prefixo `TESTE`, descrição "criado pelo teste ao vivo") ficaram **no quadro real**, contando como atraso, e eu só vi quando ele pediu melhorias.
+
+**Regra:** dado de teste entra com identificador óbvio e **sai no mesmo dia**. Antes de dizer "está limpo", procure:
+
+```bash
+# dado de teste esquecido na base do usuario
+Invoke-RestMethod -Uri 'http://127.0.0.1:<porta>/api/kanban/board' |
+  Select-Object -ExpandProperty data | Select-Object -ExpandProperty cards |
+  Where-Object { $_.id -like 'TESTE*' -or $_.description -match 'teste' } |
+  Select-Object id, title
+```
+
+Nada de verificação deve write no banco de produção sem esse prefixo.
+
+### Configuração do usuário que eu mudei sem pedir
+
+Liguei `webui.desktop.enabled = true` para conseguir testar, e nunca mais mencionei. Ficou ligado — e é o que mantém o acesso remoto funcionando. Quem achar depois não sabe se foi escolha dele.
+
+**Regra:** mudança de configuração do usuário vai para o resumo da sessão, **mesmo que pareça óbvia e útil**. "Liguei X para poder testar, continua ligado" é uma frase. Não falar nada é mentir por omissão.
+
+### O padrão por trás de tudo
+
+O defeito que se repetiu não foi técnico. Foi: **afirmar antes de verificar**, e **comprimir a verificação para ir mais rápido**. Nenhum dos quatro acima exige uma ferramenta nova — todos exigiriam um segundo de atenção.
+
+---
+
+## 9. Checklist antes de dizer "pronto"
+
+```
+[ ] SUÍTE RODADA depois da última mudança (não só o teste focado)
+[ ] se mexi em constante usada por deriveScheduleStatus: procurei os
+    testes que dependem dela e não deixei nenhum na borda
+[ ] tsc da RAIZ, não só o do pacote que mexi (o desktop não pegou um erro
+    que a raiz pegou)
 [ ] npm run dist:win terminou com "✅ Build completed!"
 [ ] log lido ANTES de qualquer relançamento (falha de bundle aparece em ~25 s)
 [ ] instalação baixada de out\, não de dist\
@@ -295,16 +367,21 @@ Apague apenas o que o dry-run listar **e** o `git status` não reclamar.
 [ ] boot do app instalado: "database initialized" e sem "newer_than_app"
 [ ] log lido do arquivo diário, com timestamp da execução atual
 [ ] npm run native:node antes de rodar testes
+[ ] nenhum cartão/servidor de teste sobrando no dado do usuário
+[ ] toda configuração que eu mudei está no resumo, com o estado atual
+[ ] todo número que eu afirmei saiu de uma medição com filtro visível
 [ ] git status limpo antes de qualquer commit
 ```
 
 O item que mais falha é **o diretório que deveria estar no pacote**. Verifique no disco, não no YAML — o empacotador pula entrada inválida em silêncio.
 
-O segundo que mais falha é **`tsc` verde**. Typecheck não é build: ele lê `.d.ts`, e tipos Mentem o que o runtime exporta. Import nomeado não usado em lugar nenhum do repo é sempre suspeito.
+O segundo é **`tsc` verde**. Typecheck não é build: ele lê `.d.ts`, e tipos mentem o que o runtime exporta. Import nomeado não usado em lugar nenhum do repo é sempre suspeito.
+
+O terceiro — e o mais barato de todos — é **rodar a suíte antes do commit**. Leva segundos e é o que teria pego os 6 testes quebrados.
 
 ---
 
-## 9. O que este clone corrige em relação ao upstream
+## 10. O que este clone corrige em relação ao upstream
 
 Contexto para não "consertar" algo que já foi consertado de propósito:
 
