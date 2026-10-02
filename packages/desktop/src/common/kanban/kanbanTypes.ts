@@ -49,9 +49,6 @@ export function blockedAgeDays(card: Pick<KanbanCard, 'blocked_since'>, now: num
   return Math.max(0, Math.floor((now - card.blocked_since) / DAY_MS));
 }
 
-/** Week windows offered in the board. Three is the common one in lean planning. */
-export const KANBAN_LOOKAHEAD_WEEKS: readonly number[] = [1, 2, 3, 4, 6];
-
 /**
  * The date a service belongs to on a calendar: when it is meant to start, or
  * failing that when it is due. A service with neither cannot be placed in a time
