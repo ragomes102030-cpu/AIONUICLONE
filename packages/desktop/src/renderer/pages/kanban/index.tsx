@@ -387,6 +387,11 @@ function KanbanCardView({
   );
 }
 
+/** The slot the dragged card would occupy, drawn as a gap between rows. */
+function DropGap() {
+  return <div className='my-1px h-2px rounded-full bg-primary' aria-hidden />;
+}
+
 function KanbanColumnView({
   column,
   cards,
@@ -405,6 +410,8 @@ function KanbanColumnView({
   draggedCardId,
   onReceipt,
   dispatchingCardId,
+  dropHint,
+  onDropHint,
 }: {
   column: KanbanColumn;
   cards: KanbanCard[];
@@ -413,7 +420,10 @@ function KanbanColumnView({
   roleById: Map<string, KanbanRole>;
   taskById: Map<string, Task>;
   t: ReturnType<typeof useTranslation>['t'];
-  onDropCard: (cardId: string, columnId: string) => void;
+  onDropCard: (cardId: string, columnId: string, position?: number) => void;
+  /** Where the dragged card would land, so the column can draw the gap. */
+  dropHint?: { columnId: string; index: number } | null;
+  onDropHint: (hint: { columnId: string; index: number } | null) => void;
   onOpenCard: (card: KanbanCard) => void;
   onOpenConversation: (task: Task) => void;
   onDispatchCard: (card: KanbanCard) => void;
@@ -473,15 +483,21 @@ function KanbanColumnView({
         event.preventDefault();
         if (!dropActive) setDropActive(true);
       }}
-      onDragLeave={(event) => {
-        if (event.currentTarget.contains(event.relatedTarget as Node)) return;
-        setDropActive(false);
-      }}
       onDrop={(event) => {
         event.preventDefault();
         setDropActive(false);
         const cardId = event.dataTransfer.getData('text/kanban-card');
-        if (cardId) onDropCard(cardId, column.id);
+        if (!cardId) return;
+        // Where the gap was drawn is where the card lands. Falling back to the
+        // end keeps the old behaviour for a drop on empty column space.
+        const hint = dropHint?.columnId === column.id ? dropHint.index : undefined;
+        onDropHint(null);
+        onDropCard(cardId, column.id, hint);
+      }}
+      onDragLeave={(event) => {
+        if (event.currentTarget.contains(event.relatedTarget as Node)) return;
+        setDropActive(false);
+        onDropHint(null);
       }}
     >
       <header className='flex items-center gap-8px border-b border-solid border-[var(--color-border-2)] px-12px py-10px'>
@@ -497,29 +513,49 @@ function KanbanColumnView({
             {t('agentTasks.kanban.dropHere', { defaultValue: 'Solte um card aqui' })}
           </div>
         ) : (
-          cards.map((card) => (
-            <KanbanCardView
-              key={card.id}
-              card={card}
-              columns={columns}
-              now={now}
-              role={card.role_id ? roleById.get(card.role_id) : undefined}
-              task={card.task_id ? taskById.get(card.task_id) : undefined}
-              t={t}
-              onOpen={() => onOpenCard(card)}
-              onOpenConversation={() => {
-                const task = card.task_id ? taskById.get(card.task_id) : undefined;
-                if (task) onOpenConversation(task);
-              }}
-              onDispatch={() => onDispatchCard(card)}
-              onArchive={() => onArchiveCard(card)}
-              onDragStart={() => onDragStart(card.id)}
-              onDragEnd={onDragEnd}
-              dragging={draggedCardId === card.id}
-              onReceipt={onReceipt}
-              dispatching={dispatchingCardId === card.id}
-            />
-          ))
+          cards.map((card, index) => {
+            const hintHere = dropHint?.columnId === column.id ? dropHint.index : null;
+            return (
+              <div
+                key={card.id}
+                onDragOver={(event) => {
+                  if (!draggedCardId) return;
+                  event.preventDefault();
+                  const box = event.currentTarget.getBoundingClientRect();
+                  // Above or below the card's midpoint decides which gap it
+                  // lands in, so the row follows the pointer instead of always
+                  // appending to the end of the column.
+                  const after = event.clientY > box.top + box.height / 2;
+                  const target = after ? index + 1 : index;
+                  const current = dropHint?.columnId === column.id ? dropHint.index : null;
+                  if (current !== target) onDropHint({ columnId: column.id, index: target });
+                }}
+              >
+                {hintHere === index ? <DropGap /> : null}
+                <KanbanCardView
+                  card={card}
+                  columns={columns}
+                  now={now}
+                  role={card.role_id ? roleById.get(card.role_id) : undefined}
+                  task={card.task_id ? taskById.get(card.task_id) : undefined}
+                  t={t}
+                  onOpen={() => onOpenCard(card)}
+                  onOpenConversation={() => {
+                    const task = card.task_id ? taskById.get(card.task_id) : undefined;
+                    if (task) onOpenConversation(task);
+                  }}
+                  onDispatch={() => onDispatchCard(card)}
+                  onArchive={() => onArchiveCard(card)}
+                  onDragStart={() => onDragStart(card.id)}
+                  onDragEnd={onDragEnd}
+                  dragging={draggedCardId === card.id}
+                  onReceipt={onReceipt}
+                  dispatching={dispatchingCardId === card.id}
+                />
+                {hintHere === index + 1 ? <DropGap /> : null}
+              </div>
+            );
+          })
         )}
       </div>
     </section>
@@ -1071,6 +1107,27 @@ const KanbanPage: React.FC = () => {
         .map((card) => card.id)
     );
   }, [board, now]);
+
+  /**
+   * Horizontal auto-scroll while dragging, plus the gap the card would land in.
+   *
+   * The board scrolls sideways, and with nine columns the one you are aiming
+   * for is routinely off-screen. Without an edge scroll you cannot reach it, so
+   * the drop lands on whatever column happened to be visible — which is how
+   * cards ended up in the wrong place.
+   */
+  const boardScrollRef = useRef<HTMLDivElement>(null);
+  const [dropHint, setDropHint] = useState<{ columnId: string; index: number } | null>(null);
+
+  const handleBoardDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    const el = boardScrollRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const EDGE = 90;
+    if (x < EDGE) el.scrollLeft -= Math.max(6, (EDGE - x) / 4);
+    else if (x > rect.width - EDGE) el.scrollLeft += Math.max(6, (x - (rect.width - EDGE)) / 4);
+  };
   const dueSoonCardIds = useMemo(() => {
     if (!board) return new Set<string>();
     return new Set(
@@ -1214,10 +1271,11 @@ const KanbanPage: React.FC = () => {
     Message.success(t('agentTasks.kanban.ownerRemoved', { defaultValue: 'Owner removed' }));
   };
 
-  const dropCard = async (cardId: string, columnId: string) => {
+  const dropCard = async (cardId: string, columnId: string, position?: number) => {
     setDraggedCardId(null);
+    setDropHint(null);
     try {
-      await moveCard({ id: cardId, column_id: columnId });
+      await moveCard({ id: cardId, column_id: columnId, ...(position === undefined ? {} : { position }) });
     } catch (moveError) {
       Message.error(
         `${t('agentTasks.kanban.moveFailed', { defaultValue: 'Could not move card' })}: ${moveError instanceof Error ? moveError.message : String(moveError)}`
@@ -1500,7 +1558,11 @@ const KanbanPage: React.FC = () => {
         </div>
       ) : null}
       {board ? (
-        <div className='min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-16px md:overflow-x-auto md:overflow-y-hidden md:p-24px'>
+        <div
+          ref={boardScrollRef}
+          onDragOver={handleBoardDragOver}
+          className='min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-16px md:overflow-x-auto md:overflow-y-hidden md:p-24px'
+        >
           <div className='flex flex-col gap-12px md:h-full md:min-w-max md:flex-row'>
             {board.columns.map((column) => {
               // The decisions column held the blocking/impact model. It is gone:
@@ -1529,7 +1591,7 @@ const KanbanPage: React.FC = () => {
                   roleById={roleById}
                   taskById={taskById}
                   t={t}
-                  onDropCard={(cardId, columnId) => void dropCard(cardId, columnId)}
+                  onDropCard={(cardId, columnId, position) => void dropCard(cardId, columnId, position)}
                   onOpenCard={openCard}
                   onOpenConversation={openConversation}
                   onDispatchCard={openDispatch}
@@ -1539,6 +1601,8 @@ const KanbanPage: React.FC = () => {
                   draggedCardId={draggedCardId}
                   onReceipt={(card, patch) => void updateCard(patch)}
                   dispatchingCardId={dispatchingCardId}
+                  dropHint={dropHint}
+                  onDropHint={setDropHint}
                 />
               );
             })}
