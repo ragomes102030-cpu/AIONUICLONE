@@ -37,7 +37,9 @@ describe('a obra vista de ponta a ponta', () => {
       column_id: byKey.get('todo')!,
       title: 'Assentamento de piso',
       assignee: 'Zezinho e Luizinho',
-      scheduled_for: now + 3 * 24 * HOUR,
+      // Four days out, past the 72h warning window: the "fine" state this test
+    // needs must not sit on the edge of a constant that changes.
+    scheduled_for: now + 4 * 24 * HOUR,
     });
     setKanbanCardDependencies(db, ceranico.id, [contrapiso.id]);
 

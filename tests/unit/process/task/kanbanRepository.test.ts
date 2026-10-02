@@ -155,7 +155,7 @@ describe('kanbanRepository', () => {
       });
 
       const columns = listKanbanBoards(db)[0].columns;
-      expect(deriveScheduleStatus(card, columns, at - 25 * HOUR)).toBe('scheduled');
+      expect(deriveScheduleStatus(card, columns, at - 73 * HOUR)).toBe('scheduled');
       expect(deriveScheduleStatus(card, columns, at - HOUR)).toBe('due_soon');
       expect(deriveScheduleStatus(card, columns, at)).toBe('overdue');
       expect(deriveScheduleStatus(card, columns, at + 3 * HOUR)).toBe('overdue');
@@ -190,9 +190,9 @@ describe('kanbanRepository', () => {
       });
       const started = updateKanbanCard(db, { id: created.id, started_at: at - 30 * 60 * 1000 });
 
-      // Two days out, so the 24h warning has not opened. Starting work must not
-      // mean the service is due soon — that would flag the whole board.
-      expect(deriveScheduleStatus(started, listKanbanBoards(db)[0].columns, at - 40 * HOUR)).toBe('in_progress');
+      // Almost four days out, so the 72h warning has not opened. Starting work must
+      // not mean the service is due soon — that would flag the whole board.
+      expect(deriveScheduleStatus(started, listKanbanBoards(db)[0].columns, at - 80 * HOUR)).toBe('in_progress');
     });
 
     it('warns a started service that is about to run out of time', () => {
@@ -241,7 +241,7 @@ describe('kanbanRepository', () => {
       });
       const columns = listKanbanBoards(db)[0].columns;
 
-      expect(deriveScheduleStatus(card, columns, at - 25 * HOUR)).toBe('scheduled');
+      expect(deriveScheduleStatus(card, columns, at - 73 * HOUR)).toBe('scheduled');
       expect(deriveScheduleStatus(card, columns, at - 23 * HOUR)).toBe('due_soon');
       expect(deriveScheduleStatus(card, columns, at + HOUR)).toBe('overdue');
     });
@@ -333,7 +333,7 @@ describe('kanbanRepository', () => {
         const columns = listKanbanBoards(db)[0].columns;
 
         expect(deriveScheduleStatus(card, columns, FRIDAY - 12 * HOUR)).toBe('due_soon');
-        expect(deriveScheduleStatus(card, columns, FRIDAY - 30 * HOUR)).toBe('scheduled');
+        expect(deriveScheduleStatus(card, columns, FRIDAY - 80 * HOUR)).toBe('scheduled');
       });
 
       it('judges a finish against the working day, not the rest day', () => {
@@ -554,7 +554,11 @@ describe('kanbanRepository', () => {
         board_id: board.id,
         column_id: byKey.get('running')!,
         title: 'Em execução dentro do prazo',
-        scheduled_for: NOW + 3 * 24 * HOUR,
+        // Four days out: comfortably past the 72h warning window, so "underway
+        // and fine" is a state the board can actually show. Sitting exactly on
+        // the window edge would make this test drift every time the constant
+        // changes.
+        scheduled_for: NOW + 4 * 24 * HOUR,
       });
       setKanbanCardDependencies(db, running.id, [predecessor.id]);
       updateKanbanCard(db, { id: running.id, started_at: NOW - HOUR });
