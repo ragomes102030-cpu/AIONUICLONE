@@ -130,7 +130,20 @@ export type KanbanCardWithDeps = KanbanCard & { depends_on: string[] };
  * the single knob for "due soon": the decision to chase someone is made the day
  * before, not after the deadline has already passed.
  */
-export const KANBAN_DUE_SOON_HOURS = 24;
+/**
+ * How far ahead of the deadline the board starts warning.
+ *
+ * Was 24 hours, and on the real board it never fired once: of 23 open
+ * services, 15 were already late and 0 fell inside a 24h window. A one-day
+ * warning only helps if someone checks the board the day before, and nobody
+ * does — a service slips from "fine" straight to "two days late" between one
+ * visit and the next, so the warning exists exactly when it is too late.
+ *
+ * Three days is the shortest span that matches how a site actually moves: it
+ * is one planning cycle, so "a vencer" is a list you can act on when you open
+ * the board, rather than an empty tab that trains you to ignore it.
+ */
+export const KANBAN_DUE_SOON_HOURS = 72;
 
 /** Days the site works, as `Date.getDay()` values: 0 is Sunday, 6 is Saturday. */
 export const KANBAN_WORKING_DAYS: readonly number[] = [1, 2, 3, 4, 5];
