@@ -38,59 +38,6 @@ export type KanbanRole = {
 };
 
 /**
- * How long a service has been standing still.
- *
- * Returns null when nothing is blocking it. The day count is what turns a
- * "blocked" column into a queue you can sort: two days is a phone call, three
- * weeks is an escalation to whoever buys the material.
- */
-export function blockedAgeDays(card: Pick<KanbanCard, 'blocked_since'>, now: number): number | null {
-  if (card.blocked_since === null) return null;
-  return Math.max(0, Math.floor((now - card.blocked_since) / DAY_MS));
-}
-
-/**
- * The date a service belongs to on a calendar: when it is meant to start, or
- * failing that when it is due. A service with neither cannot be placed in a time
- * window, so it stays out of the lookahead instead of polluting it.
- */
-export function lookaheadAnchor(card: Pick<KanbanCard, 'start_for' | 'scheduled_for'>): number | null {
-  return card.start_for ?? card.scheduled_for;
-}
-
-/**
- * Whether a service belongs in the weekly lookahead.
- *
- * The window is measured forward from now, but it deliberately also admits
- * anything already past its date: an overdue service is the first item of every
- * planning conversation, and a lookahead that hid them would be exactly the
- * reassuring board that lets a delay rot.
- *
- * Finished and archived services are left out — the meeting is about what is
- * still moving.
- */
-export function isWithinLookahead(
-  card: Pick<KanbanCard, 'archived' | 'finished_at' | 'start_for' | 'scheduled_for'>,
-  now: number,
-  weeks: number
-): boolean {
-  if (card.archived) return false;
-  if (card.finished_at !== null) return false;
-  const anchor = lookaheadAnchor(card);
-  if (anchor === null) return false;
-  return anchor <= now + weeks * 7 * DAY_MS;
-}
-
-/** The cards the weekly meeting is about, in the order the board already has. */
-export function filterByLookahead<T extends Pick<KanbanCard, 'archived' | 'finished_at' | 'start_for' | 'scheduled_for'>>(
-  cards: readonly T[],
-  now: number,
-  weeks: number
-): T[] {
-  return cards.filter((card) => isWithinLookahead(card, now, weeks));
-}
-
-/**
  * Why a service did not finish. A closed vocabulary is what lets the board say
  * "your delays are 70% material" — free text cannot be counted.
  */
