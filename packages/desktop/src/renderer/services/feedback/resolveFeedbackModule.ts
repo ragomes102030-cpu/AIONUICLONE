@@ -18,6 +18,10 @@ import type { FeedbackModuleTag } from '@/common/types/feedbackDiagnostics';
  */
 const ROUTE_MODULE_MAP: ReadonlyArray<readonly [prefix: string, tag: FeedbackModuleTag]> = [
   ['/conversation', 'conversation-session'],
+  // The activity board is where a site report originates: delays, blockers and
+  // receipts. Route it to agent-team so the button lands on the module the
+  // engineer is most likely reporting against.
+  ['/kanban', 'agent-team'],
   ['/team', 'agent-team'],
   ['/scheduled', 'scheduled-task'],
   ['/assistants', 'assistant-preset'],
