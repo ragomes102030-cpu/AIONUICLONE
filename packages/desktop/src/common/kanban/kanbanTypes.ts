@@ -241,9 +241,39 @@ export function deriveScheduleStatus(
 const BLOCKING_COLUMN_KEYS = new Set(['blocked']);
 
 /**
+ * PRECEDENCE ENGINE — deliberately not wired to any screen.
+ *
+ * isCardAtRisk and rankByImpact below are the critical-path model: they read
+ * `depends_on` and propagate delay from a predecessor that is known to be down.
+ * This board is not that tool. It answers "is this service late", not "why is
+ * the network late". Scheduling lives here; precedence does not.
+ *
+ * The screens that exposed this (the "Decisões" column and the "Travando" /
+ * "Em risco" tabs) were removed on purpose in 775108090, not left unfinished.
+ * They mixed a precedence network into a board whose job is a single service's
+ * date, and the request behind the board was a start date, an end date and a
+ * warning — nothing more.
+ *
+ * So this code has ZERO callers in production, and that is the intended state.
+ * It is kept because the engine is correct, tested, and cheap to re-wire, and
+ * because `depends_on` and the Decisions column already exist in user data: the
+ * schema does not go backwards. If precedence ever earns a place here, this is
+ * the engine to call — see the coverage guard in
+ * tests/unit/process/task/kanban-precedence-coverage.test.ts, which fails if one
+ * of these functions ever gains a production caller without this notice being
+ * revisited.
+ *
+ * Do not read the absence of callers here as a bug, and do not describe this as
+ * unfinished work: an audit once did exactly that, because nothing in the repo
+ * said the disconnection was on purpose.
+ */
+
+/**
  * A service is at risk when work it waits on is already late, and it has not
  * started itself. This is the same reasoning as the critical path: the delay is
  * not predicted, it is propagated from a predecessor that is known to be down.
+ *
+ * Part of the deliberately unwired precedence engine — see the note above.
  */
 export function isCardAtRisk(
   card: Pick<
@@ -294,6 +324,9 @@ type SchedulableCard = Pick<
  * The services that are actually holding up the board, worst first. This is the
  * list worth reading before deciding anything: it answers "what do I chase
  * today" without anyone having to sort cards by hand.
+ *
+ * Part of the deliberately unwired precedence engine — see the PRECEDENCE
+ * ENGINE note above. Zero production callers by design.
  */
 export function rankByImpact(
   cards: readonly SchedulableCard[],

@@ -207,12 +207,14 @@ function KanbanCardView({
       {card.description ? (
         <p className='mt-6px line-clamp-3 text-12px leading-17px text-t-secondary'>{card.description}</p>
       ) : null}
-      {card.scheduled_for !== null || card.start_for !== null || card.started_at !== null || card.finished_at !== null ? (
+      {card.scheduled_for !== null ||
+      card.start_for !== null ||
+      card.started_at !== null ||
+      card.finished_at !== null ? (
         <div className='mt-8px flex flex-wrap items-center gap-5px'>
           {card.start_for !== null ? (
             <Tag size='small' className='shrink-0'>
-              {t('agentTasks.kanban.startsAt', { defaultValue: 'Começa' })}{' '}
-              {formatScheduleTime(card.start_for, t)}
+              {t('agentTasks.kanban.startsAt', { defaultValue: 'Começa' })} {formatScheduleTime(card.start_for, t)}
             </Tag>
           ) : null}
           {card.scheduled_for !== null ? (
@@ -1567,6 +1569,13 @@ const KanbanPage: React.FC = () => {
             {board.columns.map((column) => {
               // The decisions column held the blocking/impact model. It is gone:
               // this board answers "is this service late", not "why".
+              //
+              // The engine behind it (rankByImpact / isCardAtRisk) is still in
+              // kanbanTypes and still tested — see the PRECEDENCE ENGINE note
+              // there. The column is not re-added by re-enabling those calls;
+              // the request behind this board was a date and a warning.
+              // Customer data keeps the column either way: rows stay in the
+              // database, they just are not drawn.
               if (column.key === DECISIONS_COLUMN_KEY) return null;
               const cards = board.cards.filter(
                 (card) =>
