@@ -7,7 +7,13 @@
 import Database from 'better-sqlite3';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import type { HostRouteHandler } from '@aionui/web-host';
+
+/** Cookie name for the access-token session, mirroring aionui-auth::COOKIE_NAME. */
+const SESSION_COOKIE = 'aionui-session';
+const JWT_ISSUER = 'aionui';
+const JWT_AUDIENCE = 'aionui-webui';
 
 import {
   listKanbanBoards,
@@ -63,7 +69,82 @@ const sendJson = (res: ServerResponse, status: number, payload: unknown): void =
  * project's structure and belong to whoever is setting the board up, not to
  * someone checking a service from the field.
  */
-export function createKanbanHostRoutes(resolveDb: () => KanbanDatabase): HostRouteHandler {
+/**
+ * Serves Kanban routes for WebUI clients.
+ *
+ * Security: when `allowRemote` is true the handler is exposed beyond
+ * 127.0.0.1, so the `aionui-session` JWT (HS256) MUST be present and valid.
+ * The signing secret is read from the backend SQLite `users` table
+ * (`aiondb.db`, `jwt_secret` column) — the same secret aioncore uses to mint
+ * access tokens — and verified with issuer/audience claims that match
+ * aionui-auth. A missing/expired/invalid token yields 401 and the board is
+ * never served over the network.
+ *
+ * In local-only mode (allowRemote=false) no cookie is required: the static
+ * server listens on 127.0.0.1 and is already gated by loopback isolation,
+ * matching the upstream desktop-trust decision.
+ */
+interface CreateKanbanHostRoutesOptions {
+  allowRemote: boolean;
+  dataDir: string;
+}
+
+export function createKanbanHostRoutes(
+  resolveDb: () => KanbanDatabase,
+  opts: CreateKanbanHostRoutesOptions
+): HostRouteHandler {
+  const { allowRemote, dataDir } = opts;
+  let secretCache: string | null = null;
+  let secretDb: Database.Database | null = null;
+
+  const resolveJwtSecret = (): string | null => {
+    // Env override mirrors aioncore's `resolve_jwt_secret` priority.
+    const envSecret = process.env.AIONUI_JWT_SECRET?.trim();
+    if (envSecret) return envSecret;
+    if (allowRemote) {
+      if (secretCache !== null) return secretCache;
+      try {
+        if (!secretDb) {
+          secretDb = new Database(path.join(dataDir, 'aiondb.db'));
+        }
+        const row = secretDb.prepare('SELECT jwt_secret FROM users LIMIT 1').get() as
+          | { jwt_secret?: string }
+          | undefined;
+        secretCache = row?.jwt_secret ?? null;
+      } catch (e) {
+        console.error('[Kanban] failed to read jwt_secret from DB:', e);
+      }
+      return secretCache;
+    }
+    return null;
+  };
+
+  const requireAuth = (req: IncomingMessage): true | string => {
+    if (!allowRemote) return true;
+    const cookieHeader = req.headers?.cookie;
+    if (!cookieHeader) return 'SESSION_REQUIRED';
+    // Parse `aionui-session=<token>`; ignore other cookies.
+    const match = cookieHeader
+      .split(';')
+      .map((c) => c.trim())
+      .find((c) => c.startsWith(`${SESSION_COOKIE}=`));
+    const token = match?.slice(SESSION_COOKIE.length + 1);
+    if (!token) return 'SESSION_REQUIRED';
+    const secret = resolveJwtSecret();
+    if (!secret) return 'BACKEND_UNAVAILABLE';
+    try {
+      const payload = jwt.verify(token, secret, {
+        issuer: JWT_ISSUER,
+        audience: JWT_AUDIENCE,
+      }) as JwtPayload;
+      // token_type must be Access, not Refresh — mirrors aionui-auth::verify_access.
+      if (payload.token_type !== 'access') return 'TOKEN_TYPE_INVALID';
+    } catch {
+      return 'TOKEN_INVALID';
+    }
+    return true;
+  };
+
   return async (req, res) => {
     const url = req.url ?? '';
     if (!url.startsWith(PREFIX)) return false;
@@ -71,6 +152,18 @@ export function createKanbanHostRoutes(resolveDb: () => KanbanDatabase): HostRou
     // Strip the query string: the list call carries ?include_archived=true.
     const route = url.slice(PREFIX.length).split('?')[0];
     const method = req.method ?? 'GET';
+
+    if (allowRemote) {
+      const auth = requireAuth(req);
+      if (auth !== true) {
+        sendJson(res, 401, {
+          success: false,
+          error: 'Authentication required',
+          code: auth,
+        });
+        return true;
+      }
+    }
 
     try {
       const db = resolveDb();

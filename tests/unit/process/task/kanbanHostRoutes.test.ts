@@ -13,6 +13,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import jwt from 'jsonwebtoken';
 
 import { createKanbanHostRoutes } from '@process/task/kanbanHostRoutes';
 import {
@@ -82,7 +83,7 @@ describe('rotas do Kanban servidas pelo desktop para o WebUI', () => {
       assignee: 'Sousa',
       scheduled_for: 1_700_000_000_000,
     }).id;
-    handler = createKanbanHostRoutes(() => db);
+    handler = createKanbanHostRoutes(() => db, { allowRemote: false, dataDir: dir });
   });
 
   afterAll(() => {
@@ -172,5 +173,95 @@ describe('rotas do Kanban servidas pelo desktop para o WebUI', () => {
 
     expect(status).toBe(404);
     expect(payload.error).toContain('not available over WebUI');
+  });
+});
+
+const JWT_SECRET = 'test-secret-fixture-v1';
+const issuer = 'aionui';
+const audience = 'aionui-webui';
+function makeToken(overrides: { type?: string; expired?: boolean; badSignature?: boolean } = {}) {
+  const opts: jwt.SignOptions = { issuer, audience, expiresIn: overrides.expired ? -10 : '1h' };
+  return jwt.sign(
+    { user_id: 'u1', username: 'admin', session_generation: 1, token_type: overrides.type ?? 'access' },
+    overrides.badSignature ? 'wrong' : JWT_SECRET,
+    opts
+  );
+}
+
+describe('kanbanHostRoutes sobre o WebUI com allowRemote', () => {
+  let dir2: string;
+  let db2: KanbanDatabase;
+  let handler2: ReturnType<typeof createKanbanHostRoutes>;
+
+  beforeAll(() => {
+    dir2 = mkdtempSync(path.join(tmpdir(), 'kanban-remote-'));
+    db2 = new BetterSqlite3(path.join(dir2, 'tasks.db'));
+    ensureTaskSchema(db2);
+    ensureKanbanSchema(db2);
+    process.env.AIONUI_JWT_SECRET = JWT_SECRET;
+    handler2 = createKanbanHostRoutes(() => db2, { allowRemote: true, dataDir: dir2 });
+  });
+  afterAll(() => {
+    db2?.close();
+    rmSync(dir2, { recursive: true, force: true });
+  });
+
+  it('1. sem cookie: 401 SESSION_REQUIRED e o board NAO vaza', async () => {
+    const { res, captured } = fakeRes();
+    const req = fakeReq('/api/kanban/board', 'GET');
+    const handled = await handler2(req, res);
+    expect(handled).toBe(true);
+    expect(captured.status).toBe(401);
+    expect(captured.body).toContain('SESSION_REQUIRED');
+    // O board real nao deve estar no corpo.
+    expect(captured.body).not.toContain('cards');
+  });
+
+  it('2. com cookie valido (access token): 200 e entrega o board', async () => {
+    const token = makeToken();
+    const { res, captured } = fakeRes();
+    // Injecta o cookie no req.
+    const req = fakeReq('/api/kanban/board', 'GET');
+    Object.defineProperty(req, 'headers', {
+      value: { cookie: `aionui-session=${token}; other=x` },
+      configurable: true,
+    });
+    const handled = await handler2(req, res);
+    expect(handled).toBe(true);
+    expect(captured.status).toBe(200);
+    expect(Array.isArray((JSON.parse(captured.body) as { data: unknown[] }).data)).toBe(true);
+  });
+
+  it('3. com refresh token no lugar de access: 401 TOKEN_TYPE_INVALID', async () => {
+    const token = makeToken({ type: 'refresh' });
+    const { res, captured } = fakeRes();
+    const req = fakeReq('/api/kanban/board', 'GET');
+    Object.defineProperty(req, 'headers', { value: { cookie: `aionui-session=${token}` }, configurable: true });
+    const handled = await handler2(req, res);
+    expect(handled).toBe(true);
+    expect(captured.status).toBe(401);
+    expect(captured.body).toContain('TOKEN_TYPE_INVALID');
+  });
+
+  it('4. com token expirado: 401 TOKEN_INVALID', async () => {
+    const token = makeToken({ expired: true });
+    const { res, captured } = fakeRes();
+    const req = fakeReq('/api/kanban/board', 'GET');
+    Object.defineProperty(req, 'headers', { value: { cookie: `aionui-session=${token}` }, configurable: true });
+    const handled = await handler2(req, res);
+    expect(handled).toBe(true);
+    expect(captured.status).toBe(401);
+    expect(captured.body).toContain('TOKEN_INVALID');
+  });
+
+  it('5. com assinatura errada: 401 TOKEN_INVALID', async () => {
+    const token = makeToken({ badSignature: true });
+    const { res, captured } = fakeRes();
+    const req = fakeReq('/api/kanban/board', 'GET');
+    Object.defineProperty(req, 'headers', { value: { cookie: `aionui-session=${token}` }, configurable: true });
+    const handled = await handler2(req, res);
+    expect(handled).toBe(true);
+    expect(captured.status).toBe(401);
+    expect(captured.body).toContain('TOKEN_INVALID');
   });
 });

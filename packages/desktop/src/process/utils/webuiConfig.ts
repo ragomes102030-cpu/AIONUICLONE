@@ -255,7 +255,10 @@ export async function startDesktopWebUI(opts: { port?: number; allowRemote?: boo
     // The board lives in tasks.db, which aioncore does not know about. Without
     // this, every /api/kanban/* call is proxied to the backend and the phone
     // gets 404 NOT_FOUND with an empty board.
-    hostRoutes: createKanbanHostRoutes(createKanbanDbProvider(getDataPath())),
+    hostRoutes: createKanbanHostRoutes(createKanbanDbProvider(getDataPath()), {
+      allowRemote,
+      dataDir: getDataPath(),
+    }),
     dirs: {
       cacheDir: sysDir.cacheDir,
       workDir: sysDir.workDir,

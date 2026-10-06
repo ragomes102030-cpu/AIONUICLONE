@@ -247,6 +247,9 @@ async function main(): Promise<void> {
       kind: 'ownBackend',
       resolveBackend: () => backendBin,
     },
+    // Standalone webui does NOT expose hostRoutes/kanban: the board lives in
+    // tasks.db (desktop-only) and has no WebUI surface in --remote mode.
+    // Any /api/kanban/* call falls through to the proxy and 404s.
   });
 
   console.log('');
