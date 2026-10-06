@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import { readFile } from 'node:fs/promises'
-import { init, install, doctor, list, update } from '../src/installer.js'
+import { readFile } from 'node:fs/promises';
+import { init, install, doctor, list, update } from '../src/installer.js';
 
-const args = process.argv.slice(2)
-const command = args[0] ?? 'init'
+const args = process.argv.slice(2);
+const command = args[0] ?? 'init';
 
 const commands = {
   init: () => init({ interactive: true }),
@@ -15,10 +15,10 @@ const commands = {
   '--help': () => help(),
   '-h': () => help(),
   '--version': () => version(),
-  '-v': () => version()
-}
+  '-v': () => version(),
+};
 
-function help () {
+function help() {
   console.log(`
 wassenger-skills — Agent Skills for Wassenger
 Documentation: https://github.com/wassengerhq/wassenger-skills
@@ -47,24 +47,24 @@ Examples:
   npx @wassengerhq/skills                       # interactive setup
   npx @wassengerhq/skills install claude-code   # just copy skills to ~/.claude/skills
   npx @wassengerhq/skills doctor                # check everything is wired
-`)
+`);
 }
 
-async function version () {
-  const pkgPath = new URL('../package.json', import.meta.url)
-  const pkg = JSON.parse(await readFile(pkgPath, 'utf8'))
-  console.log(pkg.version)
+async function version() {
+  const pkgPath = new URL('../package.json', import.meta.url);
+  const pkg = JSON.parse(await readFile(pkgPath, 'utf8'));
+  console.log(pkg.version);
 }
 
-const handler = commands[command]
+const handler = commands[command];
 if (!handler) {
-  console.error(`Unknown command: ${command}`)
-  help()
-  process.exit(1)
+  console.error(`Unknown command: ${command}`);
+  help();
+  process.exit(1);
 }
 
-Promise.resolve(handler()).catch(err => {
-  console.error('\n❌', err.message ?? err)
-  if (process.env.DEBUG) console.error(err.stack)
-  process.exit(1)
-})
+Promise.resolve(handler()).catch((err) => {
+  console.error('\n❌', err.message ?? err);
+  if (process.env.DEBUG) console.error(err.stack);
+  process.exit(1);
+});

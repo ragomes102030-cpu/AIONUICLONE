@@ -80,7 +80,14 @@ function seed(rows: Array<[string, string, string, unknown, unknown]>): void {
   });
 }
 
-function insertMcp(db: Database.Database, id: string, userId: string, name: string, createdAt: unknown, updatedAt: unknown) {
+function insertMcp(
+  db: Database.Database,
+  id: string,
+  userId: string,
+  name: string,
+  createdAt: unknown,
+  updatedAt: unknown
+) {
   db.prepare('INSERT INTO mcp_servers (id, user_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').run(
     id,
     userId,
@@ -91,7 +98,9 @@ function insertMcp(db: Database.Database, id: string, userId: string, name: stri
 }
 
 function readAll(): Row[] {
-  return withDb((db) => db.prepare('SELECT id, user_id, created_at, updated_at FROM mcp_servers ORDER BY id').all() as Row[]);
+  return withDb(
+    (db) => db.prepare('SELECT id, user_id, created_at, updated_at FROM mcp_servers ORDER BY id').all() as Row[]
+  );
 }
 
 function foreignKeyViolations(): unknown[] {
@@ -110,9 +119,7 @@ describe('normalizeEpochMillis', () => {
   });
 
   it('parses ISO-8601 with fractional seconds', () => {
-    expect(normalizeEpochMillis('2026-09-26T14:35:09.614949')).toBe(
-      new Date('2026-09-26T14:35:09.614').getTime()
-    );
+    expect(normalizeEpochMillis('2026-09-26T14:35:09.614949')).toBe(new Date('2026-09-26T14:35:09.614').getTime());
   });
 
   it('scales seconds up to milliseconds but leaves milliseconds untouched', () => {

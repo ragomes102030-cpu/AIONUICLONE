@@ -20,53 +20,52 @@ curl -X POST https://api.wassenger.com/v1/webhooks \
     "device": "DEVICE_ID_OR_OMIT_FOR_ACCOUNT_WIDE"
   }'
 ```
+
 Store the returned `secret` for signature verification.
 
 ## Event mapping
 
-| Wati `eventType` (typical) | Wassenger event |
-|---|---|
-| `message` (inbound, `owner=false`) | `message:in:new` |
-| `sessionMessageSent` / `templateMessageSent` | `message:out:sent` |
-| delivered status | `message:out:delivered` |
-| read status | `message:out:read` |
-| `templateMessageFailed` | `message:out:failed` |
-| ticket assigned / status changed | `chat:assigned` / `chat:status:changed` |
+| Wati `eventType` (typical)                   | Wassenger event                         |
+| -------------------------------------------- | --------------------------------------- |
+| `message` (inbound, `owner=false`)           | `message:in:new`                        |
+| `sessionMessageSent` / `templateMessageSent` | `message:out:sent`                      |
+| delivered status                             | `message:out:delivered`                 |
+| read status                                  | `message:out:read`                      |
+| `templateMessageFailed`                      | `message:out:failed`                    |
+| ticket assigned / status changed             | `chat:assigned` / `chat:status:changed` |
 
 ## Field renames (inbound message — verify against your logs)
 
-| Wati (typical) | Wassenger |
-|---|---|
-| `waId` | `data.message.from` |
-| `text` | `data.message.body` |
-| `senderName` | `data.chat.contact.name` |
+| Wati (typical)                | Wassenger                                                |
+| ----------------------------- | -------------------------------------------------------- |
+| `waId`                        | `data.message.from`                                      |
+| `text`                        | `data.message.body`                                      |
+| `senderName`                  | `data.chat.contact.name`                                 |
 | `owner` (bool: true=outbound) | use the `event` name (`message:in:*` vs `message:out:*`) |
-| `whatsappMessageId` / `id` | `data.message.id` |
-| `eventType` | `event` |
+| `whatsappMessageId` / `id`    | `data.message.id`                                        |
+| `eventType`                   | `event`                                                  |
 
 ## Node — handler (Wassenger, with signature)
 
 ```js
-import crypto from 'node:crypto'
+import crypto from 'node:crypto';
 
 app.post('/wassenger', express.raw({ type: 'application/json' }), (req, res) => {
-  const sig = (req.headers['x-wassenger-signature'] || '').replace(/^sha256=/, '')
-  const actual = crypto.createHmac('sha256', process.env.WASSENGER_WEBHOOK_SECRET)
-    .update(req.body).digest('hex')
+  const sig = (req.headers['x-wassenger-signature'] || '').replace(/^sha256=/, '');
+  const actual = crypto.createHmac('sha256', process.env.WASSENGER_WEBHOOK_SECRET).update(req.body).digest('hex');
   // Decode both to buffers; timingSafeEqual needs equal-length BUFFERS,
   // so compare byte lengths (not hex-string lengths) before comparing.
-  const sigBuf = Buffer.from(sig, 'hex')
-  const actualBuf = Buffer.from(actual, 'hex')
-  const ok = sigBuf.length === actualBuf.length &&
-    crypto.timingSafeEqual(sigBuf, actualBuf)
-  if (!ok) return res.sendStatus(403)
+  const sigBuf = Buffer.from(sig, 'hex');
+  const actualBuf = Buffer.from(actual, 'hex');
+  const ok = sigBuf.length === actualBuf.length && crypto.timingSafeEqual(sigBuf, actualBuf);
+  if (!ok) return res.sendStatus(403);
 
-  const evt = JSON.parse(req.body.toString())
+  const evt = JSON.parse(req.body.toString());
   if (evt.event === 'message:in:new') {
-    handleInbound(evt.data.message.from, evt.data.message.body)   // was waId / text
+    handleInbound(evt.data.message.from, evt.data.message.body); // was waId / text
   }
-  res.sendStatus(200)
-})
+  res.sendStatus(200);
+});
 ```
 
 ## Python — handler (FastAPI)

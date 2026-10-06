@@ -53,14 +53,7 @@ const ModalMcpManagementSection: React.FC<{
   setMcpServers: React.Dispatch<React.SetStateAction<IMcpServer[]>>;
   saveMcpServers: (serversOrUpdater: IMcpServer[] | ((prev: IMcpServer[]) => IMcpServer[])) => Promise<void>;
   isMcpServersLoading?: boolean;
-}> = ({
-  message,
-  mcpServers,
-  extensionMcpServers,
-  setMcpServers,
-  saveMcpServers,
-  isMcpServersLoading,
-}) => {
+}> = ({ message, mcpServers, extensionMcpServers, setMcpServers, saveMcpServers, isMcpServersLoading }) => {
   const { t } = useTranslation();
   const { oauthStatus, loggingIn, checkOAuthStatus, markLoginRequired, clearLoginRequired, login } = useMcpOAuth();
 
@@ -123,29 +116,26 @@ const ModalMcpManagementSection: React.FC<{
     [handleAddMcpServer, handleTestMcpConnection]
   );
 
-  const handleTestDraftConnection = useCallback(
-    async (serverData: McpToolDraft): Promise<McpToolConnectionResult> => {
-      // The current backend test endpoint only accepts persisted MCP records.
-      // Use the existing CRUD path for a short-lived preflight record, then
-      // remove it; no renderer-only MCP client or fake tool catalog is added.
-      const temporaryData: McpToolDraft = {
-        ...serverData,
-        name: `${serverData.name} (preflight)`,
-      };
-      const persisted = await mcpService.createServer.invoke(toBackendMcpPayload(temporaryData));
+  const handleTestDraftConnection = useCallback(async (serverData: McpToolDraft): Promise<McpToolConnectionResult> => {
+    // The current backend test endpoint only accepts persisted MCP records.
+    // Use the existing CRUD path for a short-lived preflight record, then
+    // remove it; no renderer-only MCP client or fake tool catalog is added.
+    const temporaryData: McpToolDraft = {
+      ...serverData,
+      name: `${serverData.name} (preflight)`,
+    };
+    const persisted = await mcpService.createServer.invoke(toBackendMcpPayload(temporaryData));
+    try {
+      return await mcpService.testMcpConnection.invoke({ ...persisted, runtime_scope_id: persisted.id });
+    } finally {
       try {
-        return await mcpService.testMcpConnection.invoke({ ...persisted, runtime_scope_id: persisted.id });
-      } finally {
-        try {
-          await mcpService.deleteServer.invoke({ id: persisted.id });
-        } catch {
-          // The preflight result is still useful; the next catalog refresh will
-          // reconcile a cleanup failure without exposing credentials.
-        }
+        await mcpService.deleteServer.invoke({ id: persisted.id });
+      } catch {
+        // The preflight result is still useful; the next catalog refresh will
+        // reconcile a cleanup failure without exposing credentials.
       }
-    },
-    []
-  );
+    }
+  }, []);
 
   const handleAddToolServer = useCallback(
     async (serverData: Omit<IMcpServer, 'id' | 'created_at' | 'updated_at'>) => {

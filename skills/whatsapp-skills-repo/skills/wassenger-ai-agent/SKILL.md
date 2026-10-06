@@ -4,15 +4,15 @@ description: Build a production-grade AI agent that answers your customers on Wh
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
 ---
 
 # Wassenger AI Agent
 
-Stand up an AI agent that replies to customers on WhatsApp — and, crucially, knows when to stop and hand the chat to a human. This skill wires the *safe* pattern, not a bot left unsupervised.
+Stand up an AI agent that replies to customers on WhatsApp — and, crucially, knows when to stop and hand the chat to a human. This skill wires the _safe_ pattern, not a bot left unsupervised.
 
-> **What this skill is.** It *sets up* the agent — it is **not** the runtime. The live agent runs either as Wassenger's built-in **AI Assistant** (no-code, configured in the console) or as a small **webhook service you deploy**. This skill helps you pick one, wire it, and bake in the guardrails that make it safe for production.
+> **What this skill is.** It _sets up_ the agent — it is **not** the runtime. The live agent runs either as Wassenger's built-in **AI Assistant** (no-code, configured in the console) or as a small **webhook service you deploy**. This skill helps you pick one, wire it, and bake in the guardrails that make it safe for production.
 
 ## When to use
 
@@ -27,7 +27,7 @@ Stand up an AI agent that replies to customers on WhatsApp — and, crucially, k
 An LLM agent on WhatsApp is **high-reliability with guardrails, never 100%**. Three hard constraints shape the whole design:
 
 1. **The LLM is probabilistic** — it can hallucinate or over-promise. You must scope it and gate it.
-2. **The 24-hour window** — you may reply free-form only within 24h of the customer's last inbound message. Replying *to* an inbound is always in-window; anything proactive or after 24h needs an approved template (`wassenger-messaging`).
+2. **The 24-hour window** — you may reply free-form only within 24h of the customer's last inbound message. Replying _to_ an inbound is always in-window; anything proactive or after 24h needs an approved template (`wassenger-messaging`).
 3. **Number quality** — robotic/spammy behaviour gets the number throttled by Meta. An agent that answers real inbound conversations is fine; an agent that blasts unsolicited messages is not.
 
 So the goal is **"AI that filters and escalates,"** not "AI that replaces the team." Promise it that way.

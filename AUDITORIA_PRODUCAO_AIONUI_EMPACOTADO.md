@@ -46,13 +46,13 @@ O clone **não é standalone em relação ao backend**. O AionUi inicia e usa o 
 
 ## 2. Conclusão sobre os cenários A–E
 
-| Cenário | Resultado | Evidência |
-|---|---|---|
-| A — tudo já está no clone, AionCore seria conveniência | **Não** | O launcher resolve e inicia `aioncore.exe`; as APIs de negócio são servidas pelo AionCore. |
-| B — AionCore separado do AionUi | **Possível** | `AIONUI_BACKEND_BIN`, `AIONUI_BACKEND_BUNDLED_DIR` e `PATH` são alternativas de resolução. |
-| C — AionCore incluído no instalador | **Comprovado** | `electron-builder.yml` inclui `resources/bundled-aioncore`; `afterPack` confirmou o recurso; `win-unpacked` iniciou o backend. |
-| D — incorporar módulos do AionCore ao clone | **Não decidido** | Exigiria copiar/reimplementar código, resolver licença e manter contratos; não é necessário para o funcionamento atual. |
-| E — dependências impedem um produto local completo | **Parcialmente** | O app e o backend funcionam juntos, mas agentes, providers, OAuth e MCPs externos dependem do ambiente do usuário. |
+| Cenário                                                | Resultado        | Evidência                                                                                                                      |
+| ------------------------------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| A — tudo já está no clone, AionCore seria conveniência | **Não**          | O launcher resolve e inicia `aioncore.exe`; as APIs de negócio são servidas pelo AionCore.                                     |
+| B — AionCore separado do AionUi                        | **Possível**     | `AIONUI_BACKEND_BIN`, `AIONUI_BACKEND_BUNDLED_DIR` e `PATH` são alternativas de resolução.                                     |
+| C — AionCore incluído no instalador                    | **Comprovado**   | `electron-builder.yml` inclui `resources/bundled-aioncore`; `afterPack` confirmou o recurso; `win-unpacked` iniciou o backend. |
+| D — incorporar módulos do AionCore ao clone            | **Não decidido** | Exigiria copiar/reimplementar código, resolver licença e manter contratos; não é necessário para o funcionamento atual.        |
+| E — dependências impedem um produto local completo     | **Parcialmente** | O app e o backend funcionam juntos, mas agentes, providers, OAuth e MCPs externos dependem do ambiente do usuário.             |
 
 A recomendação baseada em evidência é **manter o AionCore como binário de runtime empacotado**, não incorporar suas crates nem criar um segundo backend.
 
@@ -70,17 +70,17 @@ AionUi.exe
 
 ### 3.2 responsabilidades
 
-| Componente | Responsabilidade | Dono |
-|---|---|---|
-| `packages/desktop/src/index.ts` | ciclo de vida Electron, janelas, backend e CDP | AionUi |
-| `packages/web-host/src/backend-launcher.ts` | porta, argumentos, prontidão, health, stop e restart | AionUi |
-| `packages/desktop/src/renderer` | interface, roteamento, telas e integrações | AionUi |
-| `httpBridge.ts` / `ipcBridge.ts` | contratos que o renderer usa para falar com o backend | AionUi |
-| `packages/web-host/src/static-server.ts` | reverse proxy do modo WebUI | AionUi |
-| `aioncore.exe` | API, WebSocket, banco e serviços de domínio | AionCore |
-| crates `aionui-*` | agentes, ACP, MCP, auth, runtime, arquivos, projetos e realtime | AionCore |
-| Electron/Chromium | runtime visual e webview | AionUi/Embutido |
-| CLIs de agentes | executáveis de Claude, Hermes, OpenCode, etc. | Usuário/ambiente externo |
+| Componente                                  | Responsabilidade                                                | Dono                     |
+| ------------------------------------------- | --------------------------------------------------------------- | ------------------------ |
+| `packages/desktop/src/index.ts`             | ciclo de vida Electron, janelas, backend e CDP                  | AionUi                   |
+| `packages/web-host/src/backend-launcher.ts` | porta, argumentos, prontidão, health, stop e restart            | AionUi                   |
+| `packages/desktop/src/renderer`             | interface, roteamento, telas e integrações                      | AionUi                   |
+| `httpBridge.ts` / `ipcBridge.ts`            | contratos que o renderer usa para falar com o backend           | AionUi                   |
+| `packages/web-host/src/static-server.ts`    | reverse proxy do modo WebUI                                     | AionUi                   |
+| `aioncore.exe`                              | API, WebSocket, banco e serviços de domínio                     | AionCore                 |
+| crates `aionui-*`                           | agentes, ACP, MCP, auth, runtime, arquivos, projetos e realtime | AionCore                 |
+| Electron/Chromium                           | runtime visual e webview                                        | AionUi/Embutido          |
+| CLIs de agentes                             | executáveis de Claude, Hermes, OpenCode, etc.                   | Usuário/ambiente externo |
 
 O renderer não possui o runtime dos agentes. Ele faz chamadas ao backend e recebe eventos do WebSocket. Algumas operações de interface ainda usam IPC Electron, mas isso não substitui o backend de domínio.
 
@@ -317,15 +317,15 @@ O `win-unpacked`:
 
 ### 9.2 operações de negócio
 
-| Operação | Resultado |
-|---|---|
-| Criar conversa | HTTP 201 |
+| Operação                                    | Resultado                                                  |
+| ------------------------------------------- | ---------------------------------------------------------- |
+| Criar conversa                              | HTTP 201                                                   |
 | Abrir workspace e criar/backfill de projeto | `project_id` retornado; `/api/projects/{id}` respondeu 200 |
-| Escrever arquivo pelo filesystem | HTTP 200 |
-| Ler arquivo | Conteúdo idêntico |
-| Obter metadata | Resposta válida |
-| Listar diretório | HTTP 200 |
-| Fechar e reabrir com o mesmo userData | Conversa e arquivo preservados |
+| Escrever arquivo pelo filesystem            | HTTP 200                                                   |
+| Ler arquivo                                 | Conteúdo idêntico                                          |
+| Obter metadata                              | Resposta válida                                            |
+| Listar diretório                            | HTTP 200                                                   |
+| Fechar e reabrir com o mesmo userData       | Conversa e arquivo preservados                             |
 
 ### 9.3 testes automatizados
 
@@ -503,24 +503,24 @@ As variáveis de ambiente e a origem do segredo têm precedência no backend. A 
 
 ## 15. Classificação das dependências
 
-| Dependência | Classificação | Observação |
-|---|---|---|
-| Electron/Chromium | **EMBUTIDA NO APLICATIVO** | Runtime do `AionUi.exe` e do webview. |
-| Renderer/main/preload do AionUi | **EMBUTIDA NO APLICATIVO** | Incluídos no `app.asar`. |
-| `aioncore.exe` v0.2.2 | **INSTALADA JUNTO** no pipeline atual; **REQUIRED EXTERNAL** se separado | Incluído por `extraResources`; também pode ser resolvido por env/PATH. |
-| Manifesto do AionCore | **INSTALADA JUNTO** | Define versão, origem e arquivos. |
-| Node gerenciado 24.11.0 | **INSTALADA JUNTO** | Incluído em `managed-resources`. |
-| npm/npx gerenciados | **INSTALADA JUNTO** quando necessários pelos MCPs | Usados pelo runtime de ferramentas. |
-| Scripts built-in MCP | **INSTALADA JUNTO** | `asarUnpack` inclui browser, image-gen e team MCP. |
-| Módulos nativos | **INSTALADA JUNTO** | `better-sqlite3`, `bcrypt`, `node-pty` e dependências. |
-| Claude, Hermes, OpenCode, Gemini, Codex, OpenClaw | **REQUIRED EXTERNAL** para essas capacidades; **OPCIONAL** para o baseline | `clis: []` no manifesto. |
-| Credenciais de providers | **REQUIRED EXTERNAL** | Configuradas pelo usuário ou empresa. |
-| OAuth/remote MCP | **REQUIRED EXTERNAL** quando usado | Servidor, tokens e autorização são externos. |
-| Python, Bun, uv, Deno, OfficeCLI | **OPCIONAL** | Necessários apenas para ferramentas específicas. |
-| Nango/Composio | **NÃO RESOLVIDA** | Não foram encontrados no clone ou no manifesto. |
-| `resources/hub` | **NÃO RESOLVIDA** para esta execução | O wrapper oficial não foi executado por causa da restrição de cópia. |
-| Código-fonte/crates do AionCore | **NÃO RESOLVIDA** para incorporação | Não deve ser copiado nesta etapa. |
-| Assinatura digital | **NÃO RESOLVIDA** | Instalador e binários estão `NotSigned`. |
+| Dependência                                       | Classificação                                                              | Observação                                                             |
+| ------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Electron/Chromium                                 | **EMBUTIDA NO APLICATIVO**                                                 | Runtime do `AionUi.exe` e do webview.                                  |
+| Renderer/main/preload do AionUi                   | **EMBUTIDA NO APLICATIVO**                                                 | Incluídos no `app.asar`.                                               |
+| `aioncore.exe` v0.2.2                             | **INSTALADA JUNTO** no pipeline atual; **REQUIRED EXTERNAL** se separado   | Incluído por `extraResources`; também pode ser resolvido por env/PATH. |
+| Manifesto do AionCore                             | **INSTALADA JUNTO**                                                        | Define versão, origem e arquivos.                                      |
+| Node gerenciado 24.11.0                           | **INSTALADA JUNTO**                                                        | Incluído em `managed-resources`.                                       |
+| npm/npx gerenciados                               | **INSTALADA JUNTO** quando necessários pelos MCPs                          | Usados pelo runtime de ferramentas.                                    |
+| Scripts built-in MCP                              | **INSTALADA JUNTO**                                                        | `asarUnpack` inclui browser, image-gen e team MCP.                     |
+| Módulos nativos                                   | **INSTALADA JUNTO**                                                        | `better-sqlite3`, `bcrypt`, `node-pty` e dependências.                 |
+| Claude, Hermes, OpenCode, Gemini, Codex, OpenClaw | **REQUIRED EXTERNAL** para essas capacidades; **OPCIONAL** para o baseline | `clis: []` no manifesto.                                               |
+| Credenciais de providers                          | **REQUIRED EXTERNAL**                                                      | Configuradas pelo usuário ou empresa.                                  |
+| OAuth/remote MCP                                  | **REQUIRED EXTERNAL** quando usado                                         | Servidor, tokens e autorização são externos.                           |
+| Python, Bun, uv, Deno, OfficeCLI                  | **OPCIONAL**                                                               | Necessários apenas para ferramentas específicas.                       |
+| Nango/Composio                                    | **NÃO RESOLVIDA**                                                          | Não foram encontrados no clone ou no manifesto.                        |
+| `resources/hub`                                   | **NÃO RESOLVIDA** para esta execução                                       | O wrapper oficial não foi executado por causa da restrição de cópia.   |
+| Código-fonte/crates do AionCore                   | **NÃO RESOLVIDA** para incorporação                                        | Não deve ser copiado nesta etapa.                                      |
+| Assinatura digital                                | **NÃO RESOLVIDA**                                                          | Instalador e binários estão `NotSigned`.                               |
 
 ## 16. Licenças e distribuição
 
@@ -570,18 +570,18 @@ A ausência de uma política SSRF completa na fonte auditada não prova uma vuln
 
 ## 18. Riscos e bloqueadores
 
-| ID | Classificação | Risco | Impacto |
-|---|---|---|---|
-| R-01 | **ALTO** | O clone não é standalone sem o AionCore | Remover o binário impede o backend de iniciar. |
-| R-02 | **ALTO** | Binários e instalador não assinados | SmartScreen, confiança e distribuição pública. |
-| R-03 | **ALTO** | Divergência de licença Apache/MIT | Cópia ou incorporação pode ser inválida. |
-| R-04 | **MÉDIO** | CLIs de agentes fora do bundle | App abre, mas agentes ficam indisponíveis. |
-| R-05 | **MÉDIO** | Política SSRF/OAuth/redirect não totalmente demonstrada | Não expor URLs arbitrárias sem revisão. |
-| R-06 | **MÉDIO** | Browser MCP exige webview anexado | Teste headless falha mesmo com backend correto. |
-| R-07 | **MÉDIO** | Pipeline oficial não executado nesta fase | `hub` e preparação de release não foram validados. |
-| R-08 | **BAIXO** | Instalador não foi instalado em máquina real | Smoke de instalação, upgrade e uninstall não observado. |
-| R-09 | **BAIXO** | `resources/hub` ausente no teste direto | Fallback offline do hub não foi verificado. |
-| R-10 | **INFORMATIVO** | `aionui-browser` retornou 502 sem webview | Condição esperada da bridge single-target. |
+| ID   | Classificação   | Risco                                                   | Impacto                                                 |
+| ---- | --------------- | ------------------------------------------------------- | ------------------------------------------------------- |
+| R-01 | **ALTO**        | O clone não é standalone sem o AionCore                 | Remover o binário impede o backend de iniciar.          |
+| R-02 | **ALTO**        | Binários e instalador não assinados                     | SmartScreen, confiança e distribuição pública.          |
+| R-03 | **ALTO**        | Divergência de licença Apache/MIT                       | Cópia ou incorporação pode ser inválida.                |
+| R-04 | **MÉDIO**       | CLIs de agentes fora do bundle                          | App abre, mas agentes ficam indisponíveis.              |
+| R-05 | **MÉDIO**       | Política SSRF/OAuth/redirect não totalmente demonstrada | Não expor URLs arbitrárias sem revisão.                 |
+| R-06 | **MÉDIO**       | Browser MCP exige webview anexado                       | Teste headless falha mesmo com backend correto.         |
+| R-07 | **MÉDIO**       | Pipeline oficial não executado nesta fase               | `hub` e preparação de release não foram validados.      |
+| R-08 | **BAIXO**       | Instalador não foi instalado em máquina real            | Smoke de instalação, upgrade e uninstall não observado. |
+| R-09 | **BAIXO**       | `resources/hub` ausente no teste direto                 | Fallback offline do hub não foi verificado.             |
+| R-10 | **INFORMATIVO** | `aionui-browser` retornou 502 sem webview               | Condição esperada da bridge single-target.              |
 
 Bloqueadores para declarar o produto pronto para um usuário comum:
 

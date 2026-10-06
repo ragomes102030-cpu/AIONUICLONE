@@ -4,9 +4,9 @@ description: Configure rule-based automatic replies on Wassenger so WhatsApp nev
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Auto-Replies
@@ -15,13 +15,13 @@ The "we got your message" reflex of a healthy support operation. Customer writes
 
 ## When to use
 
-- *"Set up a welcome message when someone writes us for the first time."*
-- *"Configure an out-of-office reply for weekends."*
-- *"What auto-replies are active right now?"*
-- *"If a chat goes silent for 24 hours, send a follow-up."*
-- *"Disable all auto-replies tomorrow — we have an offsite."*
+- _"Set up a welcome message when someone writes us for the first time."_
+- _"Configure an out-of-office reply for weekends."_
+- _"What auto-replies are active right now?"_
+- _"If a chat goes silent for 24 hours, send a follow-up."_
+- _"Disable all auto-replies tomorrow — we have an offsite."_
 
-For *human-triggered* canned responses (`/shipping`, `/returns`), see `wassenger-quick-replies`. For WABA templates sent outside the 24h customer service window, see `wassenger-messaging` Recipe 3.
+For _human-triggered_ canned responses (`/shipping`, `/returns`), see `wassenger-quick-replies`. For WABA templates sent outside the 24h customer service window, see `wassenger-messaging` Recipe 3.
 
 ## Prerequisites
 
@@ -34,20 +34,20 @@ For *human-triggered* canned responses (`/shipping`, `/returns`), see `wassenger
 
 Wassenger auto-replies are rule-based. Each rule has a **trigger**, a **filter**, and an **action**:
 
-| Trigger | When it fires |
-|---|---|
-| `welcome` | First-ever inbound message from a new contact |
-| `outOfHours` | Inbound arrives outside configured business hours |
-| `busy` | All agents at capacity (or none online) |
-| `inactive` | Chat has had no agent reply for N hours |
-| `keyword` | Inbound message matches a regex / keyword list |
+| Trigger       | When it fires                                          |
+| ------------- | ------------------------------------------------------ |
+| `welcome`     | First-ever inbound message from a new contact          |
+| `outOfHours`  | Inbound arrives outside configured business hours      |
+| `busy`        | All agents at capacity (or none online)                |
+| `inactive`    | Chat has had no agent reply for N hours                |
+| `keyword`     | Inbound message matches a regex / keyword list         |
 | `awayMessage` | Inbound arrives while a vacation / away mode is active |
 
-| Action | What it does |
-|---|---|
-| `reply` | Send a configured text/media response |
-| `reply + label` | Reply + apply a label (e.g., `out-of-hours`) |
-| `reply + assign` | Reply + auto-assign to a fallback agent |
+| Action             | What it does                                       |
+| ------------------ | -------------------------------------------------- |
+| `reply`            | Send a configured text/media response              |
+| `reply + label`    | Reply + apply a label (e.g., `out-of-hours`)       |
+| `reply + assign`   | Reply + auto-assign to a fallback agent            |
 | `reply + template` | Send a WABA template (when outside the 24h window) |
 
 ## The 24h window matters here

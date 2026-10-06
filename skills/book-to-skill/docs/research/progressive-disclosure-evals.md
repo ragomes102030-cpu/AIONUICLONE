@@ -2,7 +2,7 @@
 
 Status: **ACTIVE PLAN — planning only; no paper-derived production change is authorized by this document**
 
-Primary source: [He et al., *Is Progressive Disclosure All You Need for Long-Context Agents?*](https://arxiv.org/abs/2607.17598)
+Primary source: [He et al., _Is Progressive Disclosure All You Need for Long-Context Agents?_](https://arxiv.org/abs/2607.17598)
 
 This plan converts the paper's useful findings into a sequence of falsifiable, low-waste experiments for `book-to-skill`. It is intentionally written so another coding agent can resume from the repository, locate the next task, implement it, prove it, record evidence, and continue without reconstructing the entire discussion.
 
@@ -205,21 +205,21 @@ Status values:
 - `DONE` — all acceptance gates proven.
 - `REJECTED` — hypothesis/approach failed; preserve evidence and reason.
 
-| ID | Status | Task | Depends on | Production change? |
-|---|---|---|---|---|
-| PD-00 | DONE | Freeze current baseline and evaluation contract | none | no |
-| PD-01 | DONE | Implement deterministic manifest + hashing + budget schema | PD-00 | no |
-| PD-02 | DONE | Implement fixture/replay scorer with trajectory metrics | PD-01 | no |
-| PD-03 | DONE | Implement paper-flat baseline pack builder | PD-01 | no |
-| PD-04 | BLOCKED | Add dry-run/live runner contract and first harness adapter | PD-02, PD-03 | no |
-| PD-05 | BLOCKED | Representation experiment: raw payload vs structured B2S payload | PD-04 | no |
-| PD-06 | BLOCKED | Automatic vs explicit activation experiment | PD-04 | no |
-| PD-07 | BLOCKED | Routing metadata ablation | PD-04 | no |
-| PD-08 | BLOCKED | Technical/non-narrative corpus replication | PD-05, PD-07 | no |
-| PD-09 | BLOCKED | Library scaling experiment | PD-04, PD-08 | no |
-| PD-10 | BLOCKED | Optional Hybrid RAG reference baseline | PD-04 | no |
-| PD-11 | BLOCKED | Chunking ablation | PD-08 | no |
-| PD-12 | BLOCKED | Evidence review and production decision(s) | relevant experiments | **decision only** |
+| ID    | Status  | Task                                                             | Depends on           | Production change? |
+| ----- | ------- | ---------------------------------------------------------------- | -------------------- | ------------------ |
+| PD-00 | DONE    | Freeze current baseline and evaluation contract                  | none                 | no                 |
+| PD-01 | DONE    | Implement deterministic manifest + hashing + budget schema       | PD-00                | no                 |
+| PD-02 | DONE    | Implement fixture/replay scorer with trajectory metrics          | PD-01                | no                 |
+| PD-03 | DONE    | Implement paper-flat baseline pack builder                       | PD-01                | no                 |
+| PD-04 | BLOCKED | Add dry-run/live runner contract and first harness adapter       | PD-02, PD-03         | no                 |
+| PD-05 | BLOCKED | Representation experiment: raw payload vs structured B2S payload | PD-04                | no                 |
+| PD-06 | BLOCKED | Automatic vs explicit activation experiment                      | PD-04                | no                 |
+| PD-07 | BLOCKED | Routing metadata ablation                                        | PD-04                | no                 |
+| PD-08 | BLOCKED | Technical/non-narrative corpus replication                       | PD-05, PD-07         | no                 |
+| PD-09 | BLOCKED | Library scaling experiment                                       | PD-04, PD-08         | no                 |
+| PD-10 | BLOCKED | Optional Hybrid RAG reference baseline                           | PD-04                | no                 |
+| PD-11 | BLOCKED | Chunking ablation                                                | PD-08                | no                 |
+| PD-12 | BLOCKED | Evidence review and production decision(s)                       | relevant experiments | **decision only**  |
 
 ---
 
@@ -314,7 +314,7 @@ Tests cover every classification above and token/call aggregation. A replay comm
 
 **Goal**
 
-Create a reproducible baseline matching the paper's *experimental representation* closely enough for controlled comparisons, without pretending it is the repository's current generator.
+Create a reproducible baseline matching the paper's _experimental representation_ closely enough for controlled comparisons, without pretending it is the repository's current generator.
 
 **Baseline structure**
 
@@ -366,7 +366,7 @@ Fixture/replay adapter is green first. Then one intentionally tiny live smoke ru
 
 **Question**
 
-Once routing is held constant, does the current structured `book-to-skill` payload help an agent *apply* knowledge better than raw chapter text or a simple representation?
+Once routing is held constant, does the current structured `book-to-skill` payload help an agent _apply_ knowledge better than raw chapter text or a simple representation?
 
 **Conditions**
 
@@ -529,14 +529,14 @@ For each candidate, write one of:
 
 Candidate decisions:
 
-| Candidate production idea | Minimum evidence before `ADOPT` |
-|---|---|
-| Add exact terms / KEY_ELEMENTS-style routing metadata | PD-07 repeated benefit + context overhead measured |
-| Change chapter representation/template | PD-05 task-family benefit without unacceptable retrieval regression |
-| Add explicit library mode/index | PD-09 target-domain scaling benefit |
-| Add deeper/adaptive hierarchy | Specific repeated task/scale benefit that beats flat after context cost |
-| Add generation/eval manifest to normal product output | Demonstrated user/reproducibility value beyond eval tooling |
-| Make RAG superiority claims | **Never universal**; only condition-specific benchmark statements with exact setup |
+| Candidate production idea                             | Minimum evidence before `ADOPT`                                                    |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Add exact terms / KEY_ELEMENTS-style routing metadata | PD-07 repeated benefit + context overhead measured                                 |
+| Change chapter representation/template                | PD-05 task-family benefit without unacceptable retrieval regression                |
+| Add explicit library mode/index                       | PD-09 target-domain scaling benefit                                                |
+| Add deeper/adaptive hierarchy                         | Specific repeated task/scale benefit that beats flat after context cost            |
+| Add generation/eval manifest to normal product output | Demonstrated user/reproducibility value beyond eval tooling                        |
+| Make RAG superiority claims                           | **Never universal**; only condition-specific benchmark statements with exact setup |
 
 Any adopted feature gets its own focused PR with new tests and before/after evidence. Do not mutate multiple production surfaces in PD-12 itself.
 
@@ -546,21 +546,21 @@ Any adopted feature gets its own focused PR with new tests and before/after evid
 
 Agents update this table when a task changes status. Keep entries short; link to PR/commit/result paths rather than pasting long logs.
 
-| Task | Status | PR / commit | Evidence | Notes |
-|---|---|---|---|---|
-| PD-00 | DONE | — | — | Baseline documented |
-| PD-01 | DONE | — | `tests/evals/test_manifest.py` | Deterministic manifest, source SHA-256, budget/secret validation |
-| PD-02 | DONE | — | `tests/evals/test_score.py`, `test_replay.py` | Offline trajectory scorer and replay runner |
-| PD-03 | DONE | — | `tests/evals/test_paper_flat.py` | Synthetic paper-flat baseline builder |
-| PD-04 | BLOCKED | — | — | waits for PD-02/03 |
-| PD-05 | BLOCKED | — | — | primary representation experiment |
-| PD-06 | BLOCKED | — | — | host capability dependent |
-| PD-07 | BLOCKED | — | — | no production metadata change before this |
-| PD-08 | BLOCKED | — | — | target-domain replication |
-| PD-09 | BLOCKED | — | — | no library feature before this |
-| PD-10 | BLOCKED | — | — | optional reference baseline |
-| PD-11 | BLOCKED | — | — | late ablation |
-| PD-12 | BLOCKED | — | — | production decision gate |
+| Task  | Status  | PR / commit | Evidence                                      | Notes                                                            |
+| ----- | ------- | ----------- | --------------------------------------------- | ---------------------------------------------------------------- |
+| PD-00 | DONE    | —           | —                                             | Baseline documented                                              |
+| PD-01 | DONE    | —           | `tests/evals/test_manifest.py`                | Deterministic manifest, source SHA-256, budget/secret validation |
+| PD-02 | DONE    | —           | `tests/evals/test_score.py`, `test_replay.py` | Offline trajectory scorer and replay runner                      |
+| PD-03 | DONE    | —           | `tests/evals/test_paper_flat.py`              | Synthetic paper-flat baseline builder                            |
+| PD-04 | BLOCKED | —           | —                                             | waits for PD-02/03                                               |
+| PD-05 | BLOCKED | —           | —                                             | primary representation experiment                                |
+| PD-06 | BLOCKED | —           | —                                             | host capability dependent                                        |
+| PD-07 | BLOCKED | —           | —                                             | no production metadata change before this                        |
+| PD-08 | BLOCKED | —           | —                                             | target-domain replication                                        |
+| PD-09 | BLOCKED | —           | —                                             | no library feature before this                                   |
+| PD-10 | BLOCKED | —           | —                                             | optional reference baseline                                      |
+| PD-11 | BLOCKED | —           | —                                             | late ablation                                                    |
+| PD-12 | BLOCKED | —           | —                                             | production decision gate                                         |
 
 ---
 

@@ -11,11 +11,7 @@ interface McpServerToolsListProps {
   onToggleTool?: (toolId: string) => void;
 }
 
-const McpServerToolsList: React.FC<McpServerToolsListProps> = ({
-  server,
-  selectedToolIds,
-  onToggleTool,
-}) => {
+const McpServerToolsList: React.FC<McpServerToolsListProps> = ({ server, selectedToolIds, onToggleTool }) => {
   const { t } = useTranslation();
 
   if (!server.tools || server.tools.length === 0) {
@@ -29,8 +25,7 @@ const McpServerToolsList: React.FC<McpServerToolsListProps> = ({
     <div className='space-y-3'>
       <div className='flex items-center justify-between text-11px text-t-tertiary'>
         <span>
-          {selectedCount}/{server.tools.length}{' '}
-          {t('settings.toolsSelected', { defaultValue: 'selected' })}
+          {selectedCount}/{server.tools.length} {t('settings.toolsSelected', { defaultValue: 'selected' })}
         </span>
         {server.tools.some((tool) => tool.input_schema !== undefined) && (
           <Tag size='small' color='gray'>

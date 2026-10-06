@@ -32,6 +32,7 @@
 ### Task 1: Implement WebSocket protocol exports
 
 **Files:**
+
 - Create: `skills/brainstorming/scripts/server.js`
 - Test: `tests/brainstorm-server/ws-protocol.test.js` (already exists)
 
@@ -40,17 +41,21 @@
 ```js
 const crypto = require('crypto');
 
-const OPCODES = { TEXT: 0x01, CLOSE: 0x08, PING: 0x09, PONG: 0x0A };
+const OPCODES = { TEXT: 0x01, CLOSE: 0x08, PING: 0x09, PONG: 0x0a };
 const WS_MAGIC = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 function computeAcceptKey(clientKey) {
-  return crypto.createHash('sha1').update(clientKey + WS_MAGIC).digest('base64');
+  return crypto
+    .createHash('sha1')
+    .update(clientKey + WS_MAGIC)
+    .digest('base64');
 }
 ```
 
 - [ ] **Step 2: Implement encodeFrame**
 
 Server frames are never masked. Three length encodings:
+
 - payload < 126: 2-byte header (FIN+opcode, length)
 - 126-65535: 4-byte header (FIN+opcode, 126, 16-bit length)
 - &gt; 65535: 10-byte header (FIN+opcode, 127, 64-bit length)
@@ -91,9 +96,9 @@ function decodeFrame(buffer) {
 
   const firstByte = buffer[0];
   const secondByte = buffer[1];
-  const opcode = firstByte & 0x0F;
+  const opcode = firstByte & 0x0f;
   const masked = (secondByte & 0x80) !== 0;
-  let payloadLen = secondByte & 0x7F;
+  let payloadLen = secondByte & 0x7f;
   let offset = 2;
 
   if (!masked) throw new Error('Client frames must be masked');
@@ -148,6 +153,7 @@ git commit -m "Add WebSocket protocol layer for zero-dep brainstorm server"
 ### Task 2: Add HTTP server, file watching, and WebSocket connection handling
 
 **Files:**
+
 - Modify: `skills/brainstorming/scripts/server.js`
 - Test: `tests/brainstorm-server/server.test.js` (already exists)
 
@@ -158,15 +164,21 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = process.env.BRAINSTORM_PORT || (49152 + Math.floor(Math.random() * 16383));
+const PORT = process.env.BRAINSTORM_PORT || 49152 + Math.floor(Math.random() * 16383);
 const HOST = process.env.BRAINSTORM_HOST || '127.0.0.1';
 const URL_HOST = process.env.BRAINSTORM_URL_HOST || (HOST === '127.0.0.1' ? 'localhost' : HOST);
 const SCREEN_DIR = process.env.BRAINSTORM_DIR || '/tmp/brainstorm';
 
 const MIME_TYPES = {
-  '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript',
-  '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml'
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
 };
 ```
 
@@ -198,9 +210,10 @@ function wrapInFrame(content) {
 }
 
 function getNewestScreen() {
-  const files = fs.readdirSync(SCREEN_DIR)
-    .filter(f => f.endsWith('.html'))
-    .map(f => {
+  const files = fs
+    .readdirSync(SCREEN_DIR)
+    .filter((f) => f.endsWith('.html'))
+    .map((f) => {
       const fp = path.join(SCREEN_DIR, f);
       return { path: fp, mtime: fs.statSync(fp).mtime.getTime() };
     })
@@ -216,7 +229,7 @@ function handleRequest(req, res) {
   if (req.method === 'GET' && req.url === '/') {
     const screenFile = getNewestScreen();
     let html = screenFile
-      ? (raw => isFullDocument(raw) ? raw : wrapInFrame(raw))(fs.readFileSync(screenFile, 'utf-8'))
+      ? ((raw) => (isFullDocument(raw) ? raw : wrapInFrame(raw)))(fs.readFileSync(screenFile, 'utf-8'))
       : WAITING_PAGE;
 
     if (html.includes('</body>')) {
@@ -253,14 +266,19 @@ const clients = new Set();
 
 function handleUpgrade(req, socket) {
   const key = req.headers['sec-websocket-key'];
-  if (!key) { socket.destroy(); return; }
+  if (!key) {
+    socket.destroy();
+    return;
+  }
 
   const accept = computeAcceptKey(key);
   socket.write(
     'HTTP/1.1 101 Switching Protocols\r\n' +
-    'Upgrade: websocket\r\n' +
-    'Connection: Upgrade\r\n' +
-    'Sec-WebSocket-Accept: ' + accept + '\r\n\r\n'
+      'Upgrade: websocket\r\n' +
+      'Connection: Upgrade\r\n' +
+      'Sec-WebSocket-Accept: ' +
+      accept +
+      '\r\n\r\n'
   );
 
   let buffer = Buffer.alloc(0);
@@ -326,7 +344,11 @@ function handleMessage(text) {
 function broadcast(msg) {
   const frame = encodeFrame(OPCODES.TEXT, Buffer.from(JSON.stringify(msg)));
   for (const socket of clients) {
-    try { socket.write(frame); } catch (e) { clients.delete(socket); }
+    try {
+      socket.write(frame);
+    } catch (e) {
+      clients.delete(socket);
+    }
   }
 }
 ```
@@ -353,26 +375,32 @@ function startServer() {
   const watcher = fs.watch(SCREEN_DIR, (eventType, filename) => {
     if (!filename || !filename.endsWith('.html')) return;
     if (debounceTimers.has(filename)) clearTimeout(debounceTimers.get(filename));
-    debounceTimers.set(filename, setTimeout(() => {
-      debounceTimers.delete(filename);
-      const filePath = path.join(SCREEN_DIR, filename);
-      if (eventType === 'rename' && fs.existsSync(filePath)) {
-        const eventsFile = path.join(SCREEN_DIR, '.events');
-        if (fs.existsSync(eventsFile)) fs.unlinkSync(eventsFile);
-        console.log(JSON.stringify({ type: 'screen-added', file: filePath }));
-      } else if (eventType === 'change') {
-        console.log(JSON.stringify({ type: 'screen-updated', file: filePath }));
-      }
-      broadcast({ type: 'reload' });
-    }, 100));
+    debounceTimers.set(
+      filename,
+      setTimeout(() => {
+        debounceTimers.delete(filename);
+        const filePath = path.join(SCREEN_DIR, filename);
+        if (eventType === 'rename' && fs.existsSync(filePath)) {
+          const eventsFile = path.join(SCREEN_DIR, '.events');
+          if (fs.existsSync(eventsFile)) fs.unlinkSync(eventsFile);
+          console.log(JSON.stringify({ type: 'screen-added', file: filePath }));
+        } else if (eventType === 'change') {
+          console.log(JSON.stringify({ type: 'screen-updated', file: filePath }));
+        }
+        broadcast({ type: 'reload' });
+      }, 100)
+    );
   });
   watcher.on('error', (err) => console.error('fs.watch error:', err.message));
 
   server.listen(PORT, HOST, () => {
     const info = JSON.stringify({
-      type: 'server-started', port: Number(PORT), host: HOST,
-      url_host: URL_HOST, url: 'http://' + URL_HOST + ':' + PORT,
-      screen_dir: SCREEN_DIR
+      type: 'server-started',
+      port: Number(PORT),
+      host: HOST,
+      url_host: URL_HOST,
+      url: 'http://' + URL_HOST + ':' + PORT,
+      screen_dir: SCREEN_DIR,
     });
     console.log(info);
     fs.writeFileSync(path.join(SCREEN_DIR, '.server-info'), info + '\n');
@@ -405,6 +433,7 @@ git commit -m "Add HTTP server, WebSocket handling, and file watching to server.
 ### Task 3: Update start-server.sh and remove old files
 
 **Files:**
+
 - Modify: `skills/brainstorming/scripts/start-server.sh:94,100`
 - Modify: `.gitignore:6`
 - Delete: `skills/brainstorming/scripts/index.js`

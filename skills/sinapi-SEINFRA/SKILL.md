@@ -17,6 +17,7 @@ metadata:
 # SINAPI + SEINFRA — Base de Custos da Construção Civil
 
 Skill para acesso às bases oficiais de custos da construção civil brasileira:
+
 - **SINAPI** (nacional): 15.423+ composições com preços por 27 estados (Caixa/IBGE)
 - **SEINFRA** (Ceará): 3.755+ insumos por conta/subconta (SEPLAG-CE)
 
@@ -77,25 +78,31 @@ sc.close()
 ## Estrutura do Banco
 
 ### composicoes_sinapi
+
 - `codigo` (PK), `descricao`, `preco_desonerado`, `preco_medio`, `referencia`, `uf`
 
 ### precos_uf_sinapi
+
 - `codigo_composicao` (FK), `uf`, `preco_desonerado`, `data_scraping`
 
 ### insumos_SEINFRA
+
 - `codigo` (PK), `descricao`, `conta`, `subconta`, `unidade`, `preco`, `referencia`
 
 ### categorias_SEINFRA
+
 - `codigo` (PK), `descricao`, `tipo`
 
 ## Fontes
 
 ### SINAPI: https://www.caixa.gov.br/poder-publico/modernizacao-gestao/sinapi/
+
 - Mirror: https://buscadorsinapi.com.br
 - Mensal (1ª quinzena)
 - 27 estados, 15.423+ itens
 
 ### SEINFRA: https://sin.seinfra.ce.gov.br
+
 - Versão 028, Encargos 114,15%
 - Contas: 1-29 (Serviços Preliminares, Argamassas, Instalações, Pintura, etc.)
 - 3.755 insumos

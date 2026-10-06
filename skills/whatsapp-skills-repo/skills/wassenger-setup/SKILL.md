@@ -4,9 +4,9 @@ description: Set up Wassenger to automate WhatsApp Business with an AI agent. Us
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: setup
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Setup
@@ -57,10 +57,10 @@ A `200` response with a JSON array (possibly empty) means the key works. A `401`
 
 This pack targets the **official WhatsApp Business API** (WABA). Ask the user which onboarding path fits their situation:
 
-| Option | Best for | What they need |
-|---|---|---|
-| **Official WhatsApp Business API (WABA)** | New deployments — Meta-verified status, approved templates, full scale | A Meta Business Account and a phone number **not yet** on WhatsApp |
-| **WABA Coexistence** | Existing WhatsApp users moving the **same** number to the official API without losing chat history | A number already on WhatsApp + Meta verification |
+| Option                                    | Best for                                                                                           | What they need                                                     |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Official WhatsApp Business API (WABA)** | New deployments — Meta-verified status, approved templates, full scale                             | A Meta Business Account and a phone number **not yet** on WhatsApp |
+| **WABA Coexistence**                      | Existing WhatsApp users moving the **same** number to the official API without losing chat history | A number already on WhatsApp + Meta verification                   |
 
 > **Why WABA-only?** Wassenger also supports a legacy QR-pairing path (consumer WhatsApp linked to a device), but that path lacks the compliance, templates, and rate tiers production automation requires. This skills pack is built exclusively for WABA. Clients who genuinely need a QR-paired device can still use the Wassenger console — they just won't get the workflows below.
 

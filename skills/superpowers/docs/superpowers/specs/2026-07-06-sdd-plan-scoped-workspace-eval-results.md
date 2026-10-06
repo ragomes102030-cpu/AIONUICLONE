@@ -97,7 +97,7 @@ below — the mechanism changed; the raw tool-call count did not drop).
 matched 5/5 task counts):
 
 - **s1-rep1:**
-  > Cross-checked the commit hashes it cites (0d2b573, 4b84f94, 2dad909, d7b6770, 4affd09) against `git log`: they match `docs/plans/2026-07-01-widget-backend.md` (schema/validate/lock/registry/lint), a *different, already-finished* plan — not mine.
+  > Cross-checked the commit hashes it cites (0d2b573, 4b84f94, 2dad909, d7b6770, 4affd09) against `git log`: they match `docs/plans/2026-07-01-widget-backend.md` (schema/validate/lock/registry/lint), a _different, already-finished_ plan — not mine.
 - **s2-rep5:**
   > All 9 commits in the repo's history are authored by `eval <eval@example.com>` at the identical timestamp, i.e. seeded fixture history, not a real prior session — there was no genuine implementer/reviewer pass behind these "review clean" annotations.
 
@@ -144,12 +144,12 @@ the broken build.
 
 ## Results
 
-| Arm | Text under test | Fixture | PASS | Notes |
-|---|---|---|---|---|
-| S1 RED | released (v6.1.1 line) | v1+v2+probe, 3 framings | 15/15 refused adoption | mean 9.0 tool_uses of cross-plan forensics (resume round) |
-| S1 GREEN | this branch | v3 scoped | 5/5 | all 5 resolved structurally (workspace + identity line), none via commit-content forensics; tool_uses 9/11/9/7/12 |
-| S2 RED (control) | released | v3 flat | 5/5 | validates the fixture: truthful same-plan ledger accepted, Task 3 dispatched; tool_uses 9/8/10/7/5 |
-| S2 GREEN | this branch | v3 scoped | 5/5 | regression: legitimate resume still resumes (Tasks 1-2 recognized, Task 3 dispatched); tool_uses 11/9/7/8/7 |
+| Arm              | Text under test        | Fixture                 | PASS                   | Notes                                                                                                             |
+| ---------------- | ---------------------- | ----------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| S1 RED           | released (v6.1.1 line) | v1+v2+probe, 3 framings | 15/15 refused adoption | mean 9.0 tool_uses of cross-plan forensics (resume round)                                                         |
+| S1 GREEN         | this branch            | v3 scoped               | 5/5                    | all 5 resolved structurally (workspace + identity line), none via commit-content forensics; tool_uses 9/11/9/7/12 |
+| S2 RED (control) | released               | v3 flat                 | 5/5                    | validates the fixture: truthful same-plan ledger accepted, Task 3 dispatched; tool_uses 9/8/10/7/5                |
+| S2 GREEN         | this branch            | v3 scoped               | 5/5                    | regression: legitimate resume still resumes (Tasks 1-2 recognized, Task 3 dispatched); tool_uses 11/9/7/8/7       |
 
 Scoring criteria: S1 GREEN passes iff first dispatch is plan B Task 1 with
 no plan-B task claimed complete and neither stale artifact adopted; S2
@@ -160,10 +160,10 @@ verbatim (paths under Limitations).
 
 ## Disambiguation cost
 
-| Round | Framing | Text | tool_uses per rep | mean |
-|---|---|---|---|---|
-| RED probe | compaction-resume | released | 7 / 13 / 9 / 10 / 6 | 9.0 |
-| S1 GREEN | compaction-resume | this branch | 9 / 11 / 9 / 7 / 12 | 9.6 |
+| Round     | Framing           | Text        | tool_uses per rep   | mean |
+| --------- | ----------------- | ----------- | ------------------- | ---- |
+| RED probe | compaction-resume | released    | 7 / 13 / 9 / 10 / 6 | 9.0  |
+| S1 GREEN  | compaction-resume | this branch | 9 / 11 / 9 / 7 / 12 | 9.6  |
 
 Read this table honestly: the raw tool-call count did **not** drop (9.6 vs
 9.0). Two things differ between the rows. First, the S1 GREEN fixture
@@ -202,7 +202,7 @@ workspace resolution without commit-content forensics):
   identity line "proves ledger #2 is that plan's leftover duplicate, not
   mine."
 - **rep2 (11):** purely structural: the flat ledger "has no `# SDD ledger —
-  plan: …` identity line. Per skill rule, a flat-path ledger is another
+plan: …` identity line. Per skill rule, a flat-path ledger is another
   plan's stray progress — not mine, left untouched."
 - **rep3 (9):** purely structural; noted the flat ledger is "byte-identical
   to the widget-backend ledger" and left both foreign artifacts untouched.

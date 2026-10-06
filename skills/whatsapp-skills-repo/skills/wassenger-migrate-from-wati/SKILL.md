@@ -4,15 +4,15 @@ description: Migrate a WhatsApp integration from Wati (wati.io) to Wassenger —
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: migration
   vendor: wassenger
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Migrate from Wati to Wassenger
 
-A code-level mapping for teams moving from **Wati (wati.io)** to **Wassenger**. Both are inbox + API products on the official WhatsApp Business API, so the *concepts* (templates, broadcasts, team assignment, contacts) line up well. The differences are mechanical: the tenant URL, how the recipient and sender are addressed, the **named-vs-positional template parameters**, and the webhook model.
+A code-level mapping for teams moving from **Wati (wati.io)** to **Wassenger**. Both are inbox + API products on the official WhatsApp Business API, so the _concepts_ (templates, broadcasts, team assignment, contacts) line up well. The differences are mechanical: the tenant URL, how the recipient and sender are addressed, the **named-vs-positional template parameters**, and the webhook model.
 
 Help the user translate their Wati API calls — keep their flows, swap the transport.
 
@@ -32,22 +32,22 @@ Brand-new users (no Wati) → `wassenger-setup` + `wassenger-messaging`.
 
 ## Core mapping (at a glance)
 
-| Concept | Wati | Wassenger |
-|---|---|---|
-| Auth | `Authorization: Bearer <token>` | `Token: <API_KEY>` |
-| Base URL | tenant-specific `https://live-server-<id>.wati.io` | fixed `https://api.wassenger.com/v1` |
-| Recipient | `whatsappNumber` in the URL path/query | `phone` in the JSON body |
-| Sender | implicit (one number per tenant) | explicit `device` in the body |
-| Free-form send | `POST /api/v1/sendSessionMessage/{n}` form `messageText` | `POST /messages` `{ message }` |
-| Media send | `POST /api/v1/sendSessionFile/{n}` multipart | `POST /messages` `{ media: { url \| file } }` |
-| Template send | `POST /api/v1/sendTemplateMessage?whatsappNumber=` | `POST /messages` `{ template: {...} }` |
-| Template params | `parameters: [{ name, value }]` (**named**) | `template.body: [{ name, value }]` (**positional** — `name` is the `{{N}}` index) |
-| `broadcast_name` | required on every template send | no equivalent — drop it |
-| Bulk template | `POST /api/v1/sendTemplateMessages` `{ receivers[] }` | campaigns (`wassenger-campaigns`) |
-| Assign agent | `POST /api/v1/assignOperator?email=&whatsappNumber=` | `PATCH /chats/{wid}` `{ assignedTo }` (`wassenger-inbox`) |
-| Add contact | `POST /api/v1/addContact/{n}` `{ name, customParams }` | contacts API (`wassenger-contacts`) |
-| List templates | `GET /api/v1/getMessageTemplates` | `list_whatsapp_templates` |
-| Message history | `GET /api/v1/getMessages/{n}` | `get_whatsapp_chat_messages` |
+| Concept          | Wati                                                     | Wassenger                                                                         |
+| ---------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Auth             | `Authorization: Bearer <token>`                          | `Token: <API_KEY>`                                                                |
+| Base URL         | tenant-specific `https://live-server-<id>.wati.io`       | fixed `https://api.wassenger.com/v1`                                              |
+| Recipient        | `whatsappNumber` in the URL path/query                   | `phone` in the JSON body                                                          |
+| Sender           | implicit (one number per tenant)                         | explicit `device` in the body                                                     |
+| Free-form send   | `POST /api/v1/sendSessionMessage/{n}` form `messageText` | `POST /messages` `{ message }`                                                    |
+| Media send       | `POST /api/v1/sendSessionFile/{n}` multipart             | `POST /messages` `{ media: { url \| file } }`                                     |
+| Template send    | `POST /api/v1/sendTemplateMessage?whatsappNumber=`       | `POST /messages` `{ template: {...} }`                                            |
+| Template params  | `parameters: [{ name, value }]` (**named**)              | `template.body: [{ name, value }]` (**positional** — `name` is the `{{N}}` index) |
+| `broadcast_name` | required on every template send                          | no equivalent — drop it                                                           |
+| Bulk template    | `POST /api/v1/sendTemplateMessages` `{ receivers[] }`    | campaigns (`wassenger-campaigns`)                                                 |
+| Assign agent     | `POST /api/v1/assignOperator?email=&whatsappNumber=`     | `PATCH /chats/{wid}` `{ assignedTo }` (`wassenger-inbox`)                         |
+| Add contact      | `POST /api/v1/addContact/{n}` `{ name, customParams }`   | contacts API (`wassenger-contacts`)                                               |
+| List templates   | `GET /api/v1/getMessageTemplates`                        | `list_whatsapp_templates`                                                         |
+| Message history  | `GET /api/v1/getMessages/{n}`                            | `get_whatsapp_chat_messages`                                                      |
 
 Full field-by-field table: `references/api-mapping.md`.
 
@@ -56,12 +56,15 @@ Full field-by-field table: `references/api-mapping.md`.
 ### Recipe 1 — Port a free-form (session) send
 
 Wati uses multipart form-data and the recipient in the URL:
+
 ```
 POST https://live-server-12345.wati.io/api/v1/sendSessionMessage/34600111222
 Authorization: Bearer <token>
 form-data: messageText="Hello"
 ```
+
 Wassenger uses JSON with `device` + `phone`:
+
 ```
 POST https://api.wassenger.com/v1/messages
 Token: <API_KEY>
@@ -90,6 +93,7 @@ POST /messages
 ```
 
 Rules:
+
 - **Drop `broadcast_name`** — Wassenger has no such concept.
 - **Map by position**: Wati named params resolve to `{{1}},{{2}}…` in the order they appear in the template body. Put them in `template.body[]` in that same order, with `name` set to the `{{N}}` index. Wassenger uses its own template shape (`template: { name, language, header?, body: [{ name, value }], button? }`) — **not** Meta's `components: [...]`. **Do not trust Wati's `parameters[]` array order** — order by the template body.
 - **Add `language`** — Wati infers it; Wassenger requires the exact template language (`en`, `es`, `pt_BR`). Confirm with `list_whatsapp_templates`.

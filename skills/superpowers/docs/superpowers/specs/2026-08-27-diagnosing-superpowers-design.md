@@ -228,8 +228,8 @@ in chat. Fixed section order so a remote triager can rely on it:
    adherence, repeated work, stumbles, quality evidence, request
    conflicts, cost and time) in the finding shape above. Empty dimensions
    say "none found" and what was checked.
-7. **Superpowers involvement.** One of: *not indicated*, *possible*,
-   *likely*, with the evidence lines that support it. This is the only
+7. **Superpowers involvement.** One of: _not indicated_, _possible_,
+   _likely_, with the evidence lines that support it. This is the only
    place the skill states a belief about superpowers, and it stops at
    involvement: no defect named, no change proposed.
 8. **Coverage notes.** What was not read (ranges, files) and why, which
@@ -243,7 +243,7 @@ the skill points at the GitHub issue step and offers to export the bundle.
 
 ### 4a. GitHub issues
 
-Runs when section 7 of the report says *possible* or *likely*, or when the
+Runs when section 7 of the report says _possible_ or _likely_, or when the
 user asks.
 
 1. **Search** open and closed issues on `obra/superpowers` for the
@@ -284,10 +284,10 @@ archive next to it.
 1. **Ask the redaction level.** Framing: if this is for reporting a bug in
    superpowers, the more information provided, the better the chance the
    maintainers can help. Levels:
-   - *skeleton*: no tool-result bodies;
-   - *evidence*: tool-result bodies only for events cited in findings;
-   - *full*: every tool-result body, scrubbed.
-   The skill suggests *evidence* as the default.
+   - _skeleton_: no tool-result bodies;
+   - _evidence_: tool-result bodies only for events cited in findings;
+   - _full_: every tool-result body, scrubbed.
+     The skill suggests _evidence_ as the default.
 2. **Build the bundle** with these files:
    - `README.md`: what this is, the redaction level, how to read the
      bundle, and the triager's task (decide whether superpowers
@@ -367,17 +367,17 @@ rationalizations observed in the RED phase (below); rows that never show
 up in baseline runs are dropped, rows that do are reworded to match what
 agents actually said.
 
-| Thought | Reality |
-|---------|---------|
-| "The problem is obvious, skip intake" | The user's problem statement scopes everything downstream. Ask. |
-| "I'll just grep the transcript" | One line can be your whole context. Line numbers first, fields second. |
-| "This is clearly a bug in skill X" | Not your call. Report the evidence; the triager decides. |
-| "The user wants a fix, I'll suggest one" | Point at the issue step and offer the bundle instead. |
-| "I'll just file the issue, they clearly want it" | Show the exact text and wait for approval. |
-| "I don't need a citation for this one" | No `path:line`, no finding. |
-| "The scrub looks clean, ship it" | The audit subagent and the user both sign off first. |
-| "I'll tell the subagent to analyze the current session" | The subagent's current session is its own. Pass the path. |
-| "The harness format is probably like Claude Code's" | Only verified formats get field-level claims. Discover, then report what you found. |
+| Thought                                                 | Reality                                                                             |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| "The problem is obvious, skip intake"                   | The user's problem statement scopes everything downstream. Ask.                     |
+| "I'll just grep the transcript"                         | One line can be your whole context. Line numbers first, fields second.              |
+| "This is clearly a bug in skill X"                      | Not your call. Report the evidence; the triager decides.                            |
+| "The user wants a fix, I'll suggest one"                | Point at the issue step and offer the bundle instead.                               |
+| "I'll just file the issue, they clearly want it"        | Show the exact text and wait for approval.                                          |
+| "I don't need a citation for this one"                  | No `path:line`, no finding.                                                         |
+| "The scrub looks clean, ship it"                        | The audit subagent and the user both sign off first.                                |
+| "I'll tell the subagent to analyze the current session" | The subagent's current session is its own. Pass the path.                           |
+| "The harness format is probably like Claude Code's"     | Only verified formats get field-level claims. Discover, then report what you found. |
 
 ## Harness reference files
 
@@ -437,12 +437,12 @@ available.
 
 Per `writing-skills`, the form must match the failure:
 
-| Part of the skill | Failure type | Form |
-|---|---|---|
-| Report, finding shape, case file, bundle layout, timeline | Wrong-shaped output | Recipe and templates: `templates/report.md`, `templates/case.md`, `templates/bundle-README.md`, the finding shape in every analyst prompt |
-| Environment facts, sessions examined, coverage notes | Omitted element | REQUIRED slots in the report template, not prose reminders |
-| Redaction level, similar-session search, export, GitHub issue search | Condition-dependent | Conditionals keyed to observable predicates (the user asked; the user said "bug report" at intake; the report's involvement line says possible or likely) |
-| No superpowers diagnosis, no skipping intake, context safety, read-only, user gate before archive and before posting | Discipline (knows the rule, skips it under pressure) | Prohibition + rationalization table + Red Flags, wording micro-tested |
+| Part of the skill                                                                                                    | Failure type                                         | Form                                                                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Report, finding shape, case file, bundle layout, timeline                                                            | Wrong-shaped output                                  | Recipe and templates: `templates/report.md`, `templates/case.md`, `templates/bundle-README.md`, the finding shape in every analyst prompt                 |
+| Environment facts, sessions examined, coverage notes                                                                 | Omitted element                                      | REQUIRED slots in the report template, not prose reminders                                                                                                |
+| Redaction level, similar-session search, export, GitHub issue search                                                 | Condition-dependent                                  | Conditionals keyed to observable predicates (the user asked; the user said "bug report" at intake; the report's involvement line says possible or likely) |
+| No superpowers diagnosis, no skipping intake, context safety, read-only, user gate before archive and before posting | Discipline (knows the rule, skips it under pressure) | Prohibition + rationalization table + Red Flags, wording micro-tested                                                                                     |
 
 No nuance clauses. A real exception is written as its own conditional.
 

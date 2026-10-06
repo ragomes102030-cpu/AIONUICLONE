@@ -331,7 +331,8 @@ const resolveFactorySkillsDir = (): string | null => {
   const candidates: string[] = [];
   try {
     const resourcesPath =
-      typeof process !== 'undefined' && typeof (process as unknown as { resourcesPath?: string }).resourcesPath === 'string'
+      typeof process !== 'undefined' &&
+      typeof (process as unknown as { resourcesPath?: string }).resourcesPath === 'string'
         ? (process as unknown as { resourcesPath: string }).resourcesPath
         : null;
     if (resourcesPath) candidates.push(path.join(resourcesPath, 'factory-skills'));

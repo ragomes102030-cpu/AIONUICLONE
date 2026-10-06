@@ -4,9 +4,9 @@ description: Manage the team of human agents who work in your Wassenger WhatsApp
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Team
@@ -15,13 +15,13 @@ Run the human side of the inbox: who's on the team, what they're allowed to do, 
 
 ## When to use
 
-- *"Add Pedro as a sales agent."*
-- *"Give Marta access to our support number, but not to the sales one."*
-- *"What permissions does the team have? Who can delete chats?"*
-- *"Pedro is leaving — revoke his access and move his open chats to me."*
-- *"Invite the whole new agency team (10 people) as agents and scope each one to a single device to start."*
+- _"Add Pedro as a sales agent."_
+- _"Give Marta access to our support number, but not to the sales one."_
+- _"What permissions does the team have? Who can delete chats?"_
+- _"Pedro is leaving — revoke his access and move his open chats to me."_
+- _"Invite the whole new agency team (10 people) as agents and scope each one to a single device to start."_
 
-For assigning chats *to* agents who already exist, see `wassenger-inbox` (manual) or `wassenger-routing` (auto). For department setup, see `wassenger-routing`. For labels they can apply, see `wassenger-labels`.
+For assigning chats _to_ agents who already exist, see `wassenger-inbox` (manual) or `wassenger-routing` (auto). For department setup, see `wassenger-routing`. For labels they can apply, see `wassenger-labels`.
 
 ## Prerequisites
 
@@ -31,11 +31,11 @@ For assigning chats *to* agents who already exist, see `wassenger-inbox` (manual
 
 ## The Wassenger permission model
 
-| Role | Can read chats | Can send / reply | Can manage labels & dept | Can manage team | Can manage account |
-|---|:-:|:-:|:-:|:-:|:-:|
-| **Admin** | ✓ | ✓ | ✓ | ✓ | ✓ |
-| **Supervisor** | ✓ | ✓ | ✓ | ✓ | – |
-| **Agent** | ✓ | ✓ | – | – | – |
+| Role           | Can read chats | Can send / reply | Can manage labels & dept | Can manage team | Can manage account |
+| -------------- | :------------: | :--------------: | :----------------------: | :-------------: | :----------------: |
+| **Admin**      |       ✓        |        ✓         |            ✓             |        ✓        |         ✓          |
+| **Supervisor** |       ✓        |        ✓         |            ✓             |        ✓        |         –          |
+| **Agent**      |       ✓        |        ✓         |            –             |        –        |         –          |
 
 There is **no `readonly` role**. To take away an agent's ability to send/reply (or otherwise restrict them), narrow their `permissions` / `devicePermissions` rather than reaching for a role.
 

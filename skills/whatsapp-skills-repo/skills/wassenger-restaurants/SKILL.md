@@ -4,10 +4,10 @@ description: Automate WhatsApp for restaurants, cafés, and food businesses usin
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: industry
   vertical: restaurants
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger for Restaurants

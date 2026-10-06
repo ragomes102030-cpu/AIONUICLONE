@@ -200,7 +200,16 @@ export function buildMissionStateJson(params: {
   workspace: string;
   project: { id: string | null; name: string | null };
   targetUrl: string;
-}): { objective: string; plan: { step: string; status: string }[]; turn_id: string | null; workspace: string; project: { id: string | null; name: string | null }; target_url: string; evidence: Record<string, string>; result: string | null } {
+}): {
+  objective: string;
+  plan: { step: string; status: string }[];
+  turn_id: string | null;
+  workspace: string;
+  project: { id: string | null; name: string | null };
+  target_url: string;
+  evidence: Record<string, string>;
+  result: string | null;
+} {
   return {
     objective: params.objective,
     plan: [],

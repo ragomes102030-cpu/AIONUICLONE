@@ -38,8 +38,8 @@ describe('a obra vista de ponta a ponta', () => {
       title: 'Assentamento de piso',
       assignee: 'Zezinho e Luizinho',
       // Four days out, past the 72h warning window: the "fine" state this test
-    // needs must not sit on the edge of a constant that changes.
-    scheduled_for: now + 4 * 24 * HOUR,
+      // needs must not sit on the edge of a constant that changes.
+      scheduled_for: now + 4 * 24 * HOUR,
     });
     setKanbanCardDependencies(db, ceranico.id, [contrapiso.id]);
 

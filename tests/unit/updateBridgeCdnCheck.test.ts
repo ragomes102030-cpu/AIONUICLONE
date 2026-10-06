@@ -124,7 +124,6 @@ const getCheckHandler = async () => {
   return lastCall[0];
 };
 
-
 type FetchScenario = {
   cdn?: () => Promise<Response> | Response;
   github?: () => Promise<Response> | Response;
@@ -180,9 +179,7 @@ describe('update.check CDN-first', () => {
     expect(res.data?.latest?.version).toBe('2.1.45');
     expect(res.data?.latest?.body).toBe('changelog body');
     expect(res.data?.latest?.htmlUrl).toBe(`https://github.com/${FORK_REPO}/releases/tag/v2.1.45`);
-    expect(res.data?.latest?.recommendedAsset?.url).toBe(
-      `${FORK_CDN}/2.1.45/AionUi-2.1.45-mac-arm64.dmg`
-    );
+    expect(res.data?.latest?.recommendedAsset?.url).toBe(`${FORK_CDN}/2.1.45/AionUi-2.1.45-mac-arm64.dmg`);
   });
 
   it('succeeds without notes when GitHub is unreachable', async () => {

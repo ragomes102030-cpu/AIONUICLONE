@@ -129,15 +129,18 @@ When a new session starts (`session.started` event):
    - Include skill directories for each
 
 3. **Inject tool mapping instructions**
+
    ```markdown
    **Tool Mapping for OpenCode:**
    When skills reference tools you don't have, substitute:
+
    - `TodoWrite` → `update_plan`
    - `Task` with subagents → Use OpenCode subagent system (@mention)
    - `Skill` tool → `use_skill` custom tool
    - Read, Write, Edit, Bash → Your native equivalents
 
    **Skill directories contain:**
+
    - Supporting scripts (run with bash)
    - Additional documentation (read with read tool)
    - Utilities specific to that skill
@@ -167,7 +170,7 @@ export const SuperpowersPlugin = async ({ client, directory, $ }) => {
       const toolMapping = getToolMappingInstructions();
 
       return {
-        context: `${usingSuperpowers}\n\n${skillsList}\n\n${toolMapping}`
+        context: `${usingSuperpowers}\n\n${skillsList}\n\n${toolMapping}`,
       };
     },
 
@@ -176,11 +179,11 @@ export const SuperpowersPlugin = async ({ client, directory, $ }) => {
         name: 'use_skill',
         description: 'Load and read a specific skill',
         schema: z.object({
-          skill_name: z.string()
+          skill_name: z.string(),
         }),
         execute: async ({ skill_name }) => {
           // Implementation using skillsCore
-        }
+        },
       },
       {
         name: 'find_skills',
@@ -188,9 +191,9 @@ export const SuperpowersPlugin = async ({ client, directory, $ }) => {
         schema: z.object({}),
         execute: async () => {
           // Implementation using skillsCore
-        }
-      }
-    ]
+        },
+      },
+    ],
   };
 };
 ```

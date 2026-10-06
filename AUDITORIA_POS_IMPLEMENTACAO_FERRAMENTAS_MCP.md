@@ -194,12 +194,12 @@ Não foram adicionados stores globais, clients MCP, endpoints, handlers IPC ou e
 
 Observação via backend em `http://127.0.0.1:<porta>/api/mcp/servers` e via UI/CDP:
 
-| MCP | Transporte | Estado observado | Tools | Conclusão |
-|---|---|---:|---:|---|
-| `chrome-devtools` | stdio | connected | 30 | Compatível; não houve mudança de contrato |
-| `aionui-browser` | stdio | connected | 26 | Compatível; não houve mudança de contrato |
-| `aionui-image-generation` | stdio | disconnected | 0 | Built-in preservado; permanece configurado pelo painel específico |
-| `MACP-EAP` | HTTP | connected | 18 | Registro remoto preexistente; descoberta real funcionando |
+| MCP                       | Transporte | Estado observado | Tools | Conclusão                                                         |
+| ------------------------- | ---------- | ---------------: | ----: | ----------------------------------------------------------------- |
+| `chrome-devtools`         | stdio      |        connected |    30 | Compatível; não houve mudança de contrato                         |
+| `aionui-browser`          | stdio      |        connected |    26 | Compatível; não houve mudança de contrato                         |
+| `aionui-image-generation` | stdio      |     disconnected |     0 | Built-in preservado; permanece configurado pelo painel específico |
+| `MACP-EAP`                | HTTP       |        connected |    18 | Registro remoto preexistente; descoberta real funcionando         |
 
 A nova camada não altera `IMcpServer`, `toSessionMcpServer`, `selected_mcp_server_ids` ou `selected_session_mcp_servers`. O teste de `useGuidSend` continua cobrindo IDs built-in/user e overrides de conversa.
 
@@ -344,19 +344,19 @@ Typecheck passou no worktree `C:\temp\validate-03a1e62` alinhado ao HEAD auditad
 
 ## 14. Problemas encontrados
 
-| ID | Classificação | Problema | Impacto |
-|---|---|---|---|
-| P-01 | **ALTO** | Importação JSON legada aceita `headers`/`env` e `original_json` pode transportar secrets | Exposição potencial no renderer/logs; preexistente |
-| P-02 | **MÉDIO** | Tools/status discoveries são atualizados no estado, não persistidos pelo backend | Após reload, tools podem exigir novo teste |
-| P-03 | **MÉDIO** | Seleção visual por tool não é ACL de agente | A execução permanece server-level; limitado por contrato atual |
-| P-04 | **MÉDIO** | Extensões entram no catálogo, mas não foram provadas na seleção do Guid/Assistant | Agent access de extension MCP não está fechado |
-| P-05 | **MÉDIO** | Fixture E2E dev não inicia Vite e pode usar `out` stale | E2E local depende de artifact/dev server válido |
-| P-06 | **MÉDIO** | Spec ACP espera botão `Test Connection` em página Agent | Uma asserção E2E falha fora do escopo Ferramentas |
-| P-07 | **BAIXO** | `McpManagement.tsx` permanece órfão e paralelo | Duplicação potencial; não removido por segurança |
-| P-08 | **BAIXO** | Projeção legada `mcp.config` continua existindo | Duas representações de built-ins, não do catálogo novo |
-| P-09 | **BAIXO** | Build precisa de heap ampliado neste ambiente | Build não é reprodutível com heap padrão |
-| P-10 | **BAIXO** | Worktree DOM tests duplicam React | Validação local inconsistente; typecheck permanece válido |
-| P-11 | **INFORMATIVO** | Apenas en-US/pt-BR receberam novos textos de Tools | Outros locales usam fallback |
+| ID   | Classificação   | Problema                                                                                 | Impacto                                                        |
+| ---- | --------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| P-01 | **ALTO**        | Importação JSON legada aceita `headers`/`env` e `original_json` pode transportar secrets | Exposição potencial no renderer/logs; preexistente             |
+| P-02 | **MÉDIO**       | Tools/status discoveries são atualizados no estado, não persistidos pelo backend         | Após reload, tools podem exigir novo teste                     |
+| P-03 | **MÉDIO**       | Seleção visual por tool não é ACL de agente                                              | A execução permanece server-level; limitado por contrato atual |
+| P-04 | **MÉDIO**       | Extensões entram no catálogo, mas não foram provadas na seleção do Guid/Assistant        | Agent access de extension MCP não está fechado                 |
+| P-05 | **MÉDIO**       | Fixture E2E dev não inicia Vite e pode usar `out` stale                                  | E2E local depende de artifact/dev server válido                |
+| P-06 | **MÉDIO**       | Spec ACP espera botão `Test Connection` em página Agent                                  | Uma asserção E2E falha fora do escopo Ferramentas              |
+| P-07 | **BAIXO**       | `McpManagement.tsx` permanece órfão e paralelo                                           | Duplicação potencial; não removido por segurança               |
+| P-08 | **BAIXO**       | Projeção legada `mcp.config` continua existindo                                          | Duas representações de built-ins, não do catálogo novo         |
+| P-09 | **BAIXO**       | Build precisa de heap ampliado neste ambiente                                            | Build não é reprodutível com heap padrão                       |
+| P-10 | **BAIXO**       | Worktree DOM tests duplicam React                                                        | Validação local inconsistente; typecheck permanece válido      |
+| P-11 | **INFORMATIVO** | Apenas en-US/pt-BR receberam novos textos de Tools                                       | Outros locales usam fallback                                   |
 
 Nenhum problema classificado como **CRÍTICO** foi comprovado.
 

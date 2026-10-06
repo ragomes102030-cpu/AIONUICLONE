@@ -4,9 +4,9 @@ description: Run bulk WhatsApp outreach campaigns with Wassenger — build an au
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Campaigns
@@ -21,7 +21,7 @@ Run audited, paced, monitored broadcasts — the right tool the moment the audie
 - They want to **pause** or **stop** an in-flight send.
 - They have a CSV of phone numbers to turn into the audience.
 
-For one-off messages (under ~50 recipients with different content each), use `wassenger-messaging` in a loop. For an *automated, ongoing* campaign (e.g. "every new Shopify order triggers a thank-you"), use `wassenger-webhooks` to drive `wassenger-messaging` per event.
+For one-off messages (under ~50 recipients with different content each), use `wassenger-messaging` in a loop. For an _automated, ongoing_ campaign (e.g. "every new Shopify order triggers a thank-you"), use `wassenger-webhooks` to drive `wassenger-messaging` per event.
 
 ## Prerequisites
 

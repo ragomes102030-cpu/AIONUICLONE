@@ -5,23 +5,23 @@ description: "Use this skill to design professional Excel dashboards — KPI def
 
 > **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — the underlying tool/CLI commands are usually cross-platform, but the surrounding shell syntax is not. Translate it to PowerShell before running:
 >
-> | bash (macOS / Linux) | PowerShell (Windows) |
-> | --- | --- |
-> | `a && b` | run as two steps, or `a; if ($?) { b }` |
-> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool |
-> | `VAR=$(cmd)` … `$VAR` | `$VAR = cmd` … `$VAR` |
-> | `cmd > /dev/null` | `cmd > $null` |
-> | `… \| grep PAT` | `… \| Select-String PAT` |
-> | `… \| jq …` | `… \| ConvertFrom-Json`, then read the fields |
-> | `python3 x.py` | `python x.py` (or `py x.py`) |
-> | `~/dir`, `/tmp` | `$env:USERPROFILE\dir`, `$env:TEMP` |
-> | `cp` / `mkdir -p` / `rm -rf` | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
+> | bash (macOS / Linux)              | PowerShell (Windows)                                                                |
+> | --------------------------------- | ----------------------------------------------------------------------------------- |
+> | `a && b`                          | run as two steps, or `a; if ($?) { b }`                                             |
+> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool                 |
+> | `VAR=$(cmd)` … `$VAR`             | `$VAR = cmd` … `$VAR`                                                               |
+> | `cmd > /dev/null`                 | `cmd > $null`                                                                       |
+> | `… \| grep PAT`                   | `… \| Select-String PAT`                                                            |
+> | `… \| jq …`                       | `… \| ConvertFrom-Json`, then read the fields                                       |
+> | `python3 x.py`                    | `python x.py` (or `py x.py`)                                                        |
+> | `~/dir`, `/tmp`                   | `$env:USERPROFILE\dir`, `$env:TEMP`                                                 |
+> | `cp` / `mkdir -p` / `rm -rf`      | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
 >
 > If a command has no obvious Windows equivalent, prefer the built-in file/HTTP tools over raw shell.
 
 # Dashboard Design (scene-layer on officecli-data-dashboard)
 
-A dashboard is a **decision surface**, not "a spreadsheet with charts". This skill covers the *design discipline* on top of the composition mechanics taught in `officecli-data-dashboard` (which itself layers on `officecli-xlsx`). The mechanics — KPI cards, charts, sparklines, CF, activeTab, fullCalcOnLoad, print-ready delivery — are inherited, not re-taught here. This skill adds what a **well-designed** dashboard requires: a design brief, KPI selection rules, visual hierarchy, chart justification, filter architecture, and dynamic-update discipline.
+A dashboard is a **decision surface**, not "a spreadsheet with charts". This skill covers the _design discipline_ on top of the composition mechanics taught in `officecli-data-dashboard` (which itself layers on `officecli-xlsx`). The mechanics — KPI cards, charts, sparklines, CF, activeTab, fullCalcOnLoad, print-ready delivery — are inherited, not re-taught here. This skill adds what a **well-designed** dashboard requires: a design brief, KPI selection rules, visual hierarchy, chart justification, filter architecture, and dynamic-update discipline.
 
 ## Setup
 
@@ -72,7 +72,7 @@ This skill **inherits every xlsx hard rule** from `officecli-xlsx` AND the full 
 
 3. **Visual hierarchy: value → context → action.** Top row = headline values (big, bold, colored by direction). Second band = context (trends, composition, comparisons). Lower band = detail/drill-down (tables, sparklines, breakdowns). The eye must land on the decision value first — never make the reader hunt for the number that answers the brief's ONE question.
 
-4. **Chart justification.** Every chart must be the *right* chart for its data pattern (see Chart selection below). A chart chosen "because it looks nice" is a defect. When in doubt, line for time, column for category comparison, stacked column for composition-over-time, doughnut for part-of-whole, scatter for correlation, bar for ranking (many categories).
+4. **Chart justification.** Every chart must be the _right_ chart for its data pattern (see Chart selection below). A chart chosen "because it looks nice" is a defect. When in doubt, line for time, column for category comparison, stacked column for composition-over-time, doughnut for part-of-whole, scatter for correlation, bar for ranking (many categories).
 
 5. **Filter architecture: filters that actually filter.** Slicers/dropdowns drive formulas (`SUMIFS` with criteria cells) or hidden filter rows — never fake filters over hardcoded selections. A dropdown that does not change downstream values is decoration. Filters belong above or beside the KPI band so the reader adjusts context before reading values.
 
@@ -112,7 +112,7 @@ KPI formula pattern (period-aware):
 officecli set "$FILE" /Dashboard/B2 --prop 'formula==IFERROR((Summary!B10-Summary!C10)/Summary!C10, 0)' --prop numFmt='+0.0%;-0.0%;0.0%' --prop font.size=24 --prop bold=true
 ```
 
-Guard every division (IFERROR / IF(den=0,…)). Colour: positive green, negative red, neutral gray — only when the *direction* is semantically meaningful (e.g. costs: up = bad; utilization: up = good; verify per KPI, never a single global convention).
+Guard every division (IFERROR / IF(den=0,…)). Colour: positive green, negative red, neutral gray — only when the _direction_ is semantically meaningful (e.g. costs: up = bad; utilization: up = good; verify per KPI, never a single global convention).
 
 ### Phase 4 — Charts
 
@@ -154,16 +154,16 @@ Lower band: a compact detail table (last N periods) + sparkline per key KPI. Onl
 
 ## Chart selection (justification table)
 
-| Data pattern | Chart | Why / notes |
-|---|---|---|
-| Single series over time | `line` | Chronology must read left-to-right; trendline optional |
-| Multiple components over time, sum meaningful | `columnStacked` | Read total + parts |
-| Category comparison (≤8 cats) | `column` | Not `bar` — bar breaks time/order reading |
-| Category ranking (many cats) | `bar` fits grid, else column with sorted data | Ranking reads naturally |
-| Part-of-whole | `doughnut` | `pie` has blank-render regression (inherited D-9) |
-| Plan vs actual | `combo` (bars + line) | `combosplit=1`; set at add time (D-1) |
-| Correlation | `scatter` | x via `categories` (D-3) |
-| Distribution | `column` histogram (bucketed data) | Bucket via formula helper column |
+| Data pattern                                  | Chart                                         | Why / notes                                            |
+| --------------------------------------------- | --------------------------------------------- | ------------------------------------------------------ |
+| Single series over time                       | `line`                                        | Chronology must read left-to-right; trendline optional |
+| Multiple components over time, sum meaningful | `columnStacked`                               | Read total + parts                                     |
+| Category comparison (≤8 cats)                 | `column`                                      | Not `bar` — bar breaks time/order reading              |
+| Category ranking (many cats)                  | `bar` fits grid, else column with sorted data | Ranking reads naturally                                |
+| Part-of-whole                                 | `doughnut`                                    | `pie` has blank-render regression (inherited D-9)      |
+| Plan vs actual                                | `combo` (bars + line)                         | `combosplit=1`; set at add time (D-1)                  |
+| Correlation                                   | `scatter`                                     | x via `categories` (D-3)                               |
+| Distribution                                  | `column` histogram (bucketed data)            | Bucket via formula helper column                       |
 
 Rule: if two chart types are equally defensible, pick the one the audience reads faster; document the choice in the Brief sheet.
 

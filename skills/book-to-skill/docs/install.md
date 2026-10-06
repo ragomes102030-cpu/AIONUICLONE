@@ -1,11 +1,12 @@
 ---
-description: "Install book-to-skill as an agent skill for Claude Code, GitHub Copilot CLI, Amp, Codex, Hermes Agent and OpenClaw, or as a standalone pip CLI. Every host path and optional extractor covered."
-seo_title: "Install book-to-skill - Claude Code, Copilot CLI, Amp, Hermes, OpenClaw, or pip"
+description: 'Install book-to-skill as an agent skill for Claude Code, GitHub Copilot CLI, Amp, Codex, Hermes Agent and OpenClaw, or as a standalone pip CLI. Every host path and optional extractor covered.'
+seo_title: 'Install book-to-skill - Claude Code, Copilot CLI, Amp, Hermes, OpenClaw, or pip'
 ---
 
 ## 📥 Install
 
 > **Two ways to use it, do not confuse them:**
+>
 > - **As an agent skill** (the `/book-to-skill` command in Claude Code, Copilot CLI, Amp, Codex, Hermes Agent, or OpenClaw) → **`git clone` into your skills folder** (below). This is what gives you the slash command and the full convert-a-book flow.
 > - **As a standalone CLI** (just the text extractor) → `pip install` it from the repository, then `book-to-skill --help`. This does **not** register the agent skill; it only installs the extraction engine. See [the CLI section](#standalone-cli-pip).
 
@@ -136,7 +137,6 @@ book-to-skill --check                          # report which extractors are ins
 > `bs4` fallback (no `[html]` extra needed) still works, just without boilerplate removal.
 
 ---
-
 
 ---
 

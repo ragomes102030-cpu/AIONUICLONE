@@ -6,10 +6,10 @@ API em 2026-10-01, imediatamente antes da remoção.
 Isto **não** é o mesmo que [`mcp.config.json`](./mcp.config.json), que é o
 catálogo de servidores disponíveis. Os dois se sobrepõem só em parte:
 
-| | servidores |
-| --- | --- |
+|                                                   | servidores                                                                                 |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | [`mcp.config.json`](./mcp.config.json) — catálogo | `excel-mcp-server`, `whatsapp-mcp`, `lean-planning-mcp`, `saga-mcp`, `osmmcp`, `pdf-tools` |
-| este arquivo — estado instalado | os 10 que estavam rodando/listados |
+| este arquivo — estado instalado                   | os 10 que estavam rodando/listados                                                         |
 
 Só no catálogo e nunca instalados: `whatsapp-mcp`, `pdf-tools`.
 Só aqui e **não** no catálogo: `aiven`, `render`, `postgres`, `aionui-image-generation`, `chrome-devtools`, `aionui-browser`.

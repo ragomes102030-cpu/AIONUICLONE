@@ -38,7 +38,6 @@ const makeRequest = (version = '2.2.0', name = 'AionUi-2.2.0-mac-arm64.dmg') => 
 
 let _originalFetch = undefined;
 
-
 vi.mock('electron', () => ({
   app: {
     getVersion: vi.fn(() => '1.0.0'),
@@ -231,4 +230,3 @@ describe('updateBridge manual download dedupe', () => {
     expect(second.data?.downloadId).toBe('second-download');
   });
 });
-

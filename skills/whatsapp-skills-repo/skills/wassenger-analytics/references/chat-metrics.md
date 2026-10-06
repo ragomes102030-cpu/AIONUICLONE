@@ -13,6 +13,7 @@ for c in chats: dist[c.status] = (dist[c.status] or 0) + 1
 The response also includes a `statusDistribution` summary when you filter `by_status` — prefer it, but verify it matches your window (it reflects the returned slice).
 
 Derived buckets:
+
 - **open** = active + pending
 - **closed** = resolved
 - **backlog** = pending with `meta.unreadCount > 0`
@@ -21,11 +22,11 @@ Derived buckets:
 
 Two different questions — pick the right timestamp:
 
-| "Volume" meaning | Bucket by |
-|---|---|
-| New conversations started | `firstMessageAt` |
-| Conversations active/touched | `lastMessageAt` |
-| Conversations resolved | `statusUpdatedAt` where `status==resolved` |
+| "Volume" meaning             | Bucket by                                  |
+| ---------------------------- | ------------------------------------------ |
+| New conversations started    | `firstMessageAt`                           |
+| Conversations active/touched | `lastMessageAt`                            |
+| Conversations resolved       | `statusUpdatedAt` where `status==resolved` |
 
 ```
 buckets = {}                       # e.g. by day

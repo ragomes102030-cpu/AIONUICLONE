@@ -3,6 +3,7 @@
 ## Free-form (session) message
 
 Before (Wati — form-data, recipient in URL):
+
 ```python
 import os, requests
 
@@ -14,6 +15,7 @@ requests.post(
 ```
 
 After (Wassenger — JSON, device + phone in body):
+
 ```python
 import os, requests
 
@@ -31,6 +33,7 @@ requests.post(
 ## Template message (named → positional)
 
 Before (Wati):
+
 ```python
 requests.post(
     "https://live-server-12345.wati.io/api/v1/sendTemplateMessage",
@@ -48,6 +51,7 @@ requests.post(
 ```
 
 After (Wassenger):
+
 ```python
 requests.post(
     "https://api.wassenger.com/v1/messages",

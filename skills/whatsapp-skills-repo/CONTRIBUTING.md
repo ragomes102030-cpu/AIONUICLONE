@@ -13,11 +13,11 @@ bin/, src/                 # the install CLI (npx @wassengerhq/skills)
 
 ## Adding or editing a skill
 
-1. **Frontmatter.** Every `SKILL.md` needs `name` (must match the folder) and a concrete `description` that says *when* the skill triggers and *what* it does — that's what an agent matches against, so be specific.
+1. **Frontmatter.** Every `SKILL.md` needs `name` (must match the folder) and a concrete `description` that says _when_ the skill triggers and _what_ it does — that's what an agent matches against, so be specific.
 2. **Use real tools.** Reference only tools and parameters that exist in [`skills/wassenger-mcp/references/tools-reference.md`](skills/wassenger-mcp/references/tools-reference.md) — it's the source of truth for tool names and shapes. If you're unsure, check the live MCP server or the API docs. Don't invent tools or parameters.
 3. **WABA only.** This pack targets the official WhatsApp Business API. Don't document QR-paired-only features (groups, channels, WhatsApp Status, live messages).
 4. **Respect WhatsApp rules.** Free-form messages only inside the 24-hour customer-service window (which opens on a customer's inbound message); pre-approved templates outside it. Marketing needs opt-in.
-5. **Keep the house style.** Match the structure of sibling skills: *When to use → Prerequisites → Recipes → Anti-patterns → See also*.
+5. **Keep the house style.** Match the structure of sibling skills: _When to use → Prerequisites → Recipes → Anti-patterns → See also_.
 6. **Register it.** Add new skills to `.claude-plugin/plugin.json` (and the README table) so they ship with the pack.
 
 ## Validate before you open a PR

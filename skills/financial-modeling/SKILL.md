@@ -5,17 +5,17 @@ description: "Use this skill to build financial models in Excel for budgeting, r
 
 > **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — the underlying tool/CLI commands are usually cross-platform, but the surrounding shell syntax is not. Translate it to PowerShell before running:
 >
-> | bash (macOS / Linux) | PowerShell (Windows) |
-> | --- | --- |
-> | `a && b` | run as two steps, or `a; if ($?) { b }` |
-> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool |
-> | `VAR=$(cmd)` … `$VAR` | `$VAR = cmd` … `$VAR` |
-> | `cmd > /dev/null` | `cmd > $null` |
-> | `… \| grep PAT` | `… \| Select-String PAT` |
-> | `… \| jq …` | `… \| ConvertFrom-Json`, then read the fields |
-> | `python3 x.py` | `python x.py` (or `py x.py`) |
-> | `~/dir`, `/tmp` | `$env:USERPROFILE\dir`, `$env:TEMP` |
-> | `cp` / `mkdir -p` / `rm -rf` | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
+> | bash (macOS / Linux)              | PowerShell (Windows)                                                                |
+> | --------------------------------- | ----------------------------------------------------------------------------------- |
+> | `a && b`                          | run as two steps, or `a; if ($?) { b }`                                             |
+> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool                 |
+> | `VAR=$(cmd)` … `$VAR`             | `$VAR = cmd` … `$VAR`                                                               |
+> | `cmd > /dev/null`                 | `cmd > $null`                                                                       |
+> | `… \| grep PAT`                   | `… \| Select-String PAT`                                                            |
+> | `… \| jq …`                       | `… \| ConvertFrom-Json`, then read the fields                                       |
+> | `python3 x.py`                    | `python x.py` (or `py x.py`)                                                        |
+> | `~/dir`, `/tmp`                   | `$env:USERPROFILE\dir`, `$env:TEMP`                                                 |
+> | `cp` / `mkdir -p` / `rm -rf`      | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
 >
 > If a command has no obvious Windows equivalent, prefer the built-in file/HTTP tools over raw shell.
 
@@ -23,7 +23,7 @@ description: "Use this skill to build financial models in Excel for budgeting, r
 
 A financial model is a **decision-grade, formula-driven layer**: every output traces an unbroken chain to blue-font assumptions, every statement balances, every forecast is re-auditable. This skill covers the modeling patterns most relevant to business/construction financials: budgeting, DRE, cash flow, actual-vs-budget, forecast, scenarios, and assumptions — on top of the mechanics already taught in `officecli-financial-model` (three-zone architecture, 4-color code, recipes for 3-statement / DCF / LBO, sensitivity grids, cache-drift discipline, circular-reference discipline).
 
-**Everything about the engine — cells, formulas, batch JSON, shell quoting, validate, HTML preview, number formats, named ranges — comes from officecli-xlsx and officecli-financial-model and is not re-taught here.** This skill adds the *business-modeling discipline*: what to model, how to structure Real × Orçado, and the specific delivery gates those patterns require.
+**Everything about the engine — cells, formulas, batch JSON, shell quoting, validate, HTML preview, number formats, named ranges — comes from officecli-xlsx and officecli-financial-model and is not re-taught here.** This skill adds the _business-modeling discipline_: what to model, how to structure Real × Orçado, and the specific delivery gates those patterns require.
 
 ## Setup
 
@@ -79,6 +79,7 @@ Help reflects the installed CLI version. When this skill and help disagree, **he
 ### Phase 1 — Intake & scope
 
 Get from the user (or the leader agent):
+
 - Model purpose (budget, DRE tracking, cash-flow projection, what-if scenarios, forecast…).
 - Period structure (monthly? quarterly? which years; fiscal-year start).
 - Currency, tax rate, and any regulatory/business conventions.

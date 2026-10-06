@@ -5,17 +5,17 @@ description: "Use this skill to build CPM/network scheduling workbooks in Excel 
 
 > **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — the underlying tool/CLI commands are usually cross-platform, but the surrounding shell syntax is not. Translate it to PowerShell before running:
 >
-> | bash (macOS / Linux) | PowerShell (Windows) |
-> | --- | --- |
-> | `a && b` | run as two steps, or `a; if ($?) { b }` |
-> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool |
-> | `VAR=$(cmd)` … `$VAR` | `$VAR = cmd` … `$VAR` |
-> | `cmd > /dev/null` | `cmd > $null` |
-> | `… \| grep PAT` | `… \| Select-String PAT` |
-> | `… \| jq …` | `… \| ConvertFrom-Json`, then read the fields |
-> | `python3 x.py` | `python x.py` (or `py x.py`) |
-> | `~/dir`, `/tmp` | `$env:USERPROFILE\dir`, `$env:TEMP` |
-> | `cp` / `mkdir -p` / `rm -rf` | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
+> | bash (macOS / Linux)              | PowerShell (Windows)                                                                |
+> | --------------------------------- | ----------------------------------------------------------------------------------- |
+> | `a && b`                          | run as two steps, or `a; if ($?) { b }`                                             |
+> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool                 |
+> | `VAR=$(cmd)` … `$VAR`             | `$VAR = cmd` … `$VAR`                                                               |
+> | `cmd > /dev/null`                 | `cmd > $null`                                                                       |
+> | `… \| grep PAT`                   | `… \| Select-String PAT`                                                            |
+> | `… \| jq …`                       | `… \| ConvertFrom-Json`, then read the fields                                       |
+> | `python3 x.py`                    | `python x.py` (or `py x.py`)                                                        |
+> | `~/dir`, `/tmp`                   | `$env:USERPROFILE\dir`, `$env:TEMP`                                                 |
+> | `cp` / `mkdir -p` / `rm -rf`      | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
 >
 > If a command has no obvious Windows equivalent, prefer the built-in file/HTTP tools over raw shell.
 
@@ -76,6 +76,7 @@ Help reflects the installed CLI version. When this skill and help disagree, **he
 ### Phase 1 — Intake
 
 Get from the user/leader:
+
 - Activity list (ID, name, duration, calendar) — or the EAP/service structure from construction-planning.
 - Predecessor/link list (ID, predecessor, link type, lag) — or the raw data to parse.
 - Project start date, project end/constraint (if any).
@@ -98,6 +99,7 @@ officecli close "$FILE"
 ```
 
 Sheet roles:
+
 - **Config** — project start/end, float tolerance, duration unit, calendar reference (blue inputs).
 - **Calendario** — working-day calendar (per construction-planning).
 - **Atividades** — activity register: ID, name, duration, calendar (inputs).
@@ -156,8 +158,8 @@ officecli set "$FILE" /Validacao/C4 --prop 'formula==IF(B4=0,"PASS","FAIL: "&B4&
 **V4 — Cycle detection.** The reliable worksheet probe: every activity's transitive predecessor chain must not include itself. Without iterative helpers, implement the check as: **for each activity, walk predecessors one level and confirm the ID is not in its own (recursive) predecessor set** — practical worksheet approach: a helper column `Predecessor de 2o nivel` (COUNTIF over the Links-predecessors-of-predecessors, resolved via a chain table), plus a manual audit for deep cycles. **When a cycle is suspected or cannot be excluded by workbook math, STOP and flag it** — do not compute dates, do not visualize. Report the candidate cycle activities to the user for resolution.
 
 ```bash
-# One-level cycle evidence: activities whose predecessor's predecessor includes them — 
-# resolve via a chain helper table (Predecessor-of-Predecessor) and COUNTIF. 
+# One-level cycle evidence: activities whose predecessor's predecessor includes them —
+# resolve via a chain helper table (Predecessor-of-Predecessor) and COUNTIF.
 # If the chain table cannot be built reliably, mark V4 = NOT VERIFIED (never PASS by assumption).
 ```
 

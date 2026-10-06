@@ -113,7 +113,14 @@ describe('Kanban de ponta a ponta com atividades de obra', () => {
 
   it('1. cria o quadro com 8 colunas, papeis e as 8 atividades', () => {
     expect(board.columns.map((c) => c.key)).toEqual([
-      'triage', 'todo', 'scheduled', 'ready', 'running', 'review', 'done', 'blocked',
+      'triage',
+      'todo',
+      'scheduled',
+      'ready',
+      'running',
+      'review',
+      'done',
+      'blocked',
     ]);
     expect(board.roles.map((r) => r.name)).toEqual(['Planejador']);
     expect(roleId).toBeTruthy();
@@ -189,9 +196,7 @@ describe('Kanban de ponta a ponta com atividades de obra', () => {
     moveKanbanCard(db, { id: ids.cobertura, column_id: col('scheduled'), position: 0 });
     moveKanbanCard(db, { id: ids.vigas, column_id: col('blocked'), position: 0 });
     reload();
-    expect(isCardAtRisk(by(ids.cobertura), new Map(board.cards.map((c) => [c.id, c])), board.columns, now)).toBe(
-      true
-    );
+    expect(isCardAtRisk(by(ids.cobertura), new Map(board.cards.map((c) => [c.id, c])), board.columns, now)).toBe(true);
     // restaura o estado
     moveKanbanCard(db, { id: ids.cobertura, column_id: col('done'), position: 0 });
     moveKanbanCard(db, { id: ids.vigas, column_id: col('scheduled'), position: 0 });
@@ -272,4 +277,3 @@ describe('Kanban de ponta a ponta com atividades de obra', () => {
     db = new BetterSqlite3(dbPath);
   });
 });
-

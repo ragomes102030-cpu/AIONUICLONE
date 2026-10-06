@@ -5,17 +5,17 @@ description: "Use this skill to build production-control workbooks in Excel — 
 
 > **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — the underlying tool/CLI commands are usually cross-platform, but the surrounding shell syntax is not. Translate it to PowerShell before running:
 >
-> | bash (macOS / Linux) | PowerShell (Windows) |
-> | --- | --- |
-> | `a && b` | run as two steps, or `a; if ($?) { b }` |
-> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool |
-> | `VAR=$(cmd)` … `$VAR` | `$VAR = cmd` … `$VAR` |
-> | `cmd > /dev/null` | `cmd > $null` |
-> | `… \| grep PAT` | `… \| Select-String PAT` |
-> | `… \| jq …` | `… \| ConvertFrom-Json`, then read the fields |
-> | `python3 x.py` | `python x.py` (or `py x.py`) |
-> | `~/dir`, `/tmp` | `$env:USERPROFILE\dir`, `$env:TEMP` |
-> | `cp` / `mkdir -p` / `rm -rf` | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
+> | bash (macOS / Linux)              | PowerShell (Windows)                                                                |
+> | --------------------------------- | ----------------------------------------------------------------------------------- |
+> | `a && b`                          | run as two steps, or `a; if ($?) { b }`                                             |
+> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool                 |
+> | `VAR=$(cmd)` … `$VAR`             | `$VAR = cmd` … `$VAR`                                                               |
+> | `cmd > /dev/null`                 | `cmd > $null`                                                                       |
+> | `… \| grep PAT`                   | `… \| Select-String PAT`                                                            |
+> | `… \| jq …`                       | `… \| ConvertFrom-Json`, then read the fields                                       |
+> | `python3 x.py`                    | `python x.py` (or `py x.py`)                                                        |
+> | `~/dir`, `/tmp`                   | `$env:USERPROFILE\dir`, `$env:TEMP`                                                 |
+> | `cp` / `mkdir -p` / `rm -rf`      | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
 >
 > If a command has no obvious Windows equivalent, prefer the built-in file/HTTP tools over raw shell.
 
@@ -78,6 +78,7 @@ Help reflects the installed CLI version. When this skill and help disagree, **he
 ### Phase 1 — Intake
 
 Get from the user/leader:
+
 - List of services (or EAP reference from construction-planning).
 - Work fronts and locations (dimensions).
 - Period structure (daily/weekly/monthly; period labels).
@@ -98,6 +99,7 @@ officecli close "$FILE"
 ```
 
 Sheet roles:
+
 - **Config** — productivity convention, units, reference values, status date.
 - **Planejado / Executado / Esforco** — input registers (blue).
 - **Controle de Producao** — the comparison view: one row per service×front×location (or per line item), saldo/avanço/produtividade formulas.

@@ -4,9 +4,9 @@ description: Configure how incoming WhatsApp chats get routed and assigned in Wa
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Routing
@@ -15,11 +15,11 @@ Make the inbox self-organizing. The first agent stops triaging and starts answer
 
 ## When to use
 
-- *"Auto-assign new chats to whoever is available."*
-- *"Route messages mentioning 'invoice' or 'billing' to the Finance department."*
-- *"Spanish-speaking customers go to Marta, Portuguese-speaking go to Pedro."*
-- *"If a chat sits unanswered for 30 minutes, escalate to the team lead."*
-- *"How do I set up a fallback so no chat is ever left without an owner?"*
+- _"Auto-assign new chats to whoever is available."_
+- _"Route messages mentioning 'invoice' or 'billing' to the Finance department."_
+- _"Spanish-speaking customers go to Marta, Portuguese-speaking go to Pedro."_
+- _"If a chat sits unanswered for 30 minutes, escalate to the team lead."_
+- _"How do I set up a fallback so no chat is ever left without an owner?"_
 
 For **manual** assignment ("assign this specific chat to Marta"), use `wassenger-inbox`. For the team setup itself (creating agents, granting device access), see `wassenger-team`.
 
@@ -74,7 +74,7 @@ Start with Layer 1 only. Add Layer 2 when you have enough volume to justify the 
 
 Wassenger's auto-assignment (Layer 1) is **not an MCP tool**. It is a per-device setting:
 
-- **MCP-only users:** configure it in the console at `https://app.wassenger.com/device/{deviceId}/team` → *Auto-assign* (round-robin / least-busy, candidate agents, skip offline/busy, reassign-if-unanswered). This is a one-time setup, not a per-chat call.
+- **MCP-only users:** configure it in the console at `https://app.wassenger.com/device/{deviceId}/team` → _Auto-assign_ (round-robin / least-busy, candidate agents, skip offline/busy, reassign-if-unanswered). This is a one-time setup, not a per-chat call.
 - **REST users:** the same config is a direct REST call (not an MCP tool — send the `Token: <API_KEY>` header):
 
 ```
@@ -92,7 +92,7 @@ To list the current config (REST): `GET https://api.wassenger.com/v1/devices/{de
 
 Toggle off in seconds if a campaign blows up the inbox (REST): `PUT …/autoassign` with `{ enabled: false }`.
 
-> **Layers 2–3 are not MCP features either.** Content-based routing and escalation below require a webhook handler you host (`wassenger-webhooks`); the chat *assignment* each one performs is then a single `send_whatsapp_message` `action: agent` (`chat:assign`) call.
+> **Layers 2–3 are not MCP features either.** Content-based routing and escalation below require a webhook handler you host (`wassenger-webhooks`); the chat _assignment_ each one performs is then a single `send_whatsapp_message` `action: agent` (`chat:assign`) call.
 
 ### Recipe 2 — Route by department
 
@@ -245,12 +245,12 @@ Big CSAT bump for B2B / high-touch sales. Disable for high-volume support where 
 - **No human fallback.** Every routing rule should have an "else → DEFAULT_USER" branch. Without it, edge cases churn customers.
 - **Auto-assignment that ignores capacity.** A round-robin that gives a 200-chat backlog to one agent is broken. Use `skipBusy` and reassign-if-unanswered.
 - **Re-routing within the same conversation.** Once a chat is assigned, **don't** auto-reassign on subsequent inbound messages from the same contact — that breaks the conversation thread. Reassign only on explicit escalation or staff change.
-- **Label-driven routing.** Labels are *outputs* of routing (for reporting), not *inputs*. Routing should be driven by content, time, or rules — not by who already tagged the chat.
+- **Label-driven routing.** Labels are _outputs_ of routing (for reporting), not _inputs_. Routing should be driven by content, time, or rules — not by who already tagged the chat.
 
 ## See also
 
-- `wassenger-team` — set up the agents and departments that routing routes *to*.
+- `wassenger-team` — set up the agents and departments that routing routes _to_.
 - `wassenger-inbox` — manual assignment, labels, status (the lifecycle this skill automates).
 - `wassenger-webhooks` — the event source for content-based routing.
-- `wassenger-labels` — tagging *results* of routing for reporting.
+- `wassenger-labels` — tagging _results_ of routing for reporting.
 - `wassenger-customer-support` — opinionated playbook combining routing + SLAs + escalation.

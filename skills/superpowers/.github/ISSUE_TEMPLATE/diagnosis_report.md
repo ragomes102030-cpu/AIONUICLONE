@@ -15,14 +15,14 @@ scrubbed bundle if you built one. For anything else, use Bug Report.
 
 ## Environment (required)
 
-| Field | Value |
-|-------|-------|
-| Superpowers version | |
-| Harness (Claude Code, Cursor, etc.) | |
-| Harness version | |
-| Your model + version | |
-| All plugins installed | |
-| OS + shell | |
+| Field                               | Value |
+| ----------------------------------- | ----- |
+| Superpowers version                 |       |
+| Harness (Claude Code, Cursor, etc.) |       |
+| Harness version                     |       |
+| Your model + version                |       |
+| All plugins installed               |       |
+| OS + shell                          |       |
 
 ## Is this a Superpowers issue or a platform issue?
 
@@ -31,6 +31,7 @@ scrubbed bundle if you built one. For anything else, use Bug Report.
 ## What happened?
 
 ## Steps to reproduce
+
 1.
 2.
 3.

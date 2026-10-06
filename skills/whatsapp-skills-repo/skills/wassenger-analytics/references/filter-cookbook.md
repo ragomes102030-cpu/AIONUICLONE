@@ -4,52 +4,52 @@ Copy-paste starting points. Every call needs `device` (from `get_whatsapp_device
 
 ## Status & lifecycle
 
-| Question | Call |
-|---|---|
-| How many active chats? | `get_whatsapp_chats(device, action=by_status, status=["active"])` → `statusDistribution` |
-| Open vs closed | open = `["active","pending"]`, closed = `["resolved"]` (no native open/closed) |
-| Anything archived this month? | `get_whatsapp_chats(device, action=archived, archivedAfter=<1st of month>)` |
-| Chats about to hit the 24h window | pull active chats, filter `expiresAt` within next N hours |
+| Question                          | Call                                                                                     |
+| --------------------------------- | ---------------------------------------------------------------------------------------- |
+| How many active chats?            | `get_whatsapp_chats(device, action=by_status, status=["active"])` → `statusDistribution` |
+| Open vs closed                    | open = `["active","pending"]`, closed = `["resolved"]` (no native open/closed)           |
+| Anything archived this month?     | `get_whatsapp_chats(device, action=archived, archivedAfter=<1st of month>)`              |
+| Chats about to hit the 24h window | pull active chats, filter `expiresAt` within next N hours                                |
 
 ## Time windows
 
-| Question | Call |
-|---|---|
-| New chats today | `get_whatsapp_chats(device, action=by_date_range, fromDate=<today 00:00>, toDate=now, activityType=firstMessage)` |
-| Active in last 7 days | same, `activityType=lastMessage`, `fromDate=<7d ago>` |
-| Resolved last week | pull `by_date_range` over the window, keep `status==resolved`, bucket by `statusUpdatedAt` |
+| Question              | Call                                                                                                              |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| New chats today       | `get_whatsapp_chats(device, action=by_date_range, fromDate=<today 00:00>, toDate=now, activityType=firstMessage)` |
+| Active in last 7 days | same, `activityType=lastMessage`, `fromDate=<7d ago>`                                                             |
+| Resolved last week    | pull `by_date_range` over the window, keep `status==resolved`, bucket by `statusUpdatedAt`                        |
 
 ## Assignment & team
 
-| Question | Call |
-|---|---|
-| Chats for agent X | `get_whatsapp_chats(device, action=assigned, agentId=<id>)` |
-| Chats for department Y | `get_whatsapp_chats(device, action=assigned, departmentId=<id>)` |
-| Unassigned chats | `get_whatsapp_chats(device, action=by_status, status=["pending"])`, keep `owner.agent == null` |
-| Roster (id→name) | `manage_whatsapp_team(action=search, query="")` → map `m.id → m.name` |
+| Question               | Call                                                                                           |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| Chats for agent X      | `get_whatsapp_chats(device, action=assigned, agentId=<id>)`                                    |
+| Chats for department Y | `get_whatsapp_chats(device, action=assigned, departmentId=<id>)`                               |
+| Unassigned chats       | `get_whatsapp_chats(device, action=by_status, status=["pending"])`, keep `owner.agent == null` |
+| Roster (id→name)       | `manage_whatsapp_team(action=search, query="")` → map `m.id → m.name`                          |
 
 ## Backlog & unread
 
-| Question | Call |
-|---|---|
-| Unanswered backlog | `get_whatsapp_unread_chats(device, minUnreadCount=1, sortBy=lastMessageAt, sortOrder=asc)` |
-| Heaviest unread threads | same, `sortBy=unreadCount, sortOrder=desc` |
+| Question                | Call                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------ |
+| Unanswered backlog      | `get_whatsapp_unread_chats(device, minUnreadCount=1, sortBy=lastMessageAt, sortOrder=asc)` |
+| Heaviest unread threads | same, `sortBy=unreadCount, sortOrder=desc`                                                 |
 
 ## Messages
 
-| Question | Call |
-|---|---|
-| Volume by type, a given day | `get_whatsapp_chat_messages(chat=<wid>, action=by_type, messageTypes=[...], fromDate, toDate)` — per chat; loop for a device-wide total |
-| Outbound from one number | `get_whatsapp_chat_messages(chat=<wid>, action=by_sender, sender=<wid/phone>)` — `by_type`/`by_sender` require a `chat` |
-| Delivery / read of recent sends | `analyze_whatsapp_chat_messages(action=delivery_status, messageIds=[...])` (≤30d, ≤20 ids) |
+| Question                        | Call                                                                                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Volume by type, a given day     | `get_whatsapp_chat_messages(chat=<wid>, action=by_type, messageTypes=[...], fromDate, toDate)` — per chat; loop for a device-wide total |
+| Outbound from one number        | `get_whatsapp_chat_messages(chat=<wid>, action=by_sender, sender=<wid/phone>)` — `by_type`/`by_sender` require a `chat`                 |
+| Delivery / read of recent sends | `analyze_whatsapp_chat_messages(action=delivery_status, messageIds=[...])` (≤30d, ≤20 ids)                                              |
 
 ## Contact segments
 
-| Question | Call |
-|---|---|
-| Country split | pull chats over window, `countBy contact.locationInfo.alpha2` |
-| Language split | `countBy contact.locationInfo.languages[].iso` |
-| Top labels | `countBy labels[*].name` |
+| Question       | Call                                                          |
+| -------------- | ------------------------------------------------------------- |
+| Country split  | pull chats over window, `countBy contact.locationInfo.alpha2` |
+| Language split | `countBy contact.locationInfo.languages[].iso`                |
+| Top labels     | `countBy labels[*].name`                                      |
 
 ## Dedicated stats tools (when they fit)
 

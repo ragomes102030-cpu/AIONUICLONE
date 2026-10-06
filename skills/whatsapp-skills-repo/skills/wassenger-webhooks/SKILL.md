@@ -4,9 +4,9 @@ description: Subscribe to real-time WhatsApp events from Wassenger — inbound m
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Webhooks
@@ -19,7 +19,7 @@ Drive automations from real WhatsApp events instead of polling. Webhooks turn "s
 - Another skill (`wassenger-customer-support`, `wassenger-campaigns` opt-out, `wassenger-ecommerce` order events) needs live event ingestion.
 - The user asks how to receive delivery / read receipts.
 
-For ad-hoc polling ("show me the last 10 messages"), use `wassenger-inbox` / `wassenger-messaging` instead — webhooks are for *production* automation.
+For ad-hoc polling ("show me the last 10 messages"), use `wassenger-inbox` / `wassenger-messaging` instead — webhooks are for _production_ automation.
 
 ## Prerequisites
 
@@ -41,18 +41,18 @@ The MCP server does **not** expose subscribing to webhooks — webhook managemen
 
 Common event types (full list at https://app.wassenger.com/docs/#tag/Webhooks):
 
-| Event | Fires when |
-|---|---|
-| `message:in:new` | Inbound message received |
-| `message:out:sent` | Outbound message sent successfully |
-| `message:out:delivered` | Delivery receipt from WhatsApp |
-| `message:out:read` | Read receipt |
-| `message:out:failed` | Send failed (number invalid, blocked, quota, …) |
-| `chat:assigned` | Chat assigned to a team member |
-| `chat:status:changed` | Chat status changed (active/pending/resolved/archived) |
-| `device:status:changed` | Device connection state changed |
-| `campaign:started` / `campaign:finished` | Campaign lifecycle |
-| `contact:created` / `contact:updated` | Contact synced into Wassenger |
+| Event                                    | Fires when                                             |
+| ---------------------------------------- | ------------------------------------------------------ |
+| `message:in:new`                         | Inbound message received                               |
+| `message:out:sent`                       | Outbound message sent successfully                     |
+| `message:out:delivered`                  | Delivery receipt from WhatsApp                         |
+| `message:out:read`                       | Read receipt                                           |
+| `message:out:failed`                     | Send failed (number invalid, blocked, quota, …)        |
+| `chat:assigned`                          | Chat assigned to a team member                         |
+| `chat:status:changed`                    | Chat status changed (active/pending/resolved/archived) |
+| `device:status:changed`                  | Device connection state changed                        |
+| `campaign:started` / `campaign:finished` | Campaign lifecycle                                     |
+| `contact:created` / `contact:updated`    | Contact synced into Wassenger                          |
 
 Subscribe to the **least** you need — every event you don't filter is bandwidth and a retry-storm risk.
 
@@ -84,20 +84,14 @@ Every delivery includes `X-Wassenger-Signature: sha256=<hex>`. Compute HMAC-SHA-
 Node.js example:
 
 ```js
-import crypto from 'node:crypto'
+import crypto from 'node:crypto';
 
-function verifyWassengerWebhook (rawBody, signatureHeader, secret) {
-  if (!signatureHeader?.startsWith('sha256=')) return false
-  const expected = signatureHeader.slice('sha256='.length)
-  const actual = crypto
-    .createHmac('sha256', secret)
-    .update(rawBody)
-    .digest('hex')
+function verifyWassengerWebhook(rawBody, signatureHeader, secret) {
+  if (!signatureHeader?.startsWith('sha256=')) return false;
+  const expected = signatureHeader.slice('sha256='.length);
+  const actual = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   // Constant-time compare
-  return crypto.timingSafeEqual(
-    Buffer.from(expected, 'hex'),
-    Buffer.from(actual, 'hex')
-  )
+  return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(actual, 'hex'));
 }
 ```
 

@@ -5,23 +5,23 @@ description: "Use this skill to QA-verify Excel workbooks before delivery — wo
 
 > **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — the underlying tool/CLI commands are usually cross-platform, but the surrounding shell syntax is not. Translate it to PowerShell before running:
 >
-> | bash (macOS / Linux) | PowerShell (Windows) |
-> | --- | --- |
-> | `a && b` | run as two steps, or `a; if ($?) { b }` |
-> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool |
-> | `VAR=$(cmd)` … `$VAR` | `$VAR = cmd` … `$VAR` |
-> | `cmd > /dev/null` | `cmd > $null` |
-> | `… \| grep PAT` | `… \| Select-String PAT` |
-> | `… \| jq …` | `… \| ConvertFrom-Json`, then read the fields |
-> | `python3 x.py` | `python x.py` (or `py x.py`) |
-> | `~/dir`, `/tmp` | `$env:USERPROFILE\dir`, `$env:TEMP` |
-> | `cp` / `mkdir -p` / `rm -rf` | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
+> | bash (macOS / Linux)              | PowerShell (Windows)                                                                |
+> | --------------------------------- | ----------------------------------------------------------------------------------- |
+> | `a && b`                          | run as two steps, or `a; if ($?) { b }`                                             |
+> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool                 |
+> | `VAR=$(cmd)` … `$VAR`             | `$VAR = cmd` … `$VAR`                                                               |
+> | `cmd > /dev/null`                 | `cmd > $null`                                                                       |
+> | `… \| grep PAT`                   | `… \| Select-String PAT`                                                            |
+> | `… \| jq …`                       | `… \| ConvertFrom-Json`, then read the fields                                       |
+> | `python3 x.py`                    | `python x.py` (or `py x.py`)                                                        |
+> | `~/dir`, `/tmp`                   | `$env:USERPROFILE\dir`, `$env:TEMP`                                                 |
+> | `cp` / `mkdir -p` / `rm -rf`      | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
 >
 > If a command has no obvious Windows equivalent, prefer the built-in file/HTTP tools over raw shell.
 
 # Spreadsheet QA (scene-layer on officecli-xlsx)
 
-This skill is the **verification layer** of every workbook this agent produces — or QA's the user's workbook on request. Its stance is adversarial: **assume there are problems, find them, and prove the verdict.** The special danger of QA work is *claiming* health without *showing* evidence — a QA that says "looks good" without a single query result is theater, and it violates the core rule of not asserting validation that never happened.
+This skill is the **verification layer** of every workbook this agent produces — or QA's the user's workbook on request. Its stance is adversarial: **assume there are problems, find them, and prove the verdict.** The special danger of QA work is _claiming_ health without _showing_ evidence — a QA that says "looks good" without a single query result is theater, and it violates the core rule of not asserting validation that never happened.
 
 The engine mechanics come from `officecli-xlsx`. For a deeper structural audit (source-of-truth, dependencies, risk inventory) escalate to `spreadsheet-audit`; for the final go/no-go status word, hand off to `delivery-gate`. This skill does the mechanical verification: structure, formulas, references, errors, formats, validations, conditional formatting, charts, totals, edge cases.
 
@@ -106,18 +106,18 @@ officecli add "$FILE" / --type sheet --prop name=QA
 
 Mandatory inventory (adapt names per workbook type):
 
-| # | Check | Method basis |
-|---|---|---|
-| Q1 | Expected sheets exist (abas esperadas) | `info --json` sheet list vs contract |
-| Q2 | No formula errors | errors sweep = 0 |
-| Q3 | Every total re-derives from detail | independent SUM vs stated value == 0 |
-| Q4 | No unintended hardcoded computed cells | hardcoded-number query on computed regions == expected |
-| Q5 | Validations present on input columns where promised | validation enumeration |
-| Q6 | Conditional formatting present on signal cells | CF enumeration (count + rule scan) |
-| Q7 | Charts exist and reference data ranges (not fixed literals) | chart enumeration |
-| Q8 | Formats: dates/percent/currency per convention | format scan on key columns |
-| Q9 | Edge cases pass | edge-case mini-suite (below) |
-| Q10 | No duplicated source-of-truth structure | structural scan (suspicious duplicated blocks) |
+| #   | Check                                                       | Method basis                                           |
+| --- | ----------------------------------------------------------- | ------------------------------------------------------ |
+| Q1  | Expected sheets exist (abas esperadas)                      | `info --json` sheet list vs contract                   |
+| Q2  | No formula errors                                           | errors sweep = 0                                       |
+| Q3  | Every total re-derives from detail                          | independent SUM vs stated value == 0                   |
+| Q4  | No unintended hardcoded computed cells                      | hardcoded-number query on computed regions == expected |
+| Q5  | Validations present on input columns where promised         | validation enumeration                                 |
+| Q6  | Conditional formatting present on signal cells              | CF enumeration (count + rule scan)                     |
+| Q7  | Charts exist and reference data ranges (not fixed literals) | chart enumeration                                      |
+| Q8  | Formats: dates/percent/currency per convention              | format scan on key columns                             |
+| Q9  | Edge cases pass                                             | edge-case mini-suite (below)                           |
+| Q10 | No duplicated source-of-truth structure                     | structural scan (suspicious duplicated blocks)         |
 
 ### Phase 4 — Edge-case mini-suite (Q9 mechanics)
 
@@ -155,7 +155,7 @@ Deliver: the `QA` sheet (checks + method + result + evidence) and a 5-line summa
 
 ## Honest limits
 
-- QA is mechanical + structural: it proves formulas compute, totals reconcile, and structure matches contract. It cannot certify that the numbers are *business-correct* — that is domain validation (production-control, construction-cost-control, etc.) — say so out loud.
+- QA is mechanical + structural: it proves formulas compute, totals reconcile, and structure matches contract. It cannot certify that the numbers are _business-correct_ — that is domain validation (production-control, construction-cost-control, etc.) — say so out loud.
 - Metadata that the CLI cannot read (some chart internals, some CF rules) is enumerated where possible; what can't be read is NOT VERIFIED, not assumed clean.
 - Sampled spot-checks are explicitly labeled; a targeted QA never presents itself as full QA.
 - The verdict covers this file state at this time — `TODAY()`-driven workbooks re-evaluate at open (note this for date-sensitive workbooks).

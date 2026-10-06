@@ -27,13 +27,18 @@ const require_ = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VAULT = path.join(ROOT, '.native-abi');
 const TARGET_REL = path.join(
-  'node_modules', '.bun',
-  'better-sqlite3@12.8.0', 'node_modules', 'better-sqlite3',
-  'build', 'Release', 'better_sqlite3.node'
+  'node_modules',
+  '.bun',
+  'better-sqlite3@12.8.0',
+  'node_modules',
+  'better-sqlite3',
+  'build',
+  'Release',
+  'better_sqlite3.node'
 );
 const TARGET = path.join(ROOT, TARGET_REL);
 
-const NODE_ABI = 137;   // Node 24 â€” vitest e scripts
+const NODE_ABI = 137; // Node 24 â€” vitest e scripts
 const ELECTRON_ABI = 136; // Electron 37 â€” app empacotado e npm run dev
 
 const VARIANTS = {
@@ -57,10 +62,16 @@ function detectInstalled() {
 
 const VAULT_SOURCES = {
   node: [
-    path.join(ROOT, 'node_modules/.bun/better-sqlite3@12.8.0/node_modules/better-sqlite3/build/Release/better_sqlite3.node.abi137-node'),
+    path.join(
+      ROOT,
+      'node_modules/.bun/better-sqlite3@12.8.0/node_modules/better-sqlite3/build/Release/better_sqlite3.node.abi137-node'
+    ),
   ],
   electron: [
-    path.join(ROOT, 'out/win-unpacked/resources/app.asar.unpacked/node_modules/better-sqlite3/build/Release/better_sqlite3.node'),
+    path.join(
+      ROOT,
+      'out/win-unpacked/resources/app.asar.unpacked/node_modules/better-sqlite3/build/Release/better_sqlite3.node'
+    ),
   ],
 };
 

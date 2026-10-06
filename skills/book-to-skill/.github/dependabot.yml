@@ -2,7 +2,7 @@ version: 2
 updates:
   # Keep GitHub Actions fresh (and enables pinning actions to SHAs later).
   - package-ecosystem: github-actions
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
     commit-message:
@@ -10,16 +10,16 @@ updates:
     # One PR per week with all action bumps grouped, instead of one PR per action.
     groups:
       github-actions:
-        patterns: ["*"]
+        patterns: ['*']
 
   # Python dependencies (the pyproject extras: pdf/epub/docx/rtf/technical).
   # Surfaces security alerts and version bumps for the optional extractors.
   - package-ecosystem: pip
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
     commit-message:
       prefix: deps
     groups:
       python:
-        patterns: ["*"]
+        patterns: ['*']

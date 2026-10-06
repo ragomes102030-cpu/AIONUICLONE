@@ -4,9 +4,9 @@ description: Reference for the Wassenger Model Context Protocol (MCP) server, sc
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: setup
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger MCP

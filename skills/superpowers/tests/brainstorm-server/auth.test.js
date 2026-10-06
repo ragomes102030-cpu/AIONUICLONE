@@ -30,7 +30,7 @@ const EXPECTED_SECURITY_HEADERS = {
   'cache-control': 'no-store',
   'x-frame-options': 'DENY',
   'content-security-policy': "frame-ancestors 'none'",
-  'cross-origin-resource-policy': 'same-origin'
+  'cross-origin-resource-policy': 'same-origin',
 };
 
 function cleanup() {
@@ -38,7 +38,7 @@ function cleanup() {
 }
 
 async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // Raw HTTP GET with optional key query and Cookie header.
@@ -47,11 +47,13 @@ function get(pathname, { key, cookie } = {}) {
   const headers = {};
   if (cookie) headers['Cookie'] = cookie;
   return new Promise((resolve, reject) => {
-    http.get(url, { headers }, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: data }));
-    }).on('error', reject);
+    http
+      .get(url, { headers }, (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: data }));
+      })
+      .on('error', reject);
   });
 }
 
@@ -65,7 +67,12 @@ function wsConnect({ key, cookie, origin } = {}) {
   const ws = new WebSocket(url, opts);
   return new Promise((resolve) => {
     let settled = false;
-    const done = (outcome) => { if (!settled) { settled = true; resolve({ outcome, ws }); } };
+    const done = (outcome) => {
+      if (!settled) {
+        settled = true;
+        resolve({ outcome, ws });
+      }
+    };
     ws.on('open', () => done('opened'));
     ws.on('error', () => done('rejected'));
     ws.on('close', () => done('rejected'));
@@ -75,7 +82,7 @@ function wsConnect({ key, cookie, origin } = {}) {
 
 function startServer() {
   return spawn('node', [SERVER_PATH], {
-    env: { ...process.env, BRAINSTORM_PORT: TEST_PORT, BRAINSTORM_DIR: TEST_DIR, BRAINSTORM_TOKEN: TOKEN }
+    env: { ...process.env, BRAINSTORM_PORT: TEST_PORT, BRAINSTORM_DIR: TEST_DIR, BRAINSTORM_TOKEN: TOKEN },
   });
 }
 
@@ -89,26 +96,36 @@ function runBootstrapScript(html, sessionStorage) {
   const match = html.match(/<script>\n([\s\S]*?)\n<\/script>/);
   assert(match, 'bootstrap response should contain a script block');
   const replacements = [];
-  const location = { replace(url) { replacements.push(url); } };
+  const location = {
+    replace(url) {
+      replacements.push(url);
+    },
+  };
   new Function('sessionStorage', 'location', match[1])(sessionStorage, location);
   return replacements;
 }
 
 async function waitForServer(server) {
-  let stdout = '', stderr = '';
+  let stdout = '',
+    stderr = '';
   return new Promise((resolve, reject) => {
     server.stdout.on('data', (d) => {
       stdout += d.toString();
       if (stdout.includes('server-started')) resolve({ stdout });
     });
-    server.stderr.on('data', (d) => { stderr += d.toString(); });
+    server.stderr.on('data', (d) => {
+      stderr += d.toString();
+    });
     server.on('error', reject);
     setTimeout(() => reject(new Error(`Server didn't start. stderr: ${stderr}`)), 5000);
   });
 }
 
 function serverStartedMessage(out) {
-  const line = out.trim().split('\n').find(l => l.includes('server-started'));
+  const line = out
+    .trim()
+    .split('\n')
+    .find((l) => l.includes('server-started'));
   assert(line, 'server-started JSON should be present');
   return JSON.parse(line);
 }
@@ -131,12 +148,22 @@ async function runTests() {
 
   const server = startServer();
   let stdoutAccum = '';
-  server.stdout.on('data', (d) => { stdoutAccum += d.toString(); });
+  server.stdout.on('data', (d) => {
+    stdoutAccum += d.toString();
+  });
 
-  let passed = 0, failed = 0;
+  let passed = 0,
+    failed = 0;
   async function test(name, fn) {
-    try { await fn(); console.log(`  PASS: ${name}`); passed++; }
-    catch (e) { console.log(`  FAIL: ${name}`); console.log(`    ${e.message}`); failed++; }
+    try {
+      await fn();
+      console.log(`  PASS: ${name}`);
+      passed++;
+    } catch (e) {
+      console.log(`  FAIL: ${name}`);
+      console.log(`    ${e.message}`);
+      failed++;
+    }
   }
 
   try {
@@ -193,7 +220,9 @@ async function runTests() {
       let replacements;
       assert.doesNotThrow(() => {
         replacements = runBootstrapScript(res.body, {
-        setItem() { throw new Error('storage blocked'); }
+          setItem() {
+            throw new Error('storage blocked');
+          },
         });
       });
       assert.deepStrictEqual(replacements, ['/']);
@@ -262,7 +291,7 @@ async function runTests() {
     await test('WS upgrade with valid cookie and same-origin Origin opens', async () => {
       const { outcome, ws } = await wsConnect({
         cookie: `${COOKIE_NAME}=${TOKEN}`,
-        origin: `http://localhost:${TEST_PORT}`
+        origin: `http://localhost:${TEST_PORT}`,
       });
       ws.close();
       assert.strictEqual(outcome, 'opened');
@@ -274,7 +303,7 @@ async function runTests() {
 
       const { outcome, ws } = await wsConnect({
         cookie: `${COOKIE_NAME}=${TOKEN}`,
-        origin: 'http://localhost:9999'
+        origin: 'http://localhost:9999',
       });
       if (outcome === 'opened') {
         ws.send(JSON.stringify({ type: 'choice', choice: 'attacker-injected', text: 'local attacker probe' }));
@@ -309,4 +338,7 @@ async function runTests() {
   }
 }
 
-runTests().catch(err => { console.error('Test failed:', err); process.exit(1); });
+runTests().catch((err) => {
+  console.error('Test failed:', err);
+  process.exit(1);
+});

@@ -4,16 +4,16 @@ description: Manage WhatsApp contacts in Wassenger on the official WhatsApp Busi
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Contacts
 
 The audience side of WhatsApp: who you can reach, what you know about them, and the opt-in trail behind each one. Scoped to WABA — for the WABA-vs-QR rationale see `wassenger-setup`.
 
-> **The Wassenger MCP has no general contacts tool.** There is no `get_contacts`, `search_contacts`, `get_contact_details`, or `export_contacts`. Standalone contact CRUD, search, segmentation, import, and export are done against the **REST `/contacts` API** (direct HTTPS calls with a `Token: <API_KEY>` header — clearly labelled REST throughout the recipes below). The MCP only touches contact data three indirect ways: `search_whatsapp_chats_by_name` (find a chat and its embedded `chat.contact`), `manage_whatsapp_campaign_contacts` (recipients *inside a campaign*), and `verifyWhatsAppNumberExists` (is this number on WhatsApp).
+> **The Wassenger MCP has no general contacts tool.** There is no `get_contacts`, `search_contacts`, `get_contact_details`, or `export_contacts`. Standalone contact CRUD, search, segmentation, import, and export are done against the **REST `/contacts` API** (direct HTTPS calls with a `Token: <API_KEY>` header — clearly labelled REST throughout the recipes below). The MCP only touches contact data three indirect ways: `search_whatsapp_chats_by_name` (find a chat and its embedded `chat.contact`), `manage_whatsapp_campaign_contacts` (recipients _inside a campaign_), and `verifyWhatsAppNumberExists` (is this number on WhatsApp).
 
 ## When to use
 
@@ -81,12 +81,12 @@ Batch in chunks of ~50 to avoid rate limits. Idempotency: always search by phone
 
 Common CRM patterns:
 
-| CRM | Recommended bridge |
-|---|---|
-| HubSpot | Workflow → Webhook to your function, or use `n8n-wassenger` |
-| Pipedrive | App webhooks on contact create/update |
-| Salesforce | Outbound Message → middleware → Wassenger REST |
-| Attio | Webhook automations |
+| CRM                                   | Recommended bridge                                          |
+| ------------------------------------- | ----------------------------------------------------------- |
+| HubSpot                               | Workflow → Webhook to your function, or use `n8n-wassenger` |
+| Pipedrive                             | App webhooks on contact create/update                       |
+| Salesforce                            | Outbound Message → middleware → Wassenger REST              |
+| Attio                                 | Webhook automations                                         |
 | Custom (Postgres / Notion / Airtable) | Scheduled job (cron / Inngest) that reads delta and patches |
 
 ### Recipe 3 — Segment & export
@@ -165,8 +165,8 @@ Keep custom fields **small and meaningful** — every contact carries them, so e
 ## Anti-patterns
 
 - **Mass-importing scraped or purchased phone lists.** Fastest way to a WABA suspension. Build opt-in from day one.
-- **No opt-in trail.** If you can't show *when* and *where* each contact opted in, you cannot defensibly run Marketing campaigns. Capture it at the source (form, checkout, store).
-- **Verifying every contact on every send.** `verifyWhatsAppNumberExists` is for *first* contact. After that, trust your DB until you see a failure.
+- **No opt-in trail.** If you can't show _when_ and _where_ each contact opted in, you cannot defensibly run Marketing campaigns. Capture it at the source (form, checkout, store).
+- **Verifying every contact on every send.** `verifyWhatsAppNumberExists` is for _first_ contact. After that, trust your DB until you see a failure.
 - **Mixing phone formats.** Always store E.164 (`+34600111222`). Mixed formats (`0034600111222`, `600111222`, `+34 600 111 222`) cause silent lookup misses.
 - **Custom fields as a junk drawer.** If a field is only used by one campaign once, don't persist it as a contact attribute — keep it on the campaign side.
 - **Forgetting to mirror opt-out.** When a contact opts out (via STOP keyword — see `wassenger-marketing`), update the contact's `optedOut` field everywhere, not just on Wassenger.

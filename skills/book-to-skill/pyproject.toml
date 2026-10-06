@@ -21,15 +21,15 @@ docx = ["python-docx"]
 rtf = ["striprtf"]
 technical = ["docling"]
 all = [
-    "trafilatura",
-    "ebooklib",
-    "beautifulsoup4",
-    "pdf-inspector>=1.15,<2",
-    "pypdf",
-    "pdfminer.six",
-    "python-docx",
-    "striprtf",
-    "docling"
+  "trafilatura",
+  "ebooklib",
+  "beautifulsoup4",
+  "pdf-inspector>=1.15,<2",
+  "pypdf",
+  "pdfminer.six",
+  "python-docx",
+  "striprtf",
+  "docling",
 ]
 
 

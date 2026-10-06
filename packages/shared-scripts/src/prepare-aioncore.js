@@ -453,10 +453,7 @@ function resolveLocalAioncoreBuild(projectRoot, binaryName) {
     const resolved = path.resolve(explicit);
     return fs.existsSync(resolved) ? resolved : null;
   }
-  const siblings = [
-    path.resolve(projectRoot, '..', 'AionCore'),
-    path.resolve(projectRoot, '..', '..', 'AionCore'),
-  ];
+  const siblings = [path.resolve(projectRoot, '..', 'AionCore'), path.resolve(projectRoot, '..', '..', 'AionCore')];
   for (const dir of siblings) {
     for (const profile of ['release', 'debug']) {
       const candidate = path.join(dir, 'target', profile, binaryName);

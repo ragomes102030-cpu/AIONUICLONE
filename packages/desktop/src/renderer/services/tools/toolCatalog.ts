@@ -77,7 +77,11 @@ export function getToolSelectionId(serverId: string, toolName: string): string {
 
 function getConnectionKind(server: IMcpServer): ToolConnectionKind {
   if (server.transport.type === 'stdio') return 'local-mcp';
-  if (server.transport.type === 'http' || server.transport.type === 'sse' || server.transport.type === 'streamable_http') {
+  if (
+    server.transport.type === 'http' ||
+    server.transport.type === 'sse' ||
+    server.transport.type === 'streamable_http'
+  ) {
     return 'remote-mcp';
   }
   return 'unknown';
@@ -115,7 +119,11 @@ function getToolAvailability(status: ToolIntegrationStatus): ToolAvailability {
   return 'unknown';
 }
 
-function normalizeTool(server: Pick<IMcpServer, 'id' | 'enabled'>, tool: IMcpTool, status: ToolIntegrationStatus): ToolIntegration['tools'][number] {
+function normalizeTool(
+  server: Pick<IMcpServer, 'id' | 'enabled'>,
+  tool: IMcpTool,
+  status: ToolIntegrationStatus
+): ToolIntegration['tools'][number] {
   return {
     id: getToolSelectionId(server.id, tool.name),
     name: tool.name,
@@ -162,7 +170,9 @@ export function createToolCatalog(
   const registry = new ToolIntegrationRegistry();
   registry.registerSnapshot({
     source: 'backend-mcp',
-    integrations: backendServers.map((server) => normalizeMcpToolIntegration(server, server.builtin ? 'builtin-mcp' : 'backend-mcp')),
+    integrations: backendServers.map((server) =>
+      normalizeMcpToolIntegration(server, server.builtin ? 'builtin-mcp' : 'backend-mcp')
+    ),
   });
   registry.registerSnapshot({
     source: 'extension-mcp',

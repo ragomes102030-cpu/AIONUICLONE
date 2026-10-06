@@ -31,6 +31,7 @@
 ## File Structure
 
 **superpowers repo:**
+
 - Create: `skills/subagent-driven-development/re-review-prompt.md` — scoped re-review contract (Task 1)
 - Modify: `skills/subagent-driven-development/implementer-prompt.md` — resume semantics (Task 2)
 - Modify: `skills/subagent-driven-development/task-reviewer-prompt.md` — initial review only (Task 2)
@@ -38,6 +39,7 @@
 - Modify: `skills/subagent-driven-development/SKILL.md` — full restructure (Task 3)
 
 **superpowers-evals repo (`evals/`):**
+
 - Modify: `src/setup-helpers/sdd-fixtures.ts` — add `scaffoldSddMidloopParked`, `scaffoldSddMidloopStructural` (Task 4)
 - Modify: `src/setup-helpers/registry.ts` — register both helpers (Task 4)
 - Modify: `test/setup-helpers-sdd.test.ts` — unit tests for both helpers (Task 4)
@@ -51,9 +53,11 @@
 ### Task 1: Create the scoped re-review template
 
 **Files:**
+
 - Create: `skills/subagent-driven-development/re-review-prompt.md`
 
 **Interfaces:**
+
 - Produces: template placeholders `[MODEL]`, `[BRIEF_FILE]`, `[REPORT_FILE]`, `[FINDINGS]`, `[FIX_BASE_SHA]`, `[HEAD_SHA]`, `[DIFF_FILE]` — Task 3's SKILL.md step 4 links this file and instructs the controller to fill exactly these.
 
 - [ ] **Step 1: Write the file with exactly this content**
@@ -153,6 +157,7 @@ Subagent (general-purpose):
 ```
 
 **Placeholders:**
+
 - `[MODEL]` — REQUIRED: reviewer model per SKILL.md Model Selection; scoped
   re-reviews of small fix diffs take a cheap-to-mid tier
 - `[BRIEF_FILE]` — the task brief file (same file the implementer worked from)
@@ -187,11 +192,13 @@ git commit -m "feat(sdd): add scoped re-review prompt template"
 ### Task 2: Align the implementer and task-reviewer templates and the Codex reference with resume semantics
 
 **Files:**
+
 - Modify: `skills/subagent-driven-development/implementer-prompt.md` (the "After Review Findings" section)
 - Modify: `skills/subagent-driven-development/task-reviewer-prompt.md` (trailing paragraph)
 - Modify: `skills/using-superpowers/references/codex-tools.md` (subagent close timing)
 
 **Interfaces:**
+
 - Consumes: `re-review-prompt.md` exists (Task 1).
 - Produces: the implementer contract Task 3's fix loop cites ("fix, re-run covering tests, append to your report file, return the short contract").
 
@@ -266,15 +273,17 @@ git commit -m "feat(sdd): align templates and codex reference with resume-based 
 ### Task 3: Restructure SKILL.md by lifecycle with the fix loop and rationalization table
 
 **Files:**
+
 - Modify: `skills/subagent-driven-development/SKILL.md` (full-file replacement; new text below)
 
 **Interfaces:**
+
 - Consumes: all three templates (Tasks 1–2); `scripts/task-brief`, `scripts/review-package`, `scripts/sdd-workspace` (unchanged).
 - Produces: the ledger line formats in Global Constraints (scenarios grep them); section names `Setup`, `The Task Loop`, `Final Review`, `Common Rationalizations`.
 
 - [ ] **Step 1: Replace the entire SKILL.md body with exactly this content**
 
-`````markdown
+````markdown
 ---
 name: subagent-driven-development
 description: Use when executing implementation plans with independent tasks in the current session
@@ -314,6 +323,7 @@ digraph when_to_use {
 ```
 
 **vs. Executing Plans (parallel session):**
+
 - Same session (no context switch)
 - Fresh subagent per task (no context pollution)
 - Review after each task (spec compliance + code quality), broad review at the end
@@ -453,6 +463,7 @@ implementation is transcription plus testing: use the cheapest tier for
 that implementer. Single-file mechanical fixes also take the cheapest tier.
 
 **Task complexity signals (implementation tasks):**
+
 - Touches 1-2 files with a complete spec → cheap model
 - Touches multiple files with integration concerns → standard model
 - Requires design judgment or broad codebase understanding → most capable model
@@ -507,6 +518,7 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 **NEEDS_CONTEXT:** The implementer needs information that wasn't provided. Provide the missing context and re-dispatch.
 
 **BLOCKED:** The implementer cannot complete the task. Assess the blocker:
+
 1. If it's a context problem, provide more context and re-dispatch with the same model
 2. If the task requires more reasoning, re-dispatch with a more capable model
 3. If the task is too large, break it into smaller pieces
@@ -685,16 +697,16 @@ Use superpowers:finishing-a-development-branch.
 
 ## Common Rationalizations
 
-| Excuse | Reality |
-|--------|---------|
-| "Close enough on spec compliance" | Reviewer found spec gaps = not done. Fix or hit the cap and adjudicate — those are the only exits. |
-| "I'll fix it myself, dispatching is overhead" | Controller fixes pollute your context and skip review. Resume the implementer. |
-| "One more round will converge" | Past the cap, rounds don't converge — the failure is structural. Adjudicate and route. |
-| "The reviewer will just find something new anyway" | Scoped re-reviews verify fixes; they cannot wander. New findings on untouched code go to the ledger, not the loop. |
-| "This finding is obviously wrong, I'll drop it" | You adjudicate only at the cap, and every ruling is a ledger entry. Silent discards are forbidden. |
-| "The fix was small, skip the re-review" | Unreviewed fixes are how regressions land. Every round ends with a scoped re-review. |
-| "Reviews slow the loop down" | The loop without reviews is just unverified churn. Reviews are the loop's brakes and steering. |
-| "Ledger bookkeeping is overhead" | The ledger is what survives compaction. Controllers without one have re-dispatched entire completed task sequences. |
+| Excuse                                             | Reality                                                                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| "Close enough on spec compliance"                  | Reviewer found spec gaps = not done. Fix or hit the cap and adjudicate — those are the only exits.                  |
+| "I'll fix it myself, dispatching is overhead"      | Controller fixes pollute your context and skip review. Resume the implementer.                                      |
+| "One more round will converge"                     | Past the cap, rounds don't converge — the failure is structural. Adjudicate and route.                              |
+| "The reviewer will just find something new anyway" | Scoped re-reviews verify fixes; they cannot wander. New findings on untouched code go to the ledger, not the loop.  |
+| "This finding is obviously wrong, I'll drop it"    | You adjudicate only at the cap, and every ruling is a ledger entry. Silent discards are forbidden.                  |
+| "The fix was small, skip the re-review"            | Unreviewed fixes are how regressions land. Every round ends with a scoped re-review.                                |
+| "Reviews slow the loop down"                       | The loop without reviews is just unverified churn. Reviews are the loop's brakes and steering.                      |
+| "Ledger bookkeeping is overhead"                   | The ledger is what survives compaction. Controllers without one have re-dispatched entire completed task sequences. |
 
 ## Example Workflow
 
@@ -757,7 +769,7 @@ Final reviewer: All requirements met. Deferred minors triaged: none block merge.
 
 Done! Using superpowers:finishing-a-development-branch.
 ```
-`````
+````
 
 - [ ] **Step 2: Verify the move map — every row below must hold**
 
@@ -766,41 +778,41 @@ new location (allowing only the list-marker/indentation changes noted).
 "Reworded" rows show the only permitted rewordings. Check each row against
 the new file; fix any drift toward paraphrase.
 
-| Current SKILL.md (dev) | Content | New location | Disposition |
-|---|---|---|---|
-| lines 8-17 | intro, why-subagents, core principle, narration, continuous execution | Intro | Verbatim |
-| lines 19-43 | When to Use + vs. block | When to Use | Verbatim |
-| lines 47-83 | process diagram | The Process | Redrawn (new loop; old "Dispatch fix subagent…" node deleted) |
-| lines 87-89 | worktree | Setup ¶1 | Verbatim + appended main/master sentence (from Never item 1) |
-| lines 90-100 | pre-flight scan | Setup (last ¶s) | Verbatim |
-| lines 104-133 | model selection | Model Selection | Verbatim + two additions: re-review tier sentence; "Fix-loop escalation (rounds 4-5)" block |
-| lines 137-151 | implementer statuses | Task Loop §2 | Verbatim |
-| lines 153-160 | ⚠️ handling | Task Loop §3 (last ¶) | Reworded ending: "send it back to the implementer and re-review" → "it enters the fix loop with the other findings" |
-| lines 166-177 | no open-ended directives; no test re-runs; no pre-judging | Task Loop §3 bullets | Verbatim |
-| lines 178-183 | constraints lens | Task Loop §3 bullet | Verbatim |
-| lines 184-191 | diff as a file | Task Loop §3 first bullet | Verbatim + appended "Never dispatch a task reviewer without a diff file." (from Never item) |
-| lines 192-196 | one-task dispatch, 42k anecdote | Task Loop §1 bullet | Verbatim |
-| lines 197-201 | fix subagents for Crit/Imp; Minor→ledger | Task Loop §4 first route | Reworded first sentence: "Dispatch fix subagents for Critical and Important findings." deleted (superseded by the loop); "Record Minor findings… silent discard." kept verbatim + appended "Minor findings never enter the loop." + ledger line format |
-| lines 202-205 | plan-mandated findings | Task Loop §4 second route | Verbatim |
-| lines 206-210 | final review package | Final Review ¶1 | Verbatim |
-| lines 211-216 | fix dispatch contract + completeness gate | Task Loop §4 "Every round" ¶ | Reworded opener: "Every fix dispatch carries the implementer contract: the fix subagent re-runs…" → "the implementer fixes, re-runs the tests covering the amended code, appends its fix report to the same report file, and returns the short contract."; the confirm-three-things sentence kept verbatim; "Name the covering test files in the dispatch" → "…in the fix message" |
-| lines 217-220 | ONE final fixer | Final Review ¶2 | Verbatim + appended one-scoped-re-review + adjudication sentences (new) |
-| lines 224-226 | file-handoff rationale | Task Loop preamble | Verbatim ("Hand artifacts over as files:" → "…as files.") |
-| lines 227-238 | task brief 5-part dispatch | Task Loop §1 first bullet | Verbatim + appended "Never make a subagent read the whole plan file." (from Never item) |
-| lines 239-242 | report file | Task Loop §1 second bullet | Verbatim |
-| lines 243-245 | reviewer inputs | Task Loop §3 second bullet | Verbatim |
-| lines 246-247 | fix appends to report file | Task Loop §4 "Every round" ¶ | Superseded by the reworded contract (row for 211-216); no separate sentence |
-| lines 251-254 | compaction rationale | Setup ¶2 | Verbatim |
-| lines 255-259 | ledger check | Setup bullet 1 | Reworded: "Tasks listed there as complete are DONE" → "Tasks with a `Task <N>: complete` line are DONE"; appended mid-loop resume sentence (new) |
-| lines 260-262 | append on clean | Task Loop §5 | Reworded to include the parked-completion variant; "in the same message as your other bookkeeping" kept verbatim |
-| lines 263-265 | recovery map | Setup bullet 2 | Verbatim |
-| lines 266-267 | git clean warning | Setup bullet 3 | Verbatim |
-| lines 271-273 | template list | dissolved: links at §1, §3, §4, Final Review | Restated as links |
-| lines 277-336 | example workflow | Example Workflow | Rewritten (shows resume round + ledger lines) |
-| lines 340-360 | Never list | distributed: items 1→Setup; 2,8,11,12→§3; 4,5,6→§1; 13→§5; 14→Setup bullet 1; 3,7(answer-questions)→§2; 9,10→rationalization rows | Verbatim where moved as rules; excuse-shaped items converted to table rows |
-| lines 362-366 | "If subagent asks questions" | Task Loop §2 last ¶ | Verbatim (reflowed into one sentence) |
-| lines 367-371 | "If reviewer finds issues: Implementer (same subagent) fixes them…" | Task Loop §4 | Superseded — this is the contradiction the redesign resolves; the loop's rounds 1-3 ARE this policy, now specified |
-| lines 372-375 | "If subagent fails task: Dispatch fix subagent…" | Task Loop §4 last sentence before breaker | Reworded: "Don't try to fix manually (context pollution)" → "Never fix findings yourself in the controller session — your context stays clean for coordination, and controller fixes skip review." |
+| Current SKILL.md (dev) | Content                                                               | New location                                                                                                                      | Disposition                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| lines 8-17             | intro, why-subagents, core principle, narration, continuous execution | Intro                                                                                                                             | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 19-43            | When to Use + vs. block                                               | When to Use                                                                                                                       | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 47-83            | process diagram                                                       | The Process                                                                                                                       | Redrawn (new loop; old "Dispatch fix subagent…" node deleted)                                                                                                                                                                                                                                                                                                                      |
+| lines 87-89            | worktree                                                              | Setup ¶1                                                                                                                          | Verbatim + appended main/master sentence (from Never item 1)                                                                                                                                                                                                                                                                                                                       |
+| lines 90-100           | pre-flight scan                                                       | Setup (last ¶s)                                                                                                                   | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 104-133          | model selection                                                       | Model Selection                                                                                                                   | Verbatim + two additions: re-review tier sentence; "Fix-loop escalation (rounds 4-5)" block                                                                                                                                                                                                                                                                                        |
+| lines 137-151          | implementer statuses                                                  | Task Loop §2                                                                                                                      | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 153-160          | ⚠️ handling                                                           | Task Loop §3 (last ¶)                                                                                                             | Reworded ending: "send it back to the implementer and re-review" → "it enters the fix loop with the other findings"                                                                                                                                                                                                                                                                |
+| lines 166-177          | no open-ended directives; no test re-runs; no pre-judging             | Task Loop §3 bullets                                                                                                              | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 178-183          | constraints lens                                                      | Task Loop §3 bullet                                                                                                               | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 184-191          | diff as a file                                                        | Task Loop §3 first bullet                                                                                                         | Verbatim + appended "Never dispatch a task reviewer without a diff file." (from Never item)                                                                                                                                                                                                                                                                                        |
+| lines 192-196          | one-task dispatch, 42k anecdote                                       | Task Loop §1 bullet                                                                                                               | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 197-201          | fix subagents for Crit/Imp; Minor→ledger                              | Task Loop §4 first route                                                                                                          | Reworded first sentence: "Dispatch fix subagents for Critical and Important findings." deleted (superseded by the loop); "Record Minor findings… silent discard." kept verbatim + appended "Minor findings never enter the loop." + ledger line format                                                                                                                             |
+| lines 202-205          | plan-mandated findings                                                | Task Loop §4 second route                                                                                                         | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 206-210          | final review package                                                  | Final Review ¶1                                                                                                                   | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 211-216          | fix dispatch contract + completeness gate                             | Task Loop §4 "Every round" ¶                                                                                                      | Reworded opener: "Every fix dispatch carries the implementer contract: the fix subagent re-runs…" → "the implementer fixes, re-runs the tests covering the amended code, appends its fix report to the same report file, and returns the short contract."; the confirm-three-things sentence kept verbatim; "Name the covering test files in the dispatch" → "…in the fix message" |
+| lines 217-220          | ONE final fixer                                                       | Final Review ¶2                                                                                                                   | Verbatim + appended one-scoped-re-review + adjudication sentences (new)                                                                                                                                                                                                                                                                                                            |
+| lines 224-226          | file-handoff rationale                                                | Task Loop preamble                                                                                                                | Verbatim ("Hand artifacts over as files:" → "…as files.")                                                                                                                                                                                                                                                                                                                          |
+| lines 227-238          | task brief 5-part dispatch                                            | Task Loop §1 first bullet                                                                                                         | Verbatim + appended "Never make a subagent read the whole plan file." (from Never item)                                                                                                                                                                                                                                                                                            |
+| lines 239-242          | report file                                                           | Task Loop §1 second bullet                                                                                                        | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 243-245          | reviewer inputs                                                       | Task Loop §3 second bullet                                                                                                        | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 246-247          | fix appends to report file                                            | Task Loop §4 "Every round" ¶                                                                                                      | Superseded by the reworded contract (row for 211-216); no separate sentence                                                                                                                                                                                                                                                                                                        |
+| lines 251-254          | compaction rationale                                                  | Setup ¶2                                                                                                                          | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 255-259          | ledger check                                                          | Setup bullet 1                                                                                                                    | Reworded: "Tasks listed there as complete are DONE" → "Tasks with a `Task <N>: complete` line are DONE"; appended mid-loop resume sentence (new)                                                                                                                                                                                                                                   |
+| lines 260-262          | append on clean                                                       | Task Loop §5                                                                                                                      | Reworded to include the parked-completion variant; "in the same message as your other bookkeeping" kept verbatim                                                                                                                                                                                                                                                                   |
+| lines 263-265          | recovery map                                                          | Setup bullet 2                                                                                                                    | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 266-267          | git clean warning                                                     | Setup bullet 3                                                                                                                    | Verbatim                                                                                                                                                                                                                                                                                                                                                                           |
+| lines 271-273          | template list                                                         | dissolved: links at §1, §3, §4, Final Review                                                                                      | Restated as links                                                                                                                                                                                                                                                                                                                                                                  |
+| lines 277-336          | example workflow                                                      | Example Workflow                                                                                                                  | Rewritten (shows resume round + ledger lines)                                                                                                                                                                                                                                                                                                                                      |
+| lines 340-360          | Never list                                                            | distributed: items 1→Setup; 2,8,11,12→§3; 4,5,6→§1; 13→§5; 14→Setup bullet 1; 3,7(answer-questions)→§2; 9,10→rationalization rows | Verbatim where moved as rules; excuse-shaped items converted to table rows                                                                                                                                                                                                                                                                                                         |
+| lines 362-366          | "If subagent asks questions"                                          | Task Loop §2 last ¶                                                                                                               | Verbatim (reflowed into one sentence)                                                                                                                                                                                                                                                                                                                                              |
+| lines 367-371          | "If reviewer finds issues: Implementer (same subagent) fixes them…"   | Task Loop §4                                                                                                                      | Superseded — this is the contradiction the redesign resolves; the loop's rounds 1-3 ARE this policy, now specified                                                                                                                                                                                                                                                                 |
+| lines 372-375          | "If subagent fails task: Dispatch fix subagent…"                      | Task Loop §4 last sentence before breaker                                                                                         | Reworded: "Don't try to fix manually (context pollution)" → "Never fix findings yourself in the controller session — your context stays clean for coordination, and controller fixes skip review."                                                                                                                                                                                 |
 
 Run: `grep -n "fix subagent" skills/subagent-driven-development/SKILL.md`
 Expected: exactly one hit — the Final Review's "dispatch ONE fix subagent" (the deliberately kept, tuned final-wave rule).
@@ -828,11 +840,13 @@ git commit -m "feat(sdd): lifecycle restructure with resume-based fix loop, five
 ### Task 4: Add the two mid-loop ledger fixture helpers to the evals repo
 
 **Files:**
+
 - Modify: `evals/src/setup-helpers/sdd-fixtures.ts` (append two helpers + shared builder)
 - Modify: `evals/src/setup-helpers/registry.ts` (import + two entries)
 - Modify: `evals/test/setup-helpers-sdd.test.ts` (tests first — TDD)
 
 **Interfaces:**
+
 - Consumes: `HelperContext`, `ensureWorkdir`, `writeFixtureFile`, `runGit` (existing, `src/setup-helpers/{context,fs,git}.ts`).
 - Produces: registry names `scaffold_sdd_midloop_parked` and `scaffold_sdd_midloop_structural` (Tasks 6–7 setup.sh call these); fixture repo with `docs/superpowers/plans/metrics-plan.md`, Tasks 1–2 implemented and committed, `.superpowers/sdd/progress.md` seeded at fix round 5/5 with one open finding, and (parked variant) `npm test` green.
 
@@ -850,54 +864,43 @@ git checkout -b sdd-fix-loop-scenarios
 Append to `evals/test/setup-helpers-sdd.test.ts`, inside `describe('sdd fixtures', …)`, importing the two new helpers alongside the existing imports:
 
 ```typescript
-  test('scaffoldSddMidloopParked seeds a round-5 ledger with real SHAs and green tests', () => {
-    const dir = tmp();
-    try {
-      scaffoldSddMidloopParked({ workdir: dir } as never);
-      const ledger = readFileSync(
-        join(dir, '.superpowers/sdd/progress.md'),
-        'utf8',
-      );
-      expect(ledger).toContain('Task 1: complete (commits ');
-      expect(ledger).toContain('fix round 5/5 (0 addressed, 1 open — ');
-      expect(ledger).not.toContain('Task 2: complete');
-      expect(ledger).not.toContain('Task 3:');
-      // Ledger SHAs are real commits in the fixture repo.
-      const head = runGit(['rev-parse', '--short=7', 'HEAD'], dir).trim();
-      expect(ledger).toContain(head);
-      // The open finding exists in the code: triplicated pad-and-join expression.
-      const duration = readFileSync(join(dir, 'src/duration.js'), 'utf8');
-      expect(
-        duration.split('String(s).padStart(2, "0")').length - 1,
-      ).toBeGreaterThanOrEqual(3);
-      expect(existsSync(join(dir, 'src/summary.js'))).toBe(false);
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
+test('scaffoldSddMidloopParked seeds a round-5 ledger with real SHAs and green tests', () => {
+  const dir = tmp();
+  try {
+    scaffoldSddMidloopParked({ workdir: dir } as never);
+    const ledger = readFileSync(join(dir, '.superpowers/sdd/progress.md'), 'utf8');
+    expect(ledger).toContain('Task 1: complete (commits ');
+    expect(ledger).toContain('fix round 5/5 (0 addressed, 1 open — ');
+    expect(ledger).not.toContain('Task 2: complete');
+    expect(ledger).not.toContain('Task 3:');
+    // Ledger SHAs are real commits in the fixture repo.
+    const head = runGit(['rev-parse', '--short=7', 'HEAD'], dir).trim();
+    expect(ledger).toContain(head);
+    // The open finding exists in the code: triplicated pad-and-join expression.
+    const duration = readFileSync(join(dir, 'src/duration.js'), 'utf8');
+    expect(duration.split('String(s).padStart(2, "0")').length - 1).toBeGreaterThanOrEqual(3);
+    expect(existsSync(join(dir, 'src/summary.js'))).toBe(false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
-  test('scaffoldSddMidloopStructural seeds a plan-contradiction finding', () => {
-    const dir = tmp();
-    try {
-      scaffoldSddMidloopStructural({ workdir: dir } as never);
-      const ledger = readFileSync(
-        join(dir, '.superpowers/sdd/progress.md'),
-        'utf8',
-      );
-      expect(ledger).toContain('fix round 5/5 (0 addressed, 1 open — ');
-      expect(ledger).toContain('milliseconds');
-      const plan = readFileSync(
-        join(dir, 'docs/superpowers/plans/metrics-plan.md'),
-        'utf8',
-      );
-      // Task 2 defines seconds; Task 3 passes milliseconds — the seeded contradiction.
-      expect(plan).toContain('formatDuration(seconds)');
-      expect(plan).toContain('durationMs');
-      expect(existsSync(join(dir, 'src/summary.js'))).toBe(false);
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
+test('scaffoldSddMidloopStructural seeds a plan-contradiction finding', () => {
+  const dir = tmp();
+  try {
+    scaffoldSddMidloopStructural({ workdir: dir } as never);
+    const ledger = readFileSync(join(dir, '.superpowers/sdd/progress.md'), 'utf8');
+    expect(ledger).toContain('fix round 5/5 (0 addressed, 1 open — ');
+    expect(ledger).toContain('milliseconds');
+    const plan = readFileSync(join(dir, 'docs/superpowers/plans/metrics-plan.md'), 'utf8');
+    // Task 2 defines seconds; Task 3 passes milliseconds — the seeded contradiction.
+    expect(plan).toContain('formatDuration(seconds)');
+    expect(plan).toContain('durationMs');
+    expect(existsSync(join(dir, 'src/summary.js'))).toBe(false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 ```
 
 Add `readFileSync` to the `node:fs` import line at the top of the file.
@@ -1052,11 +1055,7 @@ function scaffoldSddMidloop(ctx: HelperContext, opts: MidloopOptions): void {
 
   writeFixtureFile(ctx.workdir, 'package.json', MIDLOOP_PACKAGE_JSON);
   writeFixtureFile(ctx.workdir, '.gitignore', '.superpowers/\n');
-  writeFixtureFile(
-    ctx.workdir,
-    'docs/superpowers/plans/metrics-plan.md',
-    midloopPlanBody(opts.task3Arg),
-  );
+  writeFixtureFile(ctx.workdir, 'docs/superpowers/plans/metrics-plan.md', midloopPlanBody(opts.task3Arg));
   runGit(['add', '-A'], ctx.workdir);
   runGit(['commit', '-m', 'initial: metrics formatter plan'], ctx.workdir);
   const base = shortHead(ctx.workdir);
@@ -1082,16 +1081,13 @@ function scaffoldSddMidloop(ctx: HelperContext, opts: MidloopOptions): void {
     writeFixtureFile(
       ctx.workdir,
       'src/duration.js',
-      `${MIDLOOP_DURATION_JS}// fix round ${round}: reviewed, expression retained\n`,
+      `${MIDLOOP_DURATION_JS}// fix round ${round}: reviewed, expression retained\n`
     );
     runGit(['add', '-A'], ctx.workdir);
-    runGit(
-      ['commit', '-m', `Task 2 fix round ${round}`],
-      ctx.workdir,
-    );
+    runGit(['commit', '-m', `Task 2 fix round ${round}`], ctx.workdir);
     const head = shortHead(ctx.workdir);
     roundLines.push(
-      `Task 2: fix round ${round}/5 (0 addressed, 1 open — ${opts.openFinding}; commits ${prev}..${head})`,
+      `Task 2: fix round ${round}/5 (0 addressed, 1 open — ${opts.openFinding}; commits ${prev}..${head})`
     );
     prev = head;
   }
@@ -1120,7 +1116,7 @@ Rounds 1-5 attempted the open review finding below; each re-review returned
 NOT ADDRESSED:
 
 - ${opts.openFinding}
-`,
+`
   );
 }
 
@@ -1190,6 +1186,7 @@ Expected: PASS (biome + tsc + bun test). Fix any lint/type complaints (biome may
 cd "$(mktemp -d)" && export QW=$PWD && cd - >/dev/null
 cd evals && QUORUM_WORKDIR="$QW" bun run src/setup-helpers/cli.ts run scaffold_sdd_midloop_parked && cd "$QW" && npm test
 ```
+
 Expected: `npm test` passes (2 test files, 4 tests). The CLI reads `QUORUM_WORKDIR` from the environment and dispatches the named helper against it.
 
 - [ ] **Step 7: Commit (evals repo)**
@@ -1205,11 +1202,13 @@ git commit -m "feat(sdd-fixtures): mid-loop ledger scaffolds for breaker scenari
 ### Task 5: Scenario — fix rounds resume the implementer
 
 **Files:**
+
 - Create: `evals/scenarios/sdd-fix-loop-resumes-implementer/story.md`
 - Create: `evals/scenarios/sdd-fix-loop-resumes-implementer/setup.sh`
 - Create: `evals/scenarios/sdd-fix-loop-resumes-implementer/checks.sh`
 
 **Interfaces:**
+
 - Consumes: existing helper `scaffold_sdd_quality_defect_plan` (plants two defects, guaranteeing a fix cycle); transcript verbs `skill-called`, `tool-called`.
 - Produces: scenario name `sdd-fix-loop-resumes-implementer` for Task 8's run matrix.
 
@@ -1330,11 +1329,13 @@ git commit -m "feat(scenarios): sdd-fix-loop-resumes-implementer"
 ### Task 6: Scenario — breaker trips at the cap, adjudicates, and continues
 
 **Files:**
+
 - Create: `evals/scenarios/sdd-breaker-adjudicates-at-cap/story.md`
 - Create: `evals/scenarios/sdd-breaker-adjudicates-at-cap/setup.sh`
 - Create: `evals/scenarios/sdd-breaker-adjudicates-at-cap/checks.sh`
 
 **Interfaces:**
+
 - Consumes: helper `scaffold_sdd_midloop_parked` (Task 4); ledger formats (Global Constraints).
 - Produces: scenario name `sdd-breaker-adjudicates-at-cap`.
 
@@ -1439,11 +1440,13 @@ git commit -m "feat(scenarios): sdd-breaker-adjudicates-at-cap"
 ### Task 7: Scenario — structural finding stops the run instead of being parked
 
 **Files:**
+
 - Create: `evals/scenarios/sdd-breaker-structural-blocks/story.md`
 - Create: `evals/scenarios/sdd-breaker-structural-blocks/setup.sh`
 - Create: `evals/scenarios/sdd-breaker-structural-blocks/checks.sh`
 
 **Interfaces:**
+
 - Consumes: helper `scaffold_sdd_midloop_structural` (Task 4).
 - Produces: scenario name `sdd-breaker-structural-blocks`.
 
@@ -1558,9 +1561,11 @@ Jesse's go-ahead on the run budget before starting, then run it yourself —
 do not hand the commands back to him.
 
 **Files:**
+
 - Create: `evals/docs/experiments/2026-07-sdd-fix-loop-redesign.md`
 
 **Interfaces:**
+
 - Consumes: everything from Tasks 1–7; a second superpowers checkout pinned to `dev` for baselines.
 - Produces: verdicts for the PR's before/after evidence.
 

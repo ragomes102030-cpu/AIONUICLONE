@@ -127,7 +127,9 @@ const getBootstrapContent = (toolMapping) => {
   const fullContent = fs.readFileSync(skillPath, 'utf8');
   const { content } = extractAndStripFrontmatter(fullContent);
 
-  _bootstrapCache.set(toolMapping, `<EXTREMELY_IMPORTANT>
+  _bootstrapCache.set(
+    toolMapping,
+    `<EXTREMELY_IMPORTANT>
 You have superpowers.
 
 **IMPORTANT: The using-superpowers skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load "using-superpowers" again - that would be redundant.**
@@ -135,7 +137,8 @@ You have superpowers.
 ${content}
 
 ${toolMapping}
-</EXTREMELY_IMPORTANT>`);
+</EXTREMELY_IMPORTANT>`
+  );
 
   return _bootstrapCache.get(toolMapping);
 };
@@ -194,8 +197,7 @@ const isChildSession = async (fetchSession, sessionID) => {
     if (!session || typeof session !== 'object' || Array.isArray(session) || session.id !== sessionID) {
       throw new Error('Session lookup returned an invalid session identity');
     }
-    if (session.parentID !== undefined &&
-        (typeof session.parentID !== 'string' || session.parentID.length === 0)) {
+    if (session.parentID !== undefined && (typeof session.parentID !== 'string' || session.parentID.length === 0)) {
       throw new Error('Session lookup returned an invalid parent identity');
     }
     isChild = session.parentID !== undefined;
@@ -244,24 +246,22 @@ export const SuperpowersPlugin = async ({ client, directory }) => {
     'experimental.chat.messages.transform': async (_input, output) => {
       const bootstrap = getBootstrapContent(V1_MAPPING);
       if (!bootstrap || !output.messages.length) return;
-      const firstUser = output.messages.find(m => m.info.role === 'user');
+      const firstUser = output.messages.find((m) => m.info.role === 'user');
       if (!firstUser || !firstUser.parts.length) return;
 
       // Guard: skip if first user message already contains bootstrap.
-      if (firstUser.parts.some(p => p.type === 'text' && p.text.includes('EXTREMELY_IMPORTANT'))) return;
+      if (firstUser.parts.some((p) => p.type === 'text' && p.text.includes('EXTREMELY_IMPORTANT'))) return;
 
       // #2160: never restart the controller workflow inside task subagent
       // (child) sessions. V1 passes no input to this hook (verified in the
       // 1.18.x bundle: trigger(..., {}, {messages})), so take the sessionID
       // from the message record itself.
-      if (client && await isChildSession(
-        (id) => client.session.get({ path: { id } }),
-        firstUser.info.sessionID,
-      )) return;
+      if (client && (await isChildSession((id) => client.session.get({ path: { id } }), firstUser.info.sessionID)))
+        return;
 
       const ref = firstUser.parts[0];
       firstUser.parts.unshift({ ...ref, type: 'text', text: bootstrap });
-    }
+    },
   };
 };
 
@@ -287,7 +287,13 @@ async function setup(ctx) {
   // V1 (observed on opencode 1.18.18) also invokes default.setup, but with a
   // V1-shaped ctx that lacks the skill/session domains. Detect it and return
   // quietly — V1 is served entirely by the SuperpowersPlugin named export.
-  if (!ctx || !ctx.skill || typeof ctx.skill.transform !== 'function' || !ctx.session || typeof ctx.session.hook !== 'function') {
+  if (
+    !ctx ||
+    !ctx.skill ||
+    typeof ctx.skill.transform !== 'function' ||
+    !ctx.session ||
+    typeof ctx.session.hook !== 'function'
+  ) {
     return;
   }
 
@@ -340,17 +346,19 @@ async function setup(ctx) {
       try {
         const bootstrap = getBootstrapContent(V2_MAPPING);
         if (!bootstrap || !event.messages || !event.messages.length) return;
-        const firstUser = event.messages.find(m => m.role === 'user');
+        const firstUser = event.messages.find((m) => m.role === 'user');
         if (firstUser && (!firstUser.content || !firstUser.content.length)) return;
-        if (firstUser?.content.some(p => p.type === 'text' && p.text && p.text.includes('EXTREMELY_IMPORTANT'))) return;
+        if (firstUser?.content.some((p) => p.type === 'text' && p.text && p.text.includes('EXTREMELY_IMPORTANT')))
+          return;
 
         // #2160: the context event carries the sessionID directly. Skip the
         // controller bootstrap when this prompt belongs to a task subagent
         // (child) session. Skills registered above stay available to workers.
-        if (typeof ctx.session.get === 'function' && await isChildSession(
-          (id) => ctx.session.get({ sessionID: id }),
-          event.sessionID,
-        )) return;
+        if (
+          typeof ctx.session.get === 'function' &&
+          (await isChildSession((id) => ctx.session.get({ sessionID: id }), event.sessionID))
+        )
+          return;
 
         // Native compaction can leave only an opaque checkpoint. Keep it
         // intact and append the transient bootstrap as a user message.

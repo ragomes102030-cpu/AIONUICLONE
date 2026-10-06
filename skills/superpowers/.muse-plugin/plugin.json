@@ -76,10 +76,7 @@
       {
         "id": "session-start",
         "event": "SessionStart",
-        "command": [
-          "sh",
-          "hooks/session-start"
-        ],
+        "command": ["sh", "hooks/session-start"],
         "timeoutMs": 5000
       }
     ],

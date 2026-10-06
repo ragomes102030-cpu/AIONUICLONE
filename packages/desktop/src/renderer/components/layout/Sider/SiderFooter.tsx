@@ -68,25 +68,26 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
   return (
     <div className='shrink-0 sider-footer mt-auto pt-8px pb-8px border-t border-solid border-[var(--color-border-2)] border-s-0 border-e-0 border-b-0'>
       <div className='flex flex-col items-stretch gap-2px'>
-        {currentUser && (() => {
-          const isSystemDefault = currentUser.username === SYSTEM_DEFAULT_USER;
-          const displayName = isSystemDefault ? t('common.defaultUser') : currentUser.username;
-          const initial = isSystemDefault ? displayName.slice(0, 1) : currentUser.username.slice(0, 1);
-          return (
-            <div
-              className={classNames(
-                'flex h-34px items-center rounded-8px text-t-primary',
-                collapsed ? 'w-full justify-center' : 'w-full gap-8px px-10px'
-              )}
-              title={displayName}
-            >
-              <span className='size-24px flex items-center justify-center rounded-full bg-fill-3 text-11px font-[600] uppercase text-t-secondary shrink-0'>
-                {initial}
-              </span>
-              {!collapsed && <span className='min-w-0 flex-1 truncate text-13px font-[500]'>{displayName}</span>}
-            </div>
-          );
-        })()}
+        {currentUser &&
+          (() => {
+            const isSystemDefault = currentUser.username === SYSTEM_DEFAULT_USER;
+            const displayName = isSystemDefault ? t('common.defaultUser') : currentUser.username;
+            const initial = isSystemDefault ? displayName.slice(0, 1) : currentUser.username.slice(0, 1);
+            return (
+              <div
+                className={classNames(
+                  'flex h-34px items-center rounded-8px text-t-primary',
+                  collapsed ? 'w-full justify-center' : 'w-full gap-8px px-10px'
+                )}
+                title={displayName}
+              >
+                <span className='size-24px flex items-center justify-center rounded-full bg-fill-3 text-11px font-[600] uppercase text-t-secondary shrink-0'>
+                  {initial}
+                </span>
+                {!collapsed && <span className='min-w-0 flex-1 truncate text-13px font-[500]'>{displayName}</span>}
+              </div>
+            );
+          })()}
         <Tooltip {...siderTooltipProps} content={isSettings ? t('common.back') : t('common.settings')} position='right'>
           <div
             onClick={onSettingsClick}

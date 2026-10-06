@@ -151,13 +151,10 @@ const AddToolModal: React.FC<AddToolModalProps> = ({ visible, onCancel, onSubmit
         {kind === 'remote-mcp' ? (
           <>
             <div>
-              <div className='mb-8px text-sm text-t-primary'>{t('settings.mcpRemoteUrl', { defaultValue: 'MCP endpoint URL' })}</div>
-              <Input
-                value={url}
-                onChange={setUrl}
-                placeholder='https://example.com/mcp'
-                data-testid='add-tool-url'
-              />
+              <div className='mb-8px text-sm text-t-primary'>
+                {t('settings.mcpRemoteUrl', { defaultValue: 'MCP endpoint URL' })}
+              </div>
+              <Input value={url} onChange={setUrl} placeholder='https://example.com/mcp' data-testid='add-tool-url' />
               <div className='mt-6px text-11px text-t-tertiary'>
                 {t('settings.mcpStreamableHttpHint', {
                   defaultValue: 'Uses the MCP Streamable HTTP transport through the existing backend connection.',
@@ -165,12 +162,15 @@ const AddToolModal: React.FC<AddToolModalProps> = ({ visible, onCancel, onSubmit
               </div>
             </div>
             <div>
-              <div className='mb-8px text-sm text-t-primary'>{t('settings.mcpAuth', { defaultValue: 'Authentication' })}</div>
+              <div className='mb-8px text-sm text-t-primary'>
+                {t('settings.mcpAuth', { defaultValue: 'Authentication' })}
+              </div>
               <Radio.Group value={authMode} onChange={setAuthMode}>
                 <Radio value='none'>{t('settings.mcpAuthNone', { defaultValue: 'None' })}</Radio>
                 <Radio value='oauth'>{t('settings.mcpAuthOAuth', { defaultValue: 'OAuth' })}</Radio>
                 <Radio value='bearer' disabled>
-                  {t('settings.mcpAuthBearer', { defaultValue: 'Bearer token' })} · {t('common.comingSoon', { defaultValue: 'Coming soon' })}
+                  {t('settings.mcpAuthBearer', { defaultValue: 'Bearer token' })} ·{' '}
+                  {t('common.comingSoon', { defaultValue: 'Coming soon' })}
                 </Radio>
               </Radio.Group>
               {authMode === 'oauth' && (
@@ -178,7 +178,8 @@ const AddToolModal: React.FC<AddToolModalProps> = ({ visible, onCancel, onSubmit
                   className='mt-8px'
                   type='info'
                   content={t('settings.mcpOAuthAfterSave', {
-                    defaultValue: 'After saving, the existing MCP OAuth flow will ask the backend to authenticate this URL.',
+                    defaultValue:
+                      'After saving, the existing MCP OAuth flow will ask the backend to authenticate this URL.',
                   })}
                 />
               )}
@@ -187,16 +188,15 @@ const AddToolModal: React.FC<AddToolModalProps> = ({ visible, onCancel, onSubmit
         ) : (
           <>
             <div>
-              <div className='mb-8px text-sm text-t-primary'>{t('settings.mcpCommand', { defaultValue: 'Command' })}</div>
-              <Input
-                value={command}
-                onChange={setCommand}
-                placeholder='npx'
-                data-testid='add-tool-command'
-              />
+              <div className='mb-8px text-sm text-t-primary'>
+                {t('settings.mcpCommand', { defaultValue: 'Command' })}
+              </div>
+              <Input value={command} onChange={setCommand} placeholder='npx' data-testid='add-tool-command' />
             </div>
             <div>
-              <div className='mb-8px text-sm text-t-primary'>{t('settings.mcpArgs', { defaultValue: 'Arguments' })}</div>
+              <div className='mb-8px text-sm text-t-primary'>
+                {t('settings.mcpArgs', { defaultValue: 'Arguments' })}
+              </div>
               <Input.TextArea
                 value={args}
                 onChange={setArgs}
@@ -212,12 +212,7 @@ const AddToolModal: React.FC<AddToolModalProps> = ({ visible, onCancel, onSubmit
         )}
 
         <div className='flex justify-end'>
-          <Button
-            type='secondary'
-            loading={testing}
-            onClick={handleTestConnection}
-            data-testid='test-tool-connection'
-          >
+          <Button type='secondary' loading={testing} onClick={handleTestConnection} data-testid='test-tool-connection'>
             {t('settings.mcpTestConnectionAction', { defaultValue: 'Test connection' })}
           </Button>
         </div>

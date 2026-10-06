@@ -84,7 +84,10 @@ async function repairMcpServerCatalog(): Promise<void> {
     return;
   }
 
-  console.info('[Migration] mcp_servers catalog is already well-formed (columns: %s)', result.repairedColumns.join(','));
+  console.info(
+    '[Migration] mcp_servers catalog is already well-formed (columns: %s)',
+    result.repairedColumns.join(',')
+  );
 }
 
 /**

@@ -6,4 +6,4 @@
 // resolve via package.json `main`; this file only serves the directory form,
 // an absolute path such as `"plugins": ["/path/to/superpowers"]` (`~` is not
 // expanded).
-export { default } from "./.opencode/plugins/superpowers.js";
+export { default } from './.opencode/plugins/superpowers.js';

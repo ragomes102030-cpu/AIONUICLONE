@@ -4,10 +4,10 @@ description: Migrate a WhatsApp integration from Twilio to Wassenger — map Twi
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: migration
   vendor: wassenger
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Migrate from Twilio to Wassenger
@@ -33,21 +33,21 @@ If the user is brand-new (no Twilio), skip this and go to `wassenger-setup` + `w
 
 ## Core mapping (at a glance)
 
-| Concept | Twilio | Wassenger |
-|---|---|---|
-| Auth | HTTP Basic `AccountSid:AuthToken` | header `Token: <API_KEY>` |
-| Base URL | `https://api.twilio.com/2010-04-01/Accounts/{Sid}` | `https://api.wassenger.com/v1` |
-| Send | `POST /Messages.json` | `POST /messages` |
-| Sender | `From: "whatsapp:+14155238886"` | `device: "<deviceId>"` |
-| Recipient | `To: "whatsapp:+34600111222"` | `phone: "+34600111222"` (no prefix) |
-| Text body | `Body` | `message` |
-| Media | `MediaUrl` (1+) | `media: { url }` or `{ file }` |
-| Template | `ContentSid` + `ContentVariables` | `template: { name, language, body }` |
-| Schedule | `ScheduleType=fixed` + `SendAt` (needs Messaging Service) | `deliverAt` (ISO 8601) |
-| Message ID | `MessageSid` (`SMxx␣…`) | `message.id` |
-| Status webhook | `StatusCallback` URL | webhook subscription, events `message:out:*` |
-| Inbound webhook | form-encoded POST on the number | JSON POST, `POST /v1/webhooks` with `events[]` |
-| Signature | `X-Twilio-Signature` — HMAC-SHA1 over URL+sorted params | `X-Wassenger-Signature: sha256=` — HMAC-SHA256 over **raw body** |
+| Concept         | Twilio                                                    | Wassenger                                                        |
+| --------------- | --------------------------------------------------------- | ---------------------------------------------------------------- |
+| Auth            | HTTP Basic `AccountSid:AuthToken`                         | header `Token: <API_KEY>`                                        |
+| Base URL        | `https://api.twilio.com/2010-04-01/Accounts/{Sid}`        | `https://api.wassenger.com/v1`                                   |
+| Send            | `POST /Messages.json`                                     | `POST /messages`                                                 |
+| Sender          | `From: "whatsapp:+14155238886"`                           | `device: "<deviceId>"`                                           |
+| Recipient       | `To: "whatsapp:+34600111222"`                             | `phone: "+34600111222"` (no prefix)                              |
+| Text body       | `Body`                                                    | `message`                                                        |
+| Media           | `MediaUrl` (1+)                                           | `media: { url }` or `{ file }`                                   |
+| Template        | `ContentSid` + `ContentVariables`                         | `template: { name, language, body }`                             |
+| Schedule        | `ScheduleType=fixed` + `SendAt` (needs Messaging Service) | `deliverAt` (ISO 8601)                                           |
+| Message ID      | `MessageSid` (`SMxx␣…`)                                   | `message.id`                                                     |
+| Status webhook  | `StatusCallback` URL                                      | webhook subscription, events `message:out:*`                     |
+| Inbound webhook | form-encoded POST on the number                           | JSON POST, `POST /v1/webhooks` with `events[]`                   |
+| Signature       | `X-Twilio-Signature` — HMAC-SHA1 over URL+sorted params   | `X-Wassenger-Signature: sha256=` — HMAC-SHA256 over **raw body** |
 
 Full field-by-field table: `references/api-mapping.md`.
 
@@ -58,12 +58,15 @@ Full field-by-field table: `references/api-mapping.md`.
 > "Here's my Twilio send code, give me the Wassenger version."
 
 Twilio:
+
 ```
 POST https://api.twilio.com/2010-04-01/Accounts/{Sid}/Messages.json
 Auth: Basic {Sid}:{AuthToken}
 From=whatsapp:+14155238886  To=whatsapp:+34600111222  Body=Hello
 ```
+
 Wassenger:
+
 ```
 POST https://api.wassenger.com/v1/messages
 Header: Token: <API_KEY>

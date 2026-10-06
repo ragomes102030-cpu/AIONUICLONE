@@ -5,17 +5,17 @@ description: "Use this skill to audit the structural and logical integrity of an
 
 > **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — the underlying tool/CLI commands are usually cross-platform, but the surrounding shell syntax is not. Translate it to PowerShell before running:
 >
-> | bash (macOS / Linux) | PowerShell (Windows) |
-> | --- | --- |
-> | `a && b` | run as two steps, or `a; if ($?) { b }` |
-> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool |
-> | `VAR=$(cmd)` … `$VAR` | `$VAR = cmd` … `$VAR` |
-> | `cmd > /dev/null` | `cmd > $null` |
-> | `… \| grep PAT` | `… \| Select-String PAT` |
-> | `… \| jq …` | `… \| ConvertFrom-Json`, then read the fields |
-> | `python3 x.py` | `python x.py` (or `py x.py`) |
-> | `~/dir`, `/tmp` | `$env:USERPROFILE\dir`, `$env:TEMP` |
-> | `cp` / `mkdir -p` / `rm -rf` | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
+> | bash (macOS / Linux)              | PowerShell (Windows)                                                                |
+> | --------------------------------- | ----------------------------------------------------------------------------------- |
+> | `a && b`                          | run as two steps, or `a; if ($?) { b }`                                             |
+> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool                 |
+> | `VAR=$(cmd)` … `$VAR`             | `$VAR = cmd` … `$VAR`                                                               |
+> | `cmd > /dev/null`                 | `cmd > $null`                                                                       |
+> | `… \| grep PAT`                   | `… \| Select-String PAT`                                                            |
+> | `… \| jq …`                       | `… \| ConvertFrom-Json`, then read the fields                                       |
+> | `python3 x.py`                    | `python x.py` (or `py x.py`)                                                        |
+> | `~/dir`, `/tmp`                   | `$env:USERPROFILE\dir`, `$env:TEMP`                                                 |
+> | `cp` / `mkdir -p` / `rm -rf`      | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
 >
 > If a command has no obvious Windows equivalent, prefer the built-in file/HTTP tools over raw shell.
 
@@ -55,7 +55,7 @@ This skill **inherits every xlsx hard rule** from `officecli-xlsx` — shell quo
 **General rules that apply to every audit** (verbatim, non-negotiable):
 
 - **Não inventar dados.** Never fabricate a finding; every finding needs a real cell, range, sheet, or formula as evidence.
-- **Não inventar regras de negócio.** Do not label something "wrong" based on a business assumption you invented. If you believe a formula is inconsistent with an intent, state the *observed inconsistency* and mark the *inferred intent* as an assumption to confirm.
+- **Não inventar regras de negócio.** Do not label something "wrong" based on a business assumption you invented. If you believe a formula is inconsistent with an intent, state the _observed inconsistency_ and mark the _inferred intent_ as an assumption to confirm.
 - **Não afirmar que algo foi validado sem realmente validar.** A check you did not run is a check you did NOT run. Split VERIFIED from NOT VERIFIED explicitly in the report.
 - **Priorizar rastreabilidade.** Every finding cites sheet + cell/range + the exact command that produced the evidence.
 - **Registrar limitações.** If a check could not be executed (permissions, resident lock, renderer), record it as NOT VERIFIED, never skip it silently.
@@ -114,7 +114,7 @@ officecli query "$FILE" 'cell:contains("#REF!")' --json   # returns full cell ob
 
 ### Phase 3 — Hardcoded calculated cells
 
-Find cells that *look like* computed values but are stored as literals. Two standard probes:
+Find cells that _look like_ computed values but are stored as literals. Two standard probes:
 
 ```bash
 # Probe 1 — numeric literal directly under / beside a SUM-like section header:
@@ -126,7 +126,7 @@ officecli get "$FILE" '/SheetName/A10' --json          # total cell
 officecli get "$FILE" '/SheetName/A2:A9' --json        # range it should sum
 ```
 
-A hardcoded total whose value disagrees with its own range = BLOCKER (classic "célula calculada hardcoded"). A hardcoded total that *happens* to match today = MINOR/MAJOR risk finding (it will silently break tomorrow) — flag as **structural risk**, do not assume it's fine.
+A hardcoded total whose value disagrees with its own range = BLOCKER (classic "célula calculada hardcoded"). A hardcoded total that _happens_ to match today = MINOR/MAJOR risk finding (it will silently break tomorrow) — flag as **structural risk**, do not assume it's fine.
 
 ### Phase 4 — Formula & reference consistency
 
@@ -137,9 +137,9 @@ Focus areas:
    officecli get "$FILE" '/SheetName/C2:C30' --json | jq '.data.results[0].children[] | .format.formula // .text'
    ```
    Look for: a row using `A2*B2` while the others use `A2*B3` (wrong-row references), a hardcoded outlier in a formula column, a formula that skips a row.
-2. **Foreign / broken references.** Validate every cross-sheet reference exists. The `#REF!` sweep (Phase 2) catches broken ones at runtime. For *defensive* detection, query for cells whose formula references sheets not in the Phase 1 inventory — for example a formula containing `'Sheet99'!` where `Sheet99` does not exist.
+2. **Foreign / broken references.** Validate every cross-sheet reference exists. The `#REF!` sweep (Phase 2) catches broken ones at runtime. For _defensive_ detection, query for cells whose formula references sheets not in the Phase 1 inventory — for example a formula containing `'Sheet99'!` where `Sheet99` does not exist.
 3. **Dependency chains that reach missing inputs.** A formula chain that bottoms out in an empty cell or a text cell where it needs a number.
-4. **_xlnm / structural names.** Confirm `Print_Area` settings don't conflict across sheets (→ see officecli-data-dashboard §Print-ready delivery for the failure mode).
+4. **\_xlnm / structural names.** Confirm `Print_Area` settings don't conflict across sheets (→ see officecli-data-dashboard §Print-ready delivery for the failure mode).
 
 ### Phase 5 — Duplicate sources of truth
 
@@ -171,28 +171,35 @@ Deliver the report in a fixed structure. Statuses follow the delivery-gate taxon
 
 ```markdown
 # Audit Report — <file>
+
 Date / auditor / file hash (SHA256)
 
 ## Summary
+
 - Sheets: N | Tables: N | Charts: N | Named ranges: N
 - BLOCKER: N | MAJOR: N | MINOR: N | INFO: N
 - Verdict: TRUST / TRUST-WITH-CAVEATS / DO-NOT-TRUST
 
 ## Findings
+
 ### B-1 (BLOCKER) — <title>
+
 - Where: Sheet!Cell; formula `=...` (or literal)
 - Evidence: `officecli query …` → excerpt
 - Why it matters: <one sentence>
 - Suggested fix (not applied): <one sentence>
 
 ### M-1 (MAJOR) — <title>
+
 … same shape …
 
 ## NOT VERIFIED
+
 - <check that could not be run, and why>
 - <claim you could not confirm>
 
 ## Limitations
+
 - <renderer caveats, resident locks, permission issues>
 ```
 
@@ -207,7 +214,7 @@ Minimum cycle before "done":
 1. **Error sweep re-run** after any change the audit prompts, to confirm the audit did not introduce errors (audits are read-only; if you held a resident open, confirm `validate` passes after close).
 2. **Count precision.** Every count in the report (blocks, cells, findings) comes from a real query output — never from memory.
 3. **Gate — evidence completeness.** Every finding cites a path + query. Findings without evidence → remove or re-run.
-4. **Gate — severity calibration.** No "MAJOR" that is actually INFO; no BLOCKER that is actually MINOR. Calibrate by the question: *does this send a wrong number to a reader?*
+4. **Gate — severity calibration.** No "MAJOR" that is actually INFO; no BLOCKER that is actually MINOR. Calibrate by the question: _does this send a wrong number to a reader?_
 5. **Gate — NOT VERIFIED honesty.** Any check you could not run is listed under NOT VERIFIED, with the reason. Silently skipped checks are a delivery failure.
 
 ## Honest limits

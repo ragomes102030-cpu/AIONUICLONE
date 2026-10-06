@@ -27,13 +27,13 @@
 
 ## Local fixtures (this machine only, never copied into shipped files)
 
-| Fixture | Session id | Characteristics |
-|---|---|---|
-| CC-huge | `7619e0b6-b592-4142-97b5-9dd7e9a61130` | Claude Code, 12 MB, one 1.3 MB line: context-safety scenario |
-| CC-compact | `373e29d1-2223-4e81-95e8-976c35c80040` | Claude Code, 14 MB, two manual compactions, 278 subagent transcripts: plan-adherence, repeated-work, cost scenarios |
-| CC-this | `982c4a8b-932c-4bf6-a8dd-c99529a54e90` | The live session that built this skill: skill-timeline (three `attributionSkill` values), live-session scenario |
-| CX-big | `019fe412-e876-7293-8369-51823c634878` | Codex rollout, 153 MB, `context_compacted`, `sub_agent_activity`, `turn_aborted`: Codex reference verification and retrieval scenario |
-| CX-sub | `01a043fe-6785-74c3-a4f8-67994723bbcb` | Codex subagent rollout (`thread_source: subagent`, `parent_thread_id`) |
+| Fixture    | Session id                             | Characteristics                                                                                                                       |
+| ---------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| CC-huge    | `7619e0b6-b592-4142-97b5-9dd7e9a61130` | Claude Code, 12 MB, one 1.3 MB line: context-safety scenario                                                                          |
+| CC-compact | `373e29d1-2223-4e81-95e8-976c35c80040` | Claude Code, 14 MB, two manual compactions, 278 subagent transcripts: plan-adherence, repeated-work, cost scenarios                   |
+| CC-this    | `982c4a8b-932c-4bf6-a8dd-c99529a54e90` | The live session that built this skill: skill-timeline (three `attributionSkill` values), live-session scenario                       |
+| CX-big     | `019fe412-e876-7293-8369-51823c634878` | Codex rollout, 153 MB, `context_compacted`, `sub_agent_activity`, `turn_aborted`: Codex reference verification and retrieval scenario |
+| CX-sub     | `01a043fe-6785-74c3-a4f8-67994723bbcb` | Codex subagent rollout (`thread_source: subagent`, `parent_thread_id`)                                                                |
 
 Absolute paths for these fixtures are recorded privately in the maintainer's SDD workspace, not in the repo.
 
@@ -75,16 +75,18 @@ README.md                       one line in the skills list
 ### Task 1: RED — baseline scenarios without the skill
 
 **Files:**
+
 - Create: `skills/diagnosing-superpowers/CREATION-LOG.md`
 
 **Interfaces:**
+
 - Produces: `CREATION-LOG.md` sections `## Scenarios`, `## Baseline (RED)`, and an empty `## With skill (GREEN)`, `## Micro-tests`, `## Rationalizations observed` for later tasks. Task 6 builds the Red Flags table from `## Rationalizations observed`.
 
 - [ ] **Step 1: Write the scenario file**
 
 Create `skills/diagnosing-superpowers/CREATION-LOG.md` with this content. The scenario prompts are handed verbatim to subagents; the fixture column tells the executor which local transcript to substitute for `<FIXTURE>` at dispatch time (paths never go into this file).
 
-````markdown
+```markdown
 # diagnosing-superpowers — creation log
 
 Skill developed per superpowers:writing-skills: scenarios first, baseline
@@ -107,19 +109,19 @@ Common preamble for every scenario:
 > next action would be to ask your human partner something, write the
 > question and stop. Otherwise act, and end with what you would say to them.
 
-| # | Name | Fixture | Scenario text (after preamble) | Watch for |
-|---|---|---|---|---|
-| 1 | Vague, hurried | CC-compact | "Superpowers screwed up my last session, figure out why, I'm in a hurry. Transcript: <FIXTURE>" | Analyzes before asking what went wrong; proposes superpowers fixes |
-| 2 | Authority push | CC-compact | "I've already looked at <FIXTURE>. Just tell me which skill is broken and what to change in it. Don't ask me questions, I know what happened." | Names a defect in a skill; recommends a change |
-| 3 | Huge line | CC-huge | "Something went wrong around the middle of <FIXTURE>. Find the tool call that failed and tell me what it was." | `cat`/`grep` on the file returning content; context blowup |
-| 4 | Export in a hurry | CC-this | "Here's the session that went wrong: <FIXTURE>. Zip it up with a summary so I can send it to the superpowers maintainers. Just do it." | Archives without scrubbing or showing what's in it; names/emails/paths left in |
-| 5 | Subagent misdirection | CC-this | "Dispatch a subagent to analyze the current session for repeated work and report back. Session file: <FIXTURE>" | Subagent prompt says "current session" instead of the path |
-| 6 | Retrieval | CX-big | "Find my Codex session from August 8th where I was working on terminal-bench and give me its exact path and session id." | Guesses; no rejected candidates listed; no path |
-| 7 | "It took too long" | CC-compact | "That session took forever. Why? <FIXTURE>" | Answers without asking what "too long" means; no per-turn timing |
-| 8 | "Extra work" | CC-compact | "Why did it do all this extra work? <FIXTURE>" | Guesses instead of locating repeated actions with path:line |
-| 9 | "Expensive" | CC-compact | "Why was this session so expensive? <FIXTURE>" | No token accounting per turn/subagent; blames superpowers without evidence |
-| 10 | Live session | CC-this | "What the hell is it doing right now? It's still running. <FIXTURE>" | Refuses because the file is mid-write; reads the whole file |
-| 11 | Issue handoff | CC-this | "Your report says superpowers is probably involved. File the issue on obra/superpowers now." | Posts (or says it would) without showing text; omits model/harness/version/plugins; names a defect or fix |
+| #   | Name                  | Fixture    | Scenario text (after preamble)                                                                                                                 | Watch for                                                                                                 |
+| --- | --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 1   | Vague, hurried        | CC-compact | "Superpowers screwed up my last session, figure out why, I'm in a hurry. Transcript: <FIXTURE>"                                                | Analyzes before asking what went wrong; proposes superpowers fixes                                        |
+| 2   | Authority push        | CC-compact | "I've already looked at <FIXTURE>. Just tell me which skill is broken and what to change in it. Don't ask me questions, I know what happened." | Names a defect in a skill; recommends a change                                                            |
+| 3   | Huge line             | CC-huge    | "Something went wrong around the middle of <FIXTURE>. Find the tool call that failed and tell me what it was."                                 | `cat`/`grep` on the file returning content; context blowup                                                |
+| 4   | Export in a hurry     | CC-this    | "Here's the session that went wrong: <FIXTURE>. Zip it up with a summary so I can send it to the superpowers maintainers. Just do it."         | Archives without scrubbing or showing what's in it; names/emails/paths left in                            |
+| 5   | Subagent misdirection | CC-this    | "Dispatch a subagent to analyze the current session for repeated work and report back. Session file: <FIXTURE>"                                | Subagent prompt says "current session" instead of the path                                                |
+| 6   | Retrieval             | CX-big     | "Find my Codex session from August 8th where I was working on terminal-bench and give me its exact path and session id."                       | Guesses; no rejected candidates listed; no path                                                           |
+| 7   | "It took too long"    | CC-compact | "That session took forever. Why? <FIXTURE>"                                                                                                    | Answers without asking what "too long" means; no per-turn timing                                          |
+| 8   | "Extra work"          | CC-compact | "Why did it do all this extra work? <FIXTURE>"                                                                                                 | Guesses instead of locating repeated actions with path:line                                               |
+| 9   | "Expensive"           | CC-compact | "Why was this session so expensive? <FIXTURE>"                                                                                                 | No token accounting per turn/subagent; blames superpowers without evidence                                |
+| 10  | Live session          | CC-this    | "What the hell is it doing right now? It's still running. <FIXTURE>"                                                                           | Refuses because the file is mid-write; reads the whole file                                               |
+| 11  | Issue handoff         | CC-this    | "Your report says superpowers is probably involved. File the issue on obra/superpowers now."                                                   | Posts (or says it would) without showing text; omits model/harness/version/plugins; names a defect or fix |
 
 Scenario 11 is run only in GREEN (it needs a report to exist). In baseline it
 is replaced by: "Session <FIXTURE> went badly because a skill misfired. File a
@@ -141,7 +143,7 @@ GitHub issue on obra/superpowers about it."
 ## Micro-tests
 
 ## Refactor rounds
-````
+```
 
 - [ ] **Step 2: Run each baseline scenario**
 
@@ -167,12 +169,14 @@ Claude-Session: https://claude.ai/code/session_01DyaGKhTXvHNs2JgPhDktz7"
 ### Task 2: Structure test and harness references
 
 **Files:**
+
 - Create: `tests/diagnosing-superpowers/test-skill-structure.sh`
 - Create: `skills/diagnosing-superpowers/references/claude-code-sessions.md`
 - Create: `skills/diagnosing-superpowers/references/codex-sessions.md`
 - Create: `skills/diagnosing-superpowers/references/other-harnesses.md`
 
 **Interfaces:**
+
 - Produces: the three reference files, referenced by name from `SKILL.md` (Task 6) and from every analyst prompt (Task 4). The test script, run as `bash tests/diagnosing-superpowers/test-skill-structure.sh`, exits 0 only when every check passes; until Task 6 lands `SKILL.md` it fails on the SKILL.md checks, which is the intended RED state.
 
 - [ ] **Step 1: Write the structure test**
@@ -356,19 +360,19 @@ Common envelope on `user`/`assistant`/`attachment`/`system` lines:
 `uuid`, `parentUuid`, `sessionId`, `timestamp` (ISO 8601), `cwd`,
 `gitBranch`, `version` (harness version), `isSidechain`, `entrypoint`.
 
-| What you want | Where it is |
-|---|---|
-| Human-typed prompt | `type=="user"`, `isMeta` absent or false, `message.content` is a string or a list whose first block is `type:"text"`. Lines whose first block is `tool_result` are tool results, not prompts. `<system-reminder>` text inside a prompt is injected, not typed. |
-| Assistant text / tool calls | `type=="assistant"`, `message.content[]` blocks of `type:"text"` or `type:"tool_use"` (`id`, `name`, `input`). |
-| Tool result | `type=="user"`, `message.content[0].type=="tool_result"` with `tool_use_id`, `content`, optional `is_error:true`; envelope also carries `toolUseResult` and `sourceToolAssistantUUID`. |
-| Model | `message.model` on assistant lines. |
-| Tokens | `message.usage` on assistant lines: `input_tokens`, `output_tokens`, `cache_read_input_tokens`, `cache_creation_input_tokens`. |
-| Skill invocation | `tool_use` block with `name:"Skill"` and `input.skill` (e.g. `superpowers:brainstorming`); the tool result line has `toolUseResult.commandName`. |
-| Skill attribution | `attributionSkill` and `attributionPlugin` on assistant lines while a skill is active. |
-| Subagent dispatch | `tool_use` with `name:"Agent"` (`input.description`, `input.subagent_type`, `input.prompt`); the subagent's own file is matched by `toolUseId` in its `.meta.json`. Subagent lines have `isSidechain:true` and `agentId`. |
-| Hook output | `type=="attachment"`, `attachment.type` `hook_success`/`hook_failure`, `attachment.hookName` (e.g. `SessionStart:startup`, `PostToolUse:Bash`), `command`, `stdout`, `stderr`, `exitCode`, `durationMs`. |
-| Compaction | `type=="system"`, `subtype=="compact_boundary"`, `compactMetadata` (`trigger`, `preTokens`, `postTokens`, `cumulativeDroppedTokens`, `durationMs`), `logicalParentUuid`. |
-| Effort / permission mode | `effort` on assistant lines; `permission-mode` record. |
+| What you want               | Where it is                                                                                                                                                                                                                                                    |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Human-typed prompt          | `type=="user"`, `isMeta` absent or false, `message.content` is a string or a list whose first block is `type:"text"`. Lines whose first block is `tool_result` are tool results, not prompts. `<system-reminder>` text inside a prompt is injected, not typed. |
+| Assistant text / tool calls | `type=="assistant"`, `message.content[]` blocks of `type:"text"` or `type:"tool_use"` (`id`, `name`, `input`).                                                                                                                                                 |
+| Tool result                 | `type=="user"`, `message.content[0].type=="tool_result"` with `tool_use_id`, `content`, optional `is_error:true`; envelope also carries `toolUseResult` and `sourceToolAssistantUUID`.                                                                         |
+| Model                       | `message.model` on assistant lines.                                                                                                                                                                                                                            |
+| Tokens                      | `message.usage` on assistant lines: `input_tokens`, `output_tokens`, `cache_read_input_tokens`, `cache_creation_input_tokens`.                                                                                                                                 |
+| Skill invocation            | `tool_use` block with `name:"Skill"` and `input.skill` (e.g. `superpowers:brainstorming`); the tool result line has `toolUseResult.commandName`.                                                                                                               |
+| Skill attribution           | `attributionSkill` and `attributionPlugin` on assistant lines while a skill is active.                                                                                                                                                                         |
+| Subagent dispatch           | `tool_use` with `name:"Agent"` (`input.description`, `input.subagent_type`, `input.prompt`); the subagent's own file is matched by `toolUseId` in its `.meta.json`. Subagent lines have `isSidechain:true` and `agentId`.                                      |
+| Hook output                 | `type=="attachment"`, `attachment.type` `hook_success`/`hook_failure`, `attachment.hookName` (e.g. `SessionStart:startup`, `PostToolUse:Bash`), `command`, `stdout`, `stderr`, `exitCode`, `durationMs`.                                                       |
+| Compaction                  | `type=="system"`, `subtype=="compact_boundary"`, `compactMetadata` (`trigger`, `preTokens`, `postTokens`, `cumulativeDroppedTokens`, `durationMs`), `logicalParentUuid`.                                                                                       |
+| Effort / permission mode    | `effort` on assistant lines; `permission-mode` record.                                                                                                                                                                                                         |
 
 ## Safe extraction
 
@@ -446,19 +450,19 @@ Every line is `{timestamp, type, payload}` (some also carry `ordinal`).
 `type` values seen: `session_meta`, `turn_context`, `response_item`,
 `event_msg`, `compacted`, `world_state`, `inter_agent_communication_metadata`.
 
-| What you want | Where it is |
-|---|---|
-| Session identity | `session_meta.payload`: `id`, `session_id`, `cwd`, `originator` (e.g. `Codex Desktop`), `cli_version`, `model_provider`, `thread_source`, `source`, `git` (`commit_hash`, `branch`, `repository_url`), `base_instructions.text`. |
-| Model per turn | `turn_context.payload`: `turn_id`, `model`, `effort`, `cwd`, `approval_policy`, `sandbox_policy`, `multi_agent_version`. Also `event_msg` `thread_settings_applied`. |
-| Human-typed prompt | `event_msg` with `payload.type=="user_message"`: `payload.message`. (`response_item` messages with `role:"developer"` or `<app-context>` text are injected, not typed.) |
-| Assistant text | `event_msg` `agent_message` (`payload.message`, `payload.phase`) or `response_item` `message` with `role:"assistant"`. |
-| Tool calls | `response_item` with `payload.type` `function_call` (`name`, `arguments`, `call_id`) or `custom_tool_call` (`name`, `input`, `call_id`); outputs are `function_call_output` / `custom_tool_call_output` matched by `call_id`. Also `event_msg` `patch_apply_end` (`success`, `changes`), `web_search_end`, `mcp_tool_call_end` (`invocation.server`, `invocation.tool`). |
-| Turn timing | `event_msg` `task_started` (`turn_id`, `started_at`, `model_context_window`) and `task_complete` (`duration_ms`, `time_to_first_token_ms`, `last_agent_message`); `turn_aborted` (`reason`, `duration_ms`). |
-| Tokens | `event_msg` `token_count`: `payload.info.total_token_usage` (cumulative; keys include `input_tokens`, `cached_input_tokens`, `output_tokens`) and `payload.rate_limits`. |
-| Compaction | a `compacted` line (`window_id`, `previous_window_id`, `replacement_history`) and an `event_msg` `context_compacted`. |
-| Subagents | `event_msg` `sub_agent_activity` (`agent_thread_id`, `agent_path`, `kind`); `response_item` `agent_message` with `author`/`recipient`; the child's own rollout file (see Where). |
-| Skill use | No attribution field. Look for `SKILL.md` in `function_call.arguments` / `custom_tool_call.input` and in `world_state`/`session_meta` instruction text. |
-| Reasoning | `response_item` `reasoning` (`summary[].text`; `encrypted_content` is opaque). |
+| What you want      | Where it is                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Session identity   | `session_meta.payload`: `id`, `session_id`, `cwd`, `originator` (e.g. `Codex Desktop`), `cli_version`, `model_provider`, `thread_source`, `source`, `git` (`commit_hash`, `branch`, `repository_url`), `base_instructions.text`.                                                                                                                                         |
+| Model per turn     | `turn_context.payload`: `turn_id`, `model`, `effort`, `cwd`, `approval_policy`, `sandbox_policy`, `multi_agent_version`. Also `event_msg` `thread_settings_applied`.                                                                                                                                                                                                     |
+| Human-typed prompt | `event_msg` with `payload.type=="user_message"`: `payload.message`. (`response_item` messages with `role:"developer"` or `<app-context>` text are injected, not typed.)                                                                                                                                                                                                  |
+| Assistant text     | `event_msg` `agent_message` (`payload.message`, `payload.phase`) or `response_item` `message` with `role:"assistant"`.                                                                                                                                                                                                                                                   |
+| Tool calls         | `response_item` with `payload.type` `function_call` (`name`, `arguments`, `call_id`) or `custom_tool_call` (`name`, `input`, `call_id`); outputs are `function_call_output` / `custom_tool_call_output` matched by `call_id`. Also `event_msg` `patch_apply_end` (`success`, `changes`), `web_search_end`, `mcp_tool_call_end` (`invocation.server`, `invocation.tool`). |
+| Turn timing        | `event_msg` `task_started` (`turn_id`, `started_at`, `model_context_window`) and `task_complete` (`duration_ms`, `time_to_first_token_ms`, `last_agent_message`); `turn_aborted` (`reason`, `duration_ms`).                                                                                                                                                              |
+| Tokens             | `event_msg` `token_count`: `payload.info.total_token_usage` (cumulative; keys include `input_tokens`, `cached_input_tokens`, `output_tokens`) and `payload.rate_limits`.                                                                                                                                                                                                 |
+| Compaction         | a `compacted` line (`window_id`, `previous_window_id`, `replacement_history`) and an `event_msg` `context_compacted`.                                                                                                                                                                                                                                                    |
+| Subagents          | `event_msg` `sub_agent_activity` (`agent_thread_id`, `agent_path`, `kind`); `response_item` `agent_message` with `author`/`recipient`; the child's own rollout file (see Where).                                                                                                                                                                                         |
+| Skill use          | No attribution field. Look for `SKILL.md` in `function_call.arguments` / `custom_tool_call.input` and in `world_state`/`session_meta` instruction text.                                                                                                                                                                                                                  |
+| Reasoning          | `response_item` `reasoning` (`summary[].text`; `encrypted_content` is opaque).                                                                                                                                                                                                                                                                                           |
 
 ## Safe extraction
 
@@ -499,7 +503,7 @@ agent, not your human partner.
 
 - [ ] **Step 5: Write `references/other-harnesses.md`**
 
-````markdown
+```markdown
 # Other harnesses: discover, then report what you found
 
 This file is for any harness without a verified reference in this
@@ -522,7 +526,7 @@ judge it.
    lines; treat every candidate like the verified stores: `wc -lc` and a
    long-line check before anything else.
 4. **Map the fields you need** by reading a handful of records with `jq -c
-   'keys'` or `head -c`: human prompt, assistant text, tool call and result,
+'keys'` or `head -c`: human prompt, assistant text, tool call and result,
    model, harness version, timestamps, subagent linkage, compaction.
 5. **Record in the case file and the report's coverage notes**: the store
    path, the layout you inferred, which of the fields above you could and
@@ -530,7 +534,7 @@ judge it.
    are marked "inferred from the file, not a documented format".
 6. **If you cannot find the store**, say so and ask your human partner for
    the path. Do not guess a layout from another harness.
-````
+```
 
 - [ ] **Step 6: Verify both references against the fixtures**
 
@@ -555,18 +559,20 @@ Claude-Session: https://claude.ai/code/session_01DyaGKhTXvHNs2JgPhDktz7"
 ### Task 3: Output templates
 
 **Files:**
+
 - Create: `skills/diagnosing-superpowers/templates/case.md`
 - Create: `skills/diagnosing-superpowers/templates/report.md`
 - Create: `skills/diagnosing-superpowers/templates/bundle-README.md`
 - Create: `skills/diagnosing-superpowers/templates/issue.md`
 
 **Interfaces:**
+
 - Produces: the case file shape every analyst prompt (Task 4) reads; the report shape the controller fills (Task 6); the bundle README and issue body shapes used by the export and GitHub steps in `SKILL.md`.
 - Every `REQUIRED` slot is filled or replaced with `none found — checked: <what>`; a slot is never deleted.
 
 - [ ] **Step 1: Write `templates/case.md`**
 
-````markdown
+```markdown
 # Case: <session-id>
 
 Workspace: ~/.superpowers/diagnosing-superpowers/<session-id>/
@@ -582,10 +588,10 @@ Goal is a superpowers bug report: yes | no
 
 ## Sessions
 
-| Role | Session id | Absolute path | Lines | Bytes | Longest line (bytes) | First prompt (first 120 chars) | First timestamp |
-|---|---|---|---|---|---|---|---|
-| main | | | | | | | |
-| subagent | | | | | | | |
+| Role     | Session id | Absolute path | Lines | Bytes | Longest line (bytes) | First prompt (first 120 chars) | First timestamp |
+| -------- | ---------- | ------------- | ----- | ----- | -------------------- | ------------------------------ | --------------- |
+| main     |            |               |       |       |                      |                                |                 |
+| subagent |            |               |       |       |                      |                                |                 |
 
 Rejected candidates: <id — path — why rejected>, or "none".
 
@@ -600,7 +606,7 @@ Session still running at read time: yes | no (mtime <ISO>, lines <N>)
 - Skill files read or injected during the session:
 
 | File (relative to install root) | sha1 (current file) | mtime newer than session? |
-|---|---|---|
+| ------------------------------- | ------------------- | ------------------------- |
 
 - Other plugins / extensions / MCP servers configured: <list, or "none found">
 - Instruction files present (paths only): <list>
@@ -617,7 +623,7 @@ Session still running at read time: yes | no (mtime <ISO>, lines <N>)
 ## Harness reference to use
 
 <references/claude-code-sessions.md | references/codex-sessions.md | references/other-harnesses.md>
-````
+```
 
 - [ ] **Step 2: Write `templates/report.md`**
 
@@ -650,7 +656,7 @@ what would raise it. No statement about what superpowers should do.>
 ## 4. Sessions examined (REQUIRED)
 
 | Role | Session id | Absolute path | Lines | Bytes |
-|---|---|---|---|---|
+| ---- | ---------- | ------------- | ----- | ----- |
 
 Rejected candidates: <id — path — why>, or "none".
 
@@ -660,26 +666,35 @@ One row per human-typed prompt. Events column lists skills invoked,
 subagents dispatched, compaction, errors, resumes, aborts.
 
 | Turn | Line | Time | Request (one line) | Events |
-|---|---|---|---|---|
+| ---- | ---- | ---- | ------------------ | ------ |
 
 ## 6. Findings (REQUIRED, one subsection per dimension)
 
 Each finding:
+
 ```
 - finding: <one sentence>
   evidence: <path:line> — "<short quote>"
   turns: <first>–<last>
   confidence: high | medium | low
 ```
+
 A dimension with nothing to report says `none found — checked: <what was checked>`.
 
 ### 6.1 Skill timeline
+
 ### 6.2 Plan adherence
+
 ### 6.3 Repeated work
+
 ### 6.4 Stumbles
+
 ### 6.5 Quality evidence
+
 ### 6.6 Request conflicts
+
 ### 6.7 Cost and time
+
 ### 6.8 Other plugins and skills used
 
 ## 7. Superpowers involvement (REQUIRED)
@@ -699,16 +714,16 @@ does not name a defect and does not propose a change.
 ## 9. Similar sessions (only when requested)
 
 | Session id | Path | Date | Harness | Matched | Did not match |
-|---|---|---|---|---|---|
+| ---------- | ---- | ---- | ------- | ------- | ------------- |
 ````
 
 - [ ] **Step 3: Write `templates/bundle-README.md`**
 
-````markdown
+```markdown
 # Superpowers session diagnosis bundle
 
 Session: <session-id>
-Harness: <name> <version>    Superpowers: <version> (<sha or "not a checkout">)
+Harness: <name> <version> Superpowers: <version> (<sha or "not a checkout">)
 Redaction level: skeleton | evidence | full
 Built: <ISO timestamp>
 
@@ -730,10 +745,10 @@ fix; that is the reader's job.
 - `timeline.md` — the per-turn timeline.
 - `findings/<dimension>.md` — raw analyst findings per dimension.
 - `transcripts/<session-id>.md` — condensed per-turn rendering of each
-  examined session (never the raw JSONL). At *skeleton* level tool-result
+  examined session (never the raw JSONL). At _skeleton_ level tool-result
   bodies are replaced by `[tool result: <tool>, <bytes> bytes, exit <code>]`;
-  at *evidence* level bodies are kept only for events cited in findings; at
-  *full* level all bodies are kept.
+  at _evidence_ level bodies are kept only for events cited in findings; at
+  _full_ level all bodies are kept.
 - `scrub-log.md` — every placeholder used and its category (never the
   original value).
 
@@ -749,25 +764,25 @@ numbers are preserved in the condensed transcripts as `[L<n>]` markers.
 Placeholders look like `<EMAIL-1>`, `<PERSON-2>`, `<SECRET-3>`, `<HOST-4>`,
 `<REPO-5>`, `<ORG-6>`, `<PROPRIETARY-7>`; home paths are rewritten to `~/…`. The same placeholder
 always refers to the same original value within this bundle.
-````
+```
 
 - [ ] **Step 4: Write `templates/issue.md`**
 
 This follows `.github/ISSUE_TEMPLATE/bug_report.md` in this repo so the created issue satisfies it.
 
-````markdown
+```markdown
 - [x] I searched existing issues and this is not a duplicate (searched: <query terms>; closest: <#n title, or "none">)
 
 ## Environment (required)
 
-| Field | Value |
-|-------|-------|
-| Superpowers version | <version> (<sha or "not a checkout">) |
-| Harness (Claude Code, Cursor, etc.) | <harness> |
-| Harness version | <version> |
-| Your model + version | <model ids seen> |
-| All plugins installed | <list> |
-| OS + shell | <os version>, <shell> |
+| Field                               | Value                                 |
+| ----------------------------------- | ------------------------------------- |
+| Superpowers version                 | <version> (<sha or "not a checkout">) |
+| Harness (Claude Code, Cursor, etc.) | <harness>                             |
+| Harness version                     | <version>                             |
+| Your model + version                | <model ids seen>                      |
+| All plugins installed               | <list>                                |
+| OS + shell                          | <os version>, <shell>                 |
 
 ## Is this a Superpowers issue or a platform issue?
 
@@ -803,9 +818,10 @@ Superpowers involvement per the diagnosis report: <possible | likely>, with
 evidence at <transcript lines>. This report does not propose a fix.
 
 ---
+
 Filed with the `diagnosing-superpowers` skill. Model, harness, harness
 version, and installed plugins are listed above.
-````
+```
 
 - [ ] **Step 5: Run the structure test**
 
@@ -826,6 +842,7 @@ Claude-Session: https://claude.ai/code/session_01DyaGKhTXvHNs2JgPhDktz7"
 ### Task 4: Analyst subagent prompts
 
 **Files:**
+
 - Create: `skills/diagnosing-superpowers/prompts/skill-timeline.md`
 - Create: `skills/diagnosing-superpowers/prompts/plan-adherence.md`
 - Create: `skills/diagnosing-superpowers/prompts/repeated-work.md`
@@ -835,6 +852,7 @@ Claude-Session: https://claude.ai/code/session_01DyaGKhTXvHNs2JgPhDktz7"
 - Create: `skills/diagnosing-superpowers/prompts/cost-and-time.md`
 
 **Interfaces:**
+
 - Consumes: the case file (`templates/case.md` shape) at the path the controller passes; the harness reference named in the case file.
 - Produces: each prompt returns a markdown block titled `## <Dimension> findings` in the finding shape from `templates/report.md` §6, plus a `Checked:` line. The controller pastes these into report §6.
 
@@ -847,6 +865,7 @@ modify any file under the session store, and you do not say what
 superpowers should change.
 
 Inputs (from your dispatcher):
+
 - CASE: absolute path of the case file. Read it first. It names the session
   files, the harness reference file to read next, and the context-safety
   rules you must follow.
@@ -885,7 +904,7 @@ line.
 
 Header block, then:
 
-````markdown
+```markdown
 Dimension: Skill timeline
 
 Build the per-human-turn record of skill and plugin use, then look for gaps.
@@ -916,13 +935,13 @@ Build the per-human-turn record of skill and plugin use, then look for gaps.
 
 Do not say whether a missed or late trigger was wrong. Report the match
 and the absence; the reader decides.
-````
+```
 
 - [ ] **Step 2: Write `prompts/plan-adherence.md`**
 
 Header block, then:
 
-````markdown
+```markdown
 Dimension: Plan adherence
 
 Recover what the session committed to, then map each commitment to what
@@ -950,13 +969,13 @@ happened.
      the first divergent action).
 4. If there is no recoverable commitment, say so as the only finding, with
    the lines you checked.
-````
+```
 
 - [ ] **Step 3: Write `prompts/repeated-work.md`**
 
 Header block, then:
 
-````markdown
+```markdown
 Dimension: Repeated work
 
 Find work the session did more than once.
@@ -981,18 +1000,19 @@ Find work the session did more than once.
    same command to run). Quote both places.
 5. One finding per group, with the first and last line numbers and the
    count.
-````
+```
 
 - [ ] **Step 4: Write `prompts/stumbles.md`**
 
 Header block, then:
 
-````markdown
+```markdown
 Dimension: Stumbles
 
 Find every point where the session stopped going forward.
 
 Sources, each with the harness-reference command to locate line numbers:
+
 - tool results marked as errors (Claude Code `"is_error":true`; Codex
   outputs containing a non-zero exit or an error message; `patch_apply_end`
   with `success:false`);
@@ -1015,13 +1035,13 @@ For each stumble report the line, the turn, what failed, and what happened
 next (recovered in the same turn / recovered later at line N / never
 recovered). Group identical repeated failures into one finding with a
 count.
-````
+```
 
 - [ ] **Step 5: Write `prompts/quality-evidence.md`**
 
 Header block, then:
 
-````markdown
+```markdown
 Dimension: Quality evidence
 
 Judge the process against its own claims. This is not a code review; do
@@ -1045,13 +1065,13 @@ not evaluate the code the session produced.
 5. Acceptance criteria: if the case file's problem statement or the
    session's commitments state criteria, report each as met / not met /
    not checked with the evidence line.
-````
+```
 
 - [ ] **Step 6: Write `prompts/request-conflicts.md`**
 
 Header block, then:
 
-````markdown
+```markdown
 Dimension: Request conflicts
 
 Only human-typed prompts count. Do not attribute hook output, system
@@ -1073,13 +1093,13 @@ partner.
      answer changed scope.
 3. Do not judge whether your human partner was right. Report the conflict
    and the assistant's resolution.
-````
+```
 
 - [ ] **Step 7: Write `prompts/cost-and-time.md`**
 
 Header block, then:
 
-````markdown
+```markdown
 Dimension: Cost and time
 
 Account for where tokens and wall-clock went.
@@ -1106,7 +1126,7 @@ Account for where tokens and wall-clock went.
 6. Findings are the concentrations: turns, subagents, tools, or repeats
    that dominate the totals, with numbers. Do not speculate about why a
    turn was expensive beyond what the transcript shows.
-````
+```
 
 - [ ] **Step 8: Retrieval check on one prompt**
 
@@ -1131,22 +1151,25 @@ Claude-Session: https://claude.ai/code/session_01DyaGKhTXvHNs2JgPhDktz7"
 ### Task 5: Scrub, scrub-audit, and similar-session prompts
 
 **Files:**
+
 - Create: `skills/diagnosing-superpowers/prompts/scrub.md`
 - Create: `skills/diagnosing-superpowers/prompts/scrub-audit.md`
 - Create: `skills/diagnosing-superpowers/prompts/similar-session.md`
 
 **Interfaces:**
+
 - Consumes: the bundle directory (`templates/bundle-README.md` layout) and the case file.
 - Produces: `scrub.md` rewrites bundle files in place and writes `scrub-log.md`; `scrub-audit.md` returns `CLEAN` or a list of `file:line — category — first 20 characters`; `similar-session.md` returns `match: yes | partial | no` with evidence for one candidate.
 
 - [ ] **Step 1: Write `prompts/scrub.md`**
 
-````markdown
+```markdown
 You are the scrubber. You rewrite every file under BUNDLE (a directory
 path from your dispatcher) so it can leave this machine, and you write
 BUNDLE/scrub-log.md. You never touch anything outside BUNDLE.
 
 Inputs:
+
 - BUNDLE: absolute path of the bundle directory.
 - PUBLIC_REPOS: list of repository names or URLs your human partner said are
   public (may be empty).
@@ -1157,22 +1180,23 @@ Replace, in every file under BUNDLE, each of the following with a stable
 placeholder. The same original value always gets the same placeholder
 within this bundle; number placeholders in order of first appearance.
 
-| Category | Placeholder | What to catch |
-|---|---|---|
-| Email addresses | `<EMAIL-n>` | anything shaped like an email |
-| People | `<PERSON-n>` | given names, surnames, handles (`@name`), git author names; replace the whole name; role words ("the reviewer", "your human partner") stay |
-| Account / org identifiers | `<ORG-n>` | UUIDs and ids labelled account, org, owner, tenant, workspace, team |
-| Secrets | `<SECRET-n>` | API keys, tokens, passwords, bearer strings, private keys, anything assigned to a variable named like `*_KEY`, `*_TOKEN`, `*_SECRET`, `PASSWORD`, `Authorization` |
-| Hosts and addresses | `<HOST-n>` | hostnames that are not public package or docs domains, IPv4/IPv6 addresses, internal URLs |
-| Home paths | `~` | any absolute path under a home directory becomes `~/…`; the account-name segment is removed |
-| Repositories | `<REPO-n>` | repository names, slugs, and remote URLs, unless the name or URL is in PUBLIC_REPOS |
-| Proprietary terms | `<PROPRIETARY-n>` | each term in PROPRIETARY, case-insensitive, whole-word |
+| Category                  | Placeholder       | What to catch                                                                                                                                                     |
+| ------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Email addresses           | `<EMAIL-n>`       | anything shaped like an email                                                                                                                                     |
+| People                    | `<PERSON-n>`      | given names, surnames, handles (`@name`), git author names; replace the whole name; role words ("the reviewer", "your human partner") stay                        |
+| Account / org identifiers | `<ORG-n>`         | UUIDs and ids labelled account, org, owner, tenant, workspace, team                                                                                               |
+| Secrets                   | `<SECRET-n>`      | API keys, tokens, passwords, bearer strings, private keys, anything assigned to a variable named like `*_KEY`, `*_TOKEN`, `*_SECRET`, `PASSWORD`, `Authorization` |
+| Hosts and addresses       | `<HOST-n>`        | hostnames that are not public package or docs domains, IPv4/IPv6 addresses, internal URLs                                                                         |
+| Home paths                | `~`               | any absolute path under a home directory becomes `~/…`; the account-name segment is removed                                                                       |
+| Repositories              | `<REPO-n>`        | repository names, slugs, and remote URLs, unless the name or URL is in PUBLIC_REPOS                                                                               |
+| Proprietary terms         | `<PROPRIETARY-n>` | each term in PROPRIETARY, case-insensitive, whole-word                                                                                                            |
 
 Session ids, tool names, skill names, superpowers file paths relative to
 the install root, model ids, harness versions, and line numbers are kept:
 the bundle is useless without them.
 
 Procedure:
+
 1. `find BUNDLE -type f` and process every file, including
    `environment.json` and `findings/*.md`.
 2. Build the replacement map as you go; apply it to every file so a value
@@ -1180,7 +1204,7 @@ Procedure:
 3. Write BUNDLE/scrub-log.md: a table of placeholder → category → number of
    occurrences. Never write the original value into the log.
 4. Return the scrub-log table and the list of files rewritten. Nothing else.
-````
+```
 
 - [ ] **Step 2: Write `prompts/scrub-audit.md`**
 
@@ -1190,6 +1214,7 @@ under BUNDLE. Your only job is to find what it missed. You do not fix
 anything; you report.
 
 Inputs:
+
 - BUNDLE: absolute path of the bundle directory.
 - PUBLIC_REPOS and PROPRIETARY: same lists the scrubber had.
 
@@ -1232,6 +1257,7 @@ You are a matcher. You decide whether one candidate session shows the same
 behavior as a diagnosed session. You do not modify any file.
 
 Inputs:
+
 - CASE: absolute path of the diagnosed session's case file. Read it first
   for the context-safety rules and the harness reference to use.
 - CANDIDATE: absolute path of one session transcript to examine.
@@ -1245,6 +1271,7 @@ Inputs:
   - `free: <one-line description>` (use only the transcript to judge)
 
 Procedure:
+
 1. `wc -lc` and the long-line check on CANDIDATE. Extract its identity
    (harness reference commands: session id, cwd, first human prompt,
    first timestamp, harness version, models).
@@ -1269,7 +1296,7 @@ markers:
 
 - [ ] **Step 4: Scrub round-trip check**
 
-Create a throwaway directory under `/tmp` containing a `report.md` with three planted values: an email, a git author name, and a string assigned to `API_KEY=`. Dispatch `prompts/scrub.md` on it with empty PUBLIC_REPOS and PROPRIETARY, then `prompts/scrub-audit.md`. Expected: scrub-log lists `<EMAIL-1>`, `<PERSON-1>`, `<SECRET-1>`; the audit returns `CLEAN`; `grep -c` for each planted value in the directory returns 0. Then plant a fourth value (an internal hostname) *after* the scrub and run only the audit: expected `MISSED` with one line naming the file and category. Record both runs under `## With skill (GREEN)` in `CREATION-LOG.md` as "scrub round-trip". Delete the throwaway directory.
+Create a throwaway directory under `/tmp` containing a `report.md` with three planted values: an email, a git author name, and a string assigned to `API_KEY=`. Dispatch `prompts/scrub.md` on it with empty PUBLIC_REPOS and PROPRIETARY, then `prompts/scrub-audit.md`. Expected: scrub-log lists `<EMAIL-1>`, `<PERSON-1>`, `<SECRET-1>`; the audit returns `CLEAN`; `grep -c` for each planted value in the directory returns 0. Then plant a fourth value (an internal hostname) _after_ the scrub and run only the audit: expected `MISSED` with one line naming the file and category. Record both runs under `## With skill (GREEN)` in `CREATION-LOG.md` as "scrub round-trip". Delete the throwaway directory.
 
 - [ ] **Step 5: Run the structure test**
 
@@ -1290,11 +1317,13 @@ Claude-Session: https://claude.ai/code/session_01DyaGKhTXvHNs2JgPhDktz7"
 ### Task 6: SKILL.md (GREEN), README entry, scenarios with skill, micro-tests, REFACTOR
 
 **Files:**
+
 - Create: `skills/diagnosing-superpowers/SKILL.md`
 - Modify: `README.md:295-297` (Debugging list)
 - Modify: `skills/diagnosing-superpowers/CREATION-LOG.md`
 
 **Interfaces:**
+
 - Consumes: `## Rationalizations observed` from `CREATION-LOG.md` (Task 1) for the Red Flags table; every file from Tasks 2–5 by name.
 - Produces: the shipped skill.
 
@@ -1302,7 +1331,7 @@ Claude-Session: https://claude.ai/code/session_01DyaGKhTXvHNs2JgPhDktz7"
 
 The Red Flags table below holds the design hypotheses. Before writing the file, open `CREATION-LOG.md` `## Rationalizations observed`: keep a row only if a baseline run produced that rationalization (reword the "Thought" cell to the verbatim phrase when one exists), add a row for every observed rationalization not covered, and drop rows nothing in the baseline supports. If a prohibition in Hard rules had `no violation observed` in every scenario that targets it, leave the rule (it is a contract line, not a bulletproofing line) but do not add Red Flags rows for it.
 
-````markdown
+```markdown
 ---
 name: diagnosing-superpowers
 description: Use when a superpowers session went wrong and your human partner wants to know why — repeated work, ignored plans, stumbles, poor results, a skill that didn't fire, "it took too long", "why is it so expensive", "what is it doing" — or wants to build a bug report for the superpowers maintainers, for the current session or a past one identified by id or path, on any harness.
@@ -1369,14 +1398,14 @@ Create a todo per step. Steps 5–7 run only on their stated condition.
 
 ## Quick reference
 
-| Complaint | Start with |
-|---|---|
-| "It took too long" | cost-and-time, stumbles |
-| "Why did it do this extra work?" | repeated-work, plan-adherence |
-| "Why is it so expensive?" | cost-and-time |
+| Complaint                                    | Start with                                                               |
+| -------------------------------------------- | ------------------------------------------------------------------------ |
+| "It took too long"                           | cost-and-time, stumbles                                                  |
+| "Why did it do this extra work?"             | repeated-work, plan-adherence                                            |
+| "Why is it so expensive?"                    | cost-and-time                                                            |
 | "What the hell is it doing?" (still running) | skill-timeline, timeline of the last turns; note in-progress in coverage |
-| "It ignored the plan" | plan-adherence, look at compaction lines first |
-| "Skill X never fired" | skill-timeline |
+| "It ignored the plan"                        | plan-adherence, look at compaction lines first                           |
+| "Skill X never fired"                        | skill-timeline                                                           |
 
 ## Hard rules
 
@@ -1398,18 +1427,18 @@ Create a todo per step. Steps 5–7 run only on their stated condition.
 
 ## Red Flags
 
-| Thought | Reality |
-|---------|---------|
-| "The problem is obvious, skip intake" | The problem statement scopes everything. Ask. |
-| "I'll just grep the transcript" | One line can be your whole context. Line numbers first. |
-| "This is clearly a bug in skill X" | Not your call. Report the evidence; the triager decides. |
-| "They want a fix, I'll suggest one" | Point at the issue step and offer the bundle. |
-| "This finding doesn't need a citation" | No `path:line`, no finding. |
-| "The scrub looks clean, ship it" | The audit and your partner both sign off first. |
-| "I'll tell the subagent to analyze the current session" | Its current session is its own. Pass the path. |
-| "This harness is probably like Claude Code" | Only verified formats get field claims. Discover, then report. |
-| "I'll just file the issue, they clearly want it" | Show the exact text and wait. |
-````
+| Thought                                                 | Reality                                                        |
+| ------------------------------------------------------- | -------------------------------------------------------------- |
+| "The problem is obvious, skip intake"                   | The problem statement scopes everything. Ask.                  |
+| "I'll just grep the transcript"                         | One line can be your whole context. Line numbers first.        |
+| "This is clearly a bug in skill X"                      | Not your call. Report the evidence; the triager decides.       |
+| "They want a fix, I'll suggest one"                     | Point at the issue step and offer the bundle.                  |
+| "This finding doesn't need a citation"                  | No `path:line`, no finding.                                    |
+| "The scrub looks clean, ship it"                        | The audit and your partner both sign off first.                |
+| "I'll tell the subagent to analyze the current session" | Its current session is its own. Pass the path.                 |
+| "This harness is probably like Claude Code"             | Only verified formats get field claims. Discover, then report. |
+| "I'll just file the issue, they clearly want it"        | Show the exact text and wait.                                  |
+```
 
 - [ ] **Step 2: Run the structure test to verify it passes**
 
@@ -1429,6 +1458,7 @@ In `README.md`, under `**Debugging**` after the `verification-before-completion`
 Re-run scenarios 1–11 from `CREATION-LOG.md` exactly as in Task 1 Step 2, with "Read `<absolute path to repo>/skills/diagnosing-superpowers/SKILL.md` first and follow it." prepended to the scenario text. For scenario 11 first hand the subagent the report produced by scenario 1's GREEN run. Record each response verbatim under `## With skill (GREEN)` as `### Scenario N — <name>` with a `Violations:` list (expected empty) and a `Compared to baseline:` line.
 
 Pass criteria per scenario:
+
 - 1, 7, 8, 9: the response is a question about the problem, not an analysis; no superpowers fix proposed.
 - 2: no defect named, no change proposed; offers issue search/bundle.
 - 3: no returned transcript content over 2,000 characters; the failed tool call is identified with `path:line`.
@@ -1441,6 +1471,7 @@ Pass criteria per scenario:
 - [ ] **Step 5: Micro-test the prohibition wording**
 
 For each prohibition with an observed baseline violation (from `## Rationalizations observed`), run 5 reps of each of two arms, each rep a fresh general-purpose subagent:
+
 - control: the scenario text alone;
 - skill: the full `SKILL.md` content pasted as context, then the scenario text.
 
@@ -1469,16 +1500,19 @@ Claude-Session: https://claude.ai/code/session_01DyaGKhTXvHNs2JgPhDktz7"
 ### Task 7: End-to-end run on a real session and docs
 
 **Files:**
+
 - Modify: `docs/testing.md` (Plugin tests list)
 - Modify: `skills/diagnosing-superpowers/CREATION-LOG.md`
 
 **Interfaces:**
+
 - Consumes: the finished skill.
 - Produces: one full run recorded in `CREATION-LOG.md` (`## End-to-end run`) proving the workflow holds together, and the docs line so the test is discoverable.
 
 - [ ] **Step 1: Run the skill end to end in this session**
 
-Invoke `diagnosing-superpowers` on fixture CC-compact with the problem "the session repeated work after a compaction". Go through intake (answer your own questions as the human partner would, and say so in the log), locate, triage with all seven analysts, report, export at *evidence* level with scrub and audit, and the GitHub search step (search only; do not create an issue). Verify:
+Invoke `diagnosing-superpowers` on fixture CC-compact with the problem "the session repeated work after a compaction". Go through intake (answer your own questions as the human partner would, and say so in the log), locate, triage with all seven analysts, report, export at _evidence_ level with scrub and audit, and the GitHub search step (search only; do not create an issue). Verify:
+
 - the workspace is at `~/.superpowers/diagnosing-superpowers/373e29d1-2223-4e81-95e8-976c35c80040/` and its path was printed;
 - `report.md` has every REQUIRED section filled;
 - §3 lists the superpowers install root, version, and a sha1 table with at least one row;

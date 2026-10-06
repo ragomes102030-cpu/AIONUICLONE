@@ -4,9 +4,9 @@ description: Report on your Wassenger WhatsApp inbox by composing live chat and 
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Analytics
@@ -27,12 +27,12 @@ The pattern is always the same: **(1) resolve the device(s) → (2) pull a filte
 
 Route elsewhere when the request is an action, not a measurement:
 
-| If the user wants to… | Go to |
-|---|---|
-| Assign / resolve / archive a specific chat | `wassenger-inbox` |
-| Set up auto-assignment or escalation | `wassenger-routing` |
-| Create / apply labels | `wassenger-labels` |
-| Send or broadcast a message | `wassenger-messaging` / `wassenger-campaigns` |
+| If the user wants to…                          | Go to                                               |
+| ---------------------------------------------- | --------------------------------------------------- |
+| Assign / resolve / archive a specific chat     | `wassenger-inbox`                                   |
+| Set up auto-assignment or escalation           | `wassenger-routing`                                 |
+| Create / apply labels                          | `wassenger-labels`                                  |
+| Send or broadcast a message                    | `wassenger-messaging` / `wassenger-campaigns`       |
 | SLA tracking + support-team reporting playbook | `wassenger-customer-support` (builds on this skill) |
 
 ## Prerequisites
@@ -42,19 +42,19 @@ Route elsewhere when the request is an action, not a measurement:
 
 ## How metrics are derived
 
-| Metric | Source tool(s) | Aggregation |
-|---|---|---|
-| Chats by status | `get_whatsapp_chats` action=`by_status` | use the `statusDistribution` summary, or count `chat.status` |
-| Volume over a period | `get_whatsapp_chats` action=`by_date_range` | count by `firstMessageAt` (new) or `lastMessageAt` (active) |
-| Agent workload | `get_whatsapp_chats` action=`assigned` (per `agentId`) | count per agent; sort |
-| Department split | `get_whatsapp_chats` action=`assigned` (per `departmentId`) | count per department |
-| Unread / backlog | `get_whatsapp_unread_chats` | count + sort by `unreadCount` |
-| First-response time | per chat: `owner.assignedAt`, `firstMessageAt`, `lastInboundMessageAt`, `lastOutboundMessageAt` | time delta, then average |
-| Resolution time | per chat: `firstMessageAt` → `statusUpdatedAt` where `status=resolved` | time delta, then average |
-| Message volume by type | `get_whatsapp_chat_messages` action=`by_type` / `date_range` | count per `messageType` |
-| Delivery / read rate | `analyze_whatsapp_chat_messages` action=`delivery_status` (≤30-day messages) | ratio delivered/read vs sent |
-| Language / country | per chat: `contact.locationInfo.alpha2` + `languages` | count per code |
-| Label distribution | per chat: `labels[]` | count per label name |
+| Metric                 | Source tool(s)                                                                                  | Aggregation                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Chats by status        | `get_whatsapp_chats` action=`by_status`                                                         | use the `statusDistribution` summary, or count `chat.status` |
+| Volume over a period   | `get_whatsapp_chats` action=`by_date_range`                                                     | count by `firstMessageAt` (new) or `lastMessageAt` (active)  |
+| Agent workload         | `get_whatsapp_chats` action=`assigned` (per `agentId`)                                          | count per agent; sort                                        |
+| Department split       | `get_whatsapp_chats` action=`assigned` (per `departmentId`)                                     | count per department                                         |
+| Unread / backlog       | `get_whatsapp_unread_chats`                                                                     | count + sort by `unreadCount`                                |
+| First-response time    | per chat: `owner.assignedAt`, `firstMessageAt`, `lastInboundMessageAt`, `lastOutboundMessageAt` | time delta, then average                                     |
+| Resolution time        | per chat: `firstMessageAt` → `statusUpdatedAt` where `status=resolved`                          | time delta, then average                                     |
+| Message volume by type | `get_whatsapp_chat_messages` action=`by_type` / `date_range`                                    | count per `messageType`                                      |
+| Delivery / read rate   | `analyze_whatsapp_chat_messages` action=`delivery_status` (≤30-day messages)                    | ratio delivered/read vs sent                                 |
+| Language / country     | per chat: `contact.locationInfo.alpha2` + `languages`                                           | count per code                                               |
+| Label distribution     | per chat: `labels[]`                                                                            | count per label name                                         |
 
 Useful fields each chat object already carries (no extra call): `status`, `prevStatus`, `statusUpdatedAt`, `firstMessageAt`, `lastInboundMessageAt`, `lastOutboundMessageAt`, `expiresAt` (the 24-hour window), `owner.{agent,department,assignedAt}`, `labels[]`, `contact.locationInfo`, `meta.unreadCount`.
 

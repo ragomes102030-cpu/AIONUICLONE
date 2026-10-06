@@ -63,6 +63,7 @@
 你买了一本很好的技术书，读了一遍。三个月后，你忘了第 7 章的存在。
 
 常见的变通办法都不管用：
+
 - 📄 「我搜一下 PDF」→ 得到的是页码列表，不是答案
 - 🧠 「我问 Agent 这本书的内容」→ 要么幻觉，要么说没有内容
 - 📝 「边读边做笔记」→ 最后得到一份 200 行的文档，再也不会打开
@@ -79,13 +80,13 @@
 
 运行 `/book-to-skill your-book.pdf`（或文件夹、glob、文件列表）后，会在 Agent 的 skills 目录下生成完整 skill（Copilot CLI：`~/.copilot/skills/<slug>/`；Amp 或跨 Agent：`~/.agents/skills/<slug>/`；Claude Code：`~/.claude/skills/<slug>/`；Hermes Agent：`$HERMES_HOME/skills/<category>/<slug>/`；OpenClaw：`${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/skills/<slug>/`）：
 
-| 文件 | 用途 | 大小 |
-|------|------|------|
-| `SKILL.md` | 核心心智模型 + 章节索引 | ~4,000 tokens |
-| `chapters/ch01-*.md` … | 每章一个文件，按需加载 | ~1,000 tokens/章 |
-| `glossary.md` | 关键术语，按字母排序并附章节引用 | ~1,500 tokens |
-| `patterns.md` | 所有技巧、算法与设计模式 | ~2,000 tokens |
-| `cheatsheet.md` | 决策表与快速参考规则 | ~1,000 tokens |
+| 文件                   | 用途                             | 大小             |
+| ---------------------- | -------------------------------- | ---------------- |
+| `SKILL.md`             | 核心心智模型 + 章节索引          | ~4,000 tokens    |
+| `chapters/ch01-*.md` … | 每章一个文件，按需加载           | ~1,000 tokens/章 |
+| `glossary.md`          | 关键术语，按字母排序并附章节引用 | ~1,500 tokens    |
+| `patterns.md`          | 所有技巧、算法与设计模式         | ~2,000 tokens    |
+| `cheatsheet.md`        | 决策表与快速参考规则             | ~1,000 tokens    |
 
 **章节文件按需加载** —— 在你问到相关主题之前，不会占用 skill 预算。
 
@@ -158,19 +159,18 @@ git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/boo
 <details>
 <summary>🔧 <strong>依赖要求</strong></summary>
 
-
 提取器按格式依次尝试工具，使用第一个可用的。若均未安装，会提示应运行的安装命令。纯文本、Markdown、reStructuredText 和 AsciiDoc 无需额外依赖。
 
 > **一条命令检查环境：** `python3 scripts/extract.py --check` 会打印每种格式已安装的提取器，以及缺失项的精确安装命令 —— 无需提供文件。
 
 **PDF —— 按书籍类型选择：**
 
-| 书籍类型 | 工具 | 安装 | 速度 |
-|----------|------|------|------|
-| 文字为主（散文，少表格） | `pdftotext` (poppler) | `sudo apt install poppler-utils` | ⚡ 即时 |
-| 文字为主（备选） | `pypdf` | `pip3 install pypdf` | ⚡ 即时 |
-| 文字为主（备选） | `pdfminer.six` | `pip3 install pdfminer.six` | ⚡ 即时 |
-| **技术书（代码、表格、公式）** | **`docling`** | `pip3 install docling` | ~1.5s/页 |
+| 书籍类型                       | 工具                  | 安装                             | 速度     |
+| ------------------------------ | --------------------- | -------------------------------- | -------- |
+| 文字为主（散文，少表格）       | `pdftotext` (poppler) | `sudo apt install poppler-utils` | ⚡ 即时  |
+| 文字为主（备选）               | `pypdf`               | `pip3 install pypdf`             | ⚡ 即时  |
+| 文字为主（备选）               | `pdfminer.six`        | `pip3 install pdfminer.six`      | ⚡ 即时  |
+| **技术书（代码、表格、公式）** | **`docling`**         | `pip3 install docling`           | ~1.5s/页 |
 
 > 提取开始前，skill 会询问书籍是**技术书**还是**文字为主**，并自动选择合适工具。Docling 保留 Markdown 表格与代码块；pdftotext 对纯散文更快。
 
@@ -182,29 +182,27 @@ git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/boo
 
 **EPUB：**
 
-| 工具 | 安装 | 质量 |
-|------|------|------|
-| `ebooklib` + `beautifulsoup4` | `pip3 install ebooklib beautifulsoup4` | ⭐⭐⭐ 最佳 |
-| 标准库 `zipfile` | 内置，无需安装 | ⭐⭐ 始终可用 |
+| 工具                          | 安装                                   | 质量          |
+| ----------------------------- | -------------------------------------- | ------------- |
+| `ebooklib` + `beautifulsoup4` | `pip3 install ebooklib beautifulsoup4` | ⭐⭐⭐ 最佳   |
+| 标准库 `zipfile`              | 内置，无需安装                         | ⭐⭐ 始终可用 |
 
 **其他格式：**
 
-| 格式 | 工具 | 安装 |
-|------|------|------|
-| DOCX | `python-docx`（备选：标准库 ZIP/XML） | `pip3 install python-docx` |
-| HTML | `beautifulsoup4`（备选：标准库 `html.parser`） | `pip3 install beautifulsoup4` |
-| RTF | `striprtf`（备选：正则） | `pip3 install striprtf` |
-| MOBI / AZW / AZW3 | Calibre `ebook-convert`（外部应用，非 pip） | https://calibre-ebook.com/download |
-| TXT / Markdown / reStructuredText / AsciiDoc | 内置 | — |
+| 格式                                         | 工具                                           | 安装                               |
+| -------------------------------------------- | ---------------------------------------------- | ---------------------------------- |
+| DOCX                                         | `python-docx`（备选：标准库 ZIP/XML）          | `pip3 install python-docx`         |
+| HTML                                         | `beautifulsoup4`（备选：标准库 `html.parser`） | `pip3 install beautifulsoup4`      |
+| RTF                                          | `striprtf`（备选：正则）                       | `pip3 install striprtf`            |
+| MOBI / AZW / AZW3                            | Calibre `ebook-convert`（外部应用，非 pip）    | https://calibre-ebook.com/download |
+| TXT / Markdown / reStructuredText / AsciiDoc | 内置                                           | —                                  |
 
 ---
-
 
 </details>
 
 <details>
 <summary>📁 <strong>仓库结构</strong></summary>
-
 
 ```
 book-to-skill/
@@ -232,10 +230,10 @@ book-to-skill/
 
 ---
 
-
 </details>
 
 ---
+
 ## ⚖️ 版权与合理使用
 
 book-to-skill **不包含任何书籍内容** —— 一页都没有。它是你指向已有文件的转换器。
@@ -266,4 +264,5 @@ MIT —— 适用于本仓库中的转换器（代码 + skill 定义），**不*
 ---
 
 <!-- translation-meta: source=README.md@907be508ee17428fea0179f9996bde80e5282a0f date=2026-09-01 -->
+
 <sub>简体中文翻译与英文 README 同步于 commit <code>907be50</code> · 英文版为准</sub>

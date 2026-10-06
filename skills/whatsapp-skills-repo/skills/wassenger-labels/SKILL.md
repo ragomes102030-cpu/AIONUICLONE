@@ -4,9 +4,9 @@ description: Manage labels on Wassenger chats and contacts — create, edit, del
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Labels
@@ -15,11 +15,11 @@ Tag chats and contacts with the language your business actually uses — VIP, bu
 
 ## When to use
 
-- *"Tag this chat as VIP."*
-- *"Show me every chat tagged 'interested-in-enterprise'."*
-- *"Bulk-tag every customer in Spain with 'segment:es'."*
-- *"How many chats are labeled 'bug' this month?"*
-- *"Rename 'urgent' to 'priority:high'."*
+- _"Tag this chat as VIP."_
+- _"Show me every chat tagged 'interested-in-enterprise'."_
+- _"Bulk-tag every customer in Spain with 'segment:es'."_
+- _"How many chats are labeled 'bug' this month?"_
+- _"Rename 'urgent' to 'priority:high'."_
 
 For chat **lifecycle status** (open / pending / resolved / archived), don't use labels — that's `chat.status`, covered in `wassenger-inbox`. Labels are **orthogonal**: a chat can be `active` AND `vip` AND `bug:android` simultaneously.
 
@@ -32,16 +32,16 @@ For chat **lifecycle status** (open / pending / resolved / archived), don't use 
 
 Wassenger labels are flat (no hierarchy in the API), but a **namespace convention** with a colon gives you de-facto hierarchy and prevents the "200-flat-labels-nobody-uses" problem.
 
-| Pattern | Example | When |
-|---|---|---|
-| `segment:<value>` | `segment:vip`, `segment:churn-risk` | Customer classification |
-| `intent:<value>` | `intent:billing`, `intent:demo` | What the customer wants |
-| `bug:<platform>` | `bug:android`, `bug:web` | Bug reports |
-| `campaign:<id>` | `campaign:blackfriday-2026` | Trace which campaign produced a chat |
-| `language:<bcp47>` | `language:es`, `language:pt-BR` | Customer language |
-| `priority:<level>` | `priority:high`, `priority:low` | Urgency |
-| `team:<name>` | `team:sales`, `team:support` | Which team owns it (use departments for routing — labels here for *reporting*) |
-| `lifecycle:<stage>` | `lifecycle:cold`, `lifecycle:qualified` | Sales funnel stage |
+| Pattern             | Example                                 | When                                                                           |
+| ------------------- | --------------------------------------- | ------------------------------------------------------------------------------ |
+| `segment:<value>`   | `segment:vip`, `segment:churn-risk`     | Customer classification                                                        |
+| `intent:<value>`    | `intent:billing`, `intent:demo`         | What the customer wants                                                        |
+| `bug:<platform>`    | `bug:android`, `bug:web`                | Bug reports                                                                    |
+| `campaign:<id>`     | `campaign:blackfriday-2026`             | Trace which campaign produced a chat                                           |
+| `language:<bcp47>`  | `language:es`, `language:pt-BR`         | Customer language                                                              |
+| `priority:<level>`  | `priority:high`, `priority:low`         | Urgency                                                                        |
+| `team:<name>`       | `team:sales`, `team:support`            | Which team owns it (use departments for routing — labels here for _reporting_) |
+| `lifecycle:<stage>` | `lifecycle:cold`, `lifecycle:qualified` | Sales funnel stage                                                             |
 
 Pick a small set of namespaces (5-8) and **document them** somewhere your agents can see. Inconsistent naming kills label reporting more than any other failure.
 
@@ -163,7 +163,7 @@ manage_whatsapp_labels
   - description: "Needs a reply within 1h"   # required on update
 ```
 
-To actually change the *text* of a label (e.g. shift from flat `urgent` → namespaced `priority:high`), there's no atomic rename. Do it in three steps:
+To actually change the _text_ of a label (e.g. shift from flat `urgent` → namespaced `priority:high`), there's no atomic rename. Do it in three steps:
 
 ```
 1. manage_whatsapp_labels action: create, name: "priority:high", color: "tomato"
@@ -217,7 +217,7 @@ Don't auto-delete — labels are a vocabulary the team shares. A label nobody us
 - **Inconsistent capitalization.** `VIP` vs `Vip` vs `vip` are three labels. Lowercase + hyphens, always.
 - **No documentation.** A label called `wf-step-3-pending` makes sense to one person on the team. Document namespaces in a shared doc your agents can reference.
 - **Labels as a junk drawer.** If a label has < 5 chats and is older than 60 days, it's probably dead. Prune.
-- **Label-driven routing.** Routing belongs in `wassenger-routing` (auto-assignment + departments). Labels are for *reporting* and *filtering*, not for *triggering* downstream actions.
+- **Label-driven routing.** Routing belongs in `wassenger-routing` (auto-assignment + departments). Labels are for _reporting_ and _filtering_, not for _triggering_ downstream actions.
 
 ## See also
 

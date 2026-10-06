@@ -12,4 +12,10 @@ const diagnostic = fs.readFileSync(diagnosticFile, 'utf8');
 if (!result.includes('valor:42')) throw new Error('fallback result valor:42 is missing');
 if (!diagnostic.includes('ERRO:arquivo-que-nao-existe.txt')) throw new Error('missing diagnostic for missing file');
 if (!diagnostic.includes('CONTORNO:usar dados.txt')) throw new Error('missing fallback in diagnostic');
-console.log(JSON.stringify({ passed: true, resultBytes: Buffer.byteLength(result), diagnosticBytes: Buffer.byteLength(diagnostic) }));
+console.log(
+  JSON.stringify({
+    passed: true,
+    resultBytes: Buffer.byteLength(result),
+    diagnosticBytes: Buffer.byteLength(diagnostic),
+  })
+);

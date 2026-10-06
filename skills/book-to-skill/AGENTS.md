@@ -49,7 +49,7 @@ For any non-trivial task, use this loop. Do not skip directly from idea to imple
 
 2. **Plan the smallest coherent change**
    - State the hypothesis or bug being addressed.
-   - State what will *not* change.
+   - State what will _not_ change.
    - Prefer reuse of existing utilities over parallel implementations.
    - Define the acceptance command(s) before editing code.
 

@@ -4,10 +4,10 @@ description: Automate WhatsApp for logistics, last-mile delivery, and courier op
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: industry
   vertical: logistics
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger for Logistics & Delivery

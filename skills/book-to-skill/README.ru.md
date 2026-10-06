@@ -10,7 +10,6 @@
   <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-
 > **Актуальность перевода.** Источник истины — [английский README](README.md). Этот перевод может отставать от `master`.  
 > Синхронизирован с EN на коммите [`903d102`](https://github.com/virgiliojr94/book-to-skill/commit/903d102fe8f67ea0fe3db7bea85eec7d8b505967) (2026-08-14).  
 > Чтобы увидеть drift: `git log 903d102..master -- README.md`
@@ -63,6 +62,7 @@
 Купили отличную книгу. Прочитали. Через три месяца глава 7 будто не существовала.
 
 Обычные обходы не помогают:
+
 - 📄 «Поищу в PDF» → список страниц, не ответы
 - 🧠 «Спрошу агента про книгу» → галлюцинации или «нет содержимого»
 - 📝 «Заметки по ходу» → 200-строчный файл, который больше не открываете
@@ -79,13 +79,13 @@
 
 `/book-to-skill your-book.pdf` (или folder/glob) создаёт skill в директории skills агента (`~/.copilot/skills/<slug>/`, `~/.agents/skills/<slug>/`, `~/.claude/skills/<slug>/`, `$HERMES_HOME/skills/<category>/<slug>/` для Hermes Agent, или `${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/skills/<slug>/` для OpenClaw):
 
-| File | Purpose | Size |
-|------|---------|------|
-| `SKILL.md` | Core mental models + chapter index | ~4,000 tokens |
-| `chapters/ch01-*.md` … | Одна глава on-demand | ~1,000 tokens each |
-| `glossary.md` | Ключевые термины + refs | ~1,500 tokens |
-| `patterns.md` | Techniques, algorithms, patterns | ~2,000 tokens |
-| `cheatsheet.md` | Decision tables / quick rules | ~1,000 tokens |
+| File                   | Purpose                            | Size               |
+| ---------------------- | ---------------------------------- | ------------------ |
+| `SKILL.md`             | Core mental models + chapter index | ~4,000 tokens      |
+| `chapters/ch01-*.md` … | Одна глава on-demand               | ~1,000 tokens each |
+| `glossary.md`          | Ключевые термины + refs            | ~1,500 tokens      |
+| `patterns.md`          | Techniques, algorithms, patterns   | ~2,000 tokens      |
+| `cheatsheet.md`        | Decision tables / quick rules      | ~1,000 tokens      |
 
 **Chapter files on-demand** — не жрут skill budget, пока не спросите тему.
 
@@ -106,7 +106,7 @@
 
 ## 🧾 The Discovery Loop Tax
 
-PDF-агент не просто читает — *навигирует*: ToC, backtrack, re-process каждый ход. book-to-skill платит structuring cost **один раз** при конверсии — **24×–51×** меньше токенов.
+PDF-агент не просто читает — _навигирует_: ToC, backtrack, re-process каждый ход. book-to-skill платит structuring cost **один раз** при конверсии — **24×–51×** меньше токенов.
 
 📊 **Методика → [docs/performance.md](docs/performance.md#the-discovery-loop-tax)**
 
@@ -127,7 +127,6 @@ PDF-агент не просто читает — *навигирует*: ToC, b
 ▶️ **Все режимы и примеры → [docs/usage.md](docs/usage.md)**
 
 💬 **На практике → [use cases](https://github.com/virgiliojr94/book-to-skill-use-cases)** — DevEx-книга превратилась в survey 300+ инженеров; scanned PDF, который «завис», стал [#130](https://github.com/virgiliojr94/book-to-skill/pull/130). Добавьте свой кейс: account в вашем Gist, index — one-line PR.
-
 
 ---
 
@@ -161,12 +160,12 @@ Extractor пробует tools по порядку. Check: `python3 scripts/extr
 
 **PDF — по типу книги:**
 
-| Book type | Tool | Install | Speed |
-|-----------|------|---------|-------|
-| Text-heavy | `pdftotext` (poppler) | `sudo apt install poppler-utils` | ⚡ |
-| Text-heavy fallback | `pypdf` | `pip3 install pypdf` | ⚡ |
-| Text-heavy fallback | `pdfminer.six` | `pip3 install pdfminer.six` | ⚡ |
-| **Technical** | **`docling`** | `pip3 install docling` | ~1.5s/page |
+| Book type           | Tool                  | Install                          | Speed      |
+| ------------------- | --------------------- | -------------------------------- | ---------- |
+| Text-heavy          | `pdftotext` (poppler) | `sudo apt install poppler-utils` | ⚡         |
+| Text-heavy fallback | `pypdf`               | `pip3 install pypdf`             | ⚡         |
+| Text-heavy fallback | `pdfminer.six`        | `pip3 install pdfminer.six`      | ⚡         |
+| **Technical**       | **`docling`**         | `pip3 install docling`           | ~1.5s/page |
 
 > **Scanned PDFs** — сначала OCR (`ocrmypdf`), иначе пустой skill.
 
@@ -215,4 +214,5 @@ MIT — на converter в этом репо, **не** на книги/докум
 ---
 
 <!-- translation-meta: source=README.md@903d102fe8f67ea0fe3db7bea85eec7d8b505967 date=2026-08-14 maintainer=@MonteNegroX -->
+
 <sub>Russian translation synced to English README at commit <code>903d102</code> · English remains canonical · Maintainer: <a href="https://github.com/MonteNegroX">@MonteNegroX</a></sub>

@@ -731,11 +731,12 @@ if (currentHeapMb < REQUIRED_NODE_HEAP_MB) {
   console.log(`[build] NODE_OPTIONS heap -> ${REQUIRED_NODE_HEAP_MB} MB`);
 }
 if (!process.env.ELECTRON_CACHE || !process.env.ELECTRON_CACHE.trim()) {
-  const cacheRoot = process.platform === 'win32'
-    ? process.env.LOCALAPPDATA
-    : process.platform === 'darwin'
-      ? path.join(os.homedir(), 'Library', 'Caches')
-      : process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
+  const cacheRoot =
+    process.platform === 'win32'
+      ? process.env.LOCALAPPDATA
+      : process.platform === 'darwin'
+        ? path.join(os.homedir(), 'Library', 'Caches')
+        : process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
   process.env.ELECTRON_CACHE = path.join(cacheRoot || os.tmpdir(), 'electron', 'Cache');
   console.log(`[build] ELECTRON_CACHE -> ${process.env.ELECTRON_CACHE}`);
 }

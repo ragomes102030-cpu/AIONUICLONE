@@ -34,14 +34,14 @@ Four, all observed in real sessions:
 
 ## Design Decisions
 
-| # | Decision | Rationale |
-|---|----------|-----------|
-| 1 | The original implementer fixes its own review findings — resume it in place. | It already holds the task context; ownership beats a drive-by patcher. Fresh "fix subagents" rebuild context per finding and lack the task frame. |
-| 2 | Re-reviews are scoped to the findings. | Fresh full reviews each round are the churn engine. Scoped re-reviews make the loop structurally convergent; the final whole-branch review remains the broad safety net. |
-| 3 | Circuit breaker at five fix rounds: three resumes, then two fresh dispatches on a more capable model. | Jesse's call. A loop that survives three resumes usually means the implementer cannot see its own problem — the fresh capable dispatch de-anchors and capability-bumps in one move. |
-| 4 | At trip, the controller adjudicates and routes. No new human checkpoint — structural failures reach the existing BLOCKED stop. | SDD's point is autonomous execution. The controller holds the plan and cross-task context the reviewer lacks; the existing text already sanctions it ("adjudicate it in the review loop") without ever specifying the mechanism. |
-| 5 | Reorganize SKILL.md by lifecycle, preserving tuned sentences. | Fixes "hard to follow" at the root. Content moves to its point of use, matching the house direction (recent commits fold recap sections into points of use). |
-| 6 | Convert Red Flags to a `| Excuse | Reality |` rationalization table; relocate hard rules to their points of use. | Matches the other seven skills. Excuses get rebuttals; rules get enforced where the reader acts. |
+| #   | Decision                                                                                                                       | Rationale                                                                                                                                                                                                                        |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 1   | The original implementer fixes its own review findings — resume it in place.                                                   | It already holds the task context; ownership beats a drive-by patcher. Fresh "fix subagents" rebuild context per finding and lack the task frame.                                                                                |
+| 2   | Re-reviews are scoped to the findings.                                                                                         | Fresh full reviews each round are the churn engine. Scoped re-reviews make the loop structurally convergent; the final whole-branch review remains the broad safety net.                                                         |
+| 3   | Circuit breaker at five fix rounds: three resumes, then two fresh dispatches on a more capable model.                          | Jesse's call. A loop that survives three resumes usually means the implementer cannot see its own problem — the fresh capable dispatch de-anchors and capability-bumps in one move.                                              |
+| 4   | At trip, the controller adjudicates and routes. No new human checkpoint — structural failures reach the existing BLOCKED stop. | SDD's point is autonomous execution. The controller holds the plan and cross-task context the reviewer lacks; the existing text already sanctions it ("adjudicate it in the review loop") without ever specifying the mechanism. |
+| 5   | Reorganize SKILL.md by lifecycle, preserving tuned sentences.                                                                  | Fixes "hard to follow" at the root. Content moves to its point of use, matching the house direction (recent commits fold recap sections into points of use).                                                                     |
+| 6   | Convert Red Flags to a `                                                                                                       | Excuse                                                                                                                                                                                                                           | Reality | ` rationalization table; relocate hard rules to their points of use. | Matches the other seven skills. Excuses get rebuttals; rules get enforced where the reader acts. |
 
 ## The Fix Loop
 
@@ -132,14 +132,14 @@ reworded.
 Excuse-shaped Never items convert to rows; new rows cover the loop
 pathology. Draft rows (final wording at implementation):
 
-| Excuse | Reality |
-|--------|---------|
-| "Close enough on spec compliance" | Reviewer found gaps = not done. |
-| "I'll fix it myself, dispatching is overhead" | Controller fixes pollute your context and skip review. Resume the implementer. |
-| "One more round will converge" | Past the cap, rounds don't converge. Adjudicate. |
+| Excuse                                             | Reality                                                                                                  |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| "Close enough on spec compliance"                  | Reviewer found gaps = not done.                                                                          |
+| "I'll fix it myself, dispatching is overhead"      | Controller fixes pollute your context and skip review. Resume the implementer.                           |
+| "One more round will converge"                     | Past the cap, rounds don't converge. Adjudicate.                                                         |
 | "The reviewer will just find something new anyway" | Scoped re-reviews check fixes, not taste. New findings on untouched code go to the ledger, not the loop. |
-| "This finding is obviously wrong, I'll drop it" | You adjudicate only at the cap, and every adjudication is a ledger entry. Silent discards are forbidden. |
-| "The fix was small, skip the re-review" | Unreviewed fixes are how regressions land. |
+| "This finding is obviously wrong, I'll drop it"    | You adjudicate only at the cap, and every adjudication is a ledger entry. Silent discards are forbidden. |
+| "The fix was small, skip the re-review"            | Unreviewed fixes are how regressions land.                                                               |
 
 Hard rules that are not excuses (never parallel implementers, never dispatch
 a reviewer without a diff file, model line required, never re-dispatch

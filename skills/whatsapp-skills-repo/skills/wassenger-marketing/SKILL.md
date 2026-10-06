@@ -4,10 +4,10 @@ description: Run WhatsApp marketing campaigns with Wassenger — segmented broad
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: industry
   vertical: marketing
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger for Marketing
@@ -52,9 +52,8 @@ At checkout (or any signup form):
 
 ```html
 <label>
-  <input type="checkbox" name="wa_optin" required>
-  I want to receive offers and updates from {{brand}} on WhatsApp.
-  I can opt out anytime by replying STOP.
+  <input type="checkbox" name="wa_optin" required />
+  I want to receive offers and updates from {{brand}} on WhatsApp. I can opt out anytime by replying STOP.
 </label>
 ```
 
@@ -181,14 +180,14 @@ Loyalty pushes work because they're personally relevant — not a blanket promo.
 
 Every campaign should answer:
 
-| Metric | Target (B2C, EU) | How to measure |
-|---|---|---|
-| Delivery rate | > 95% | `manage_whatsapp_campaigns stats.delivered / total` |
-| Read rate | > 80% | `stats.read / stats.delivered` |
-| Reply rate | 3-10% | `stats.replied / stats.delivered` |
-| Click-through | 5-15% | UTM'd short links in template |
-| Conversion | 1-5% | E-commerce attribution window 7d |
-| Opt-out rate | < 0.5% | Newly opted-out / campaign size |
+| Metric        | Target (B2C, EU) | How to measure                                      |
+| ------------- | ---------------- | --------------------------------------------------- |
+| Delivery rate | > 95%            | `manage_whatsapp_campaigns stats.delivered / total` |
+| Read rate     | > 80%            | `stats.read / stats.delivered`                      |
+| Reply rate    | 3-10%            | `stats.replied / stats.delivered`                   |
+| Click-through | 5-15%            | UTM'd short links in template                       |
+| Conversion    | 1-5%             | E-commerce attribution window 7d                    |
+| Opt-out rate  | < 0.5%           | Newly opted-out / campaign size                     |
 
 Anything below half of target = template / segment / timing problem. Stop and iterate, don't scale.
 

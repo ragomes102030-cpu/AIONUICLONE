@@ -148,12 +148,12 @@ O `AGENTS.md` documenta o fluxo do upstream. **Estas são as diferenças medidas
 
 ### O que a documentação pede e aqui não existe
 
-| Documentado em AGENTS.md | Realidade local | Faça |
-| --- | --- | --- |
+| Documentado em AGENTS.md  | Realidade local          | Faça                                                                                                 |
+| ------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
 | `just push` (obrigatório) | **`just` não instalado** | `bun run lint && bunx tsc --noEmit && node node_modules/vitest/vitest.mjs run` e só então `git push` |
-| `prek run` (check de PR) | **`prek` não instalado** | pule, ou instale com `npm i -g @j178/prek` |
-| `prettier` | não instalado global | `bun run format` (usa oxfmt) |
-| `bun run test` | `bun` existe ✅ | funciona; `npx oxlint` também |
+| `prek run` (check de PR)  | **`prek` não instalado** | pule, ou instale com `npm i -g @j178/prek`                                                           |
+| `prettier`                | não instalado global     | `bun run format` (usa oxfmt)                                                                         |
+| `bun run test`            | `bun` existe ✅          | funciona; `npx oxlint` também                                                                        |
 
 `just push` ser inexecutável **não** é permissão para pular a verificação. Rode as três etapas à mão, na mesma ordem, e só então dê push.
 
@@ -193,12 +193,12 @@ O WebUI sobe em `25808` e é alcançável de outro dispositivo em `http://<ip-da
 
 ## Skills Index
 
-| Skill            | Purpose                                                                     | Triggers                                                                                               |
-| ---------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| **architecture** | File & directory structure conventions for all process types                | Creating files, adding modules, architectural decisions                                                |
-| **i18n**         | Internationalization workflow and standards                                 | Adding or changing user-facing text, modifying `locales/` or `packages/desktop/src/common/config/i18n` |
-| **testing**      | Testing workflow and quality standards                                      | Writing tests, changing runtime behavior, fixing bugs, or claiming behavior is verified                |
-| **bump-version** | Version bump workflow: update package.json, checks, branch, PR, tag release | Bumping version, `/bump-version`                                                                       |
-| **empacotamento** | Empacotar, instalar e diagnosticar o app no Windows; armadilhas de build/ABI/log | `dist:win`, instalar/atualizar o app, ler logs, preparar testes, acesso via WebUI/celular                 |
+| Skill             | Purpose                                                                          | Triggers                                                                                               |
+| ----------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **architecture**  | File & directory structure conventions for all process types                     | Creating files, adding modules, architectural decisions                                                |
+| **i18n**          | Internationalization workflow and standards                                      | Adding or changing user-facing text, modifying `locales/` or `packages/desktop/src/common/config/i18n` |
+| **testing**       | Testing workflow and quality standards                                           | Writing tests, changing runtime behavior, fixing bugs, or claiming behavior is verified                |
+| **bump-version**  | Version bump workflow: update package.json, checks, branch, PR, tag release      | Bumping version, `/bump-version`                                                                       |
+| **empacotamento** | Empacotar, instalar e diagnosticar o app no Windows; armadilhas de build/ABI/log | `dist:win`, instalar/atualizar o app, ler logs, preparar testes, acesso via WebUI/celular              |
 
 > Skills are located in `.claude/skills/` (project conventions) and `skills/` (workflows locais do fork). Both contain knowledge that applies to **all** agents and contributors.

@@ -35,27 +35,27 @@ officecli add "$FILE" /Resultado --type pivottable \
 
 ## Propriedades principais (schema real)
 
-| Prop | O que faz | Exemplo |
-|---|---|---|
-| `rows` | Campos do eixo linha, separados por vírgula | `rows=Regiao,Categoria` |
-| `cols` | Campos do eixo coluna | `cols=Ano` |
-| `filters` | Campos do eixo filtro (filtro de página) | `filters=Segmento` |
-| `values` | Campos de valor como tuplas `Campo:agg` | `values=Vendas:sum,Qty:avg` |
-| `aggregate` | Agregação padrão quando omitida em `values` | `aggregate=avg` |
-| `showDataAs` | Exibição: `normal`, `percentOfTotal`, `percentOfRow`, `percentOfCol`, `runningTotal` | `showDataAs=percentOfTotal` |
-| `topN` | Mantém só os top-N (add-time; filtra origem) | `topN=10` |
-| `labelFilter` | Filtro de rótulo `campo:tipo:valor` (add-time) | `labelFilter=Regiao:beginsWith:N` |
-| `calculatedField` | Campo calculado `Nome:=Formula` (add-time) | `calculatedField=Margem:=Vendas-Custo` |
-| `sort` | Ordenação de rótulo: `asc`, `desc`, `locale`, `none` | `sort=desc` |
-| `layout` | `compact` (padrão), `outline`, `tabular` | `layout=tabular` |
-| `grandTotals` | `both` / `rows` / `cols` / `none` | `grandTotals=both` |
-| `subtotals` | `on` / `off` — subtotais do nível externo | `subtotals=off` |
-| `repeatLabels` | Repete rótulos do eixo externo (fillDown) | `repeatLabels=true` |
-| `blankRows` | Linha em branco após cada grupo | `blankRows=true` |
-| `style` | Estilo embutido, ex. `PivotStyleMedium9` | `style=PivotStyleMedium9` |
-| `showRowStripes` / `showColStripes` | Listras zebradas no estilo | `showRowStripes=true` |
-| `mergeLabels` | Mescla células do eixo externo (add-time) | `mergeLabels=true` |
-| `showDrill` | Botões +/− de expandir/colapsar (add-time) | `showDrill=false` |
+| Prop                                | O que faz                                                                            | Exemplo                                |
+| ----------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------- |
+| `rows`                              | Campos do eixo linha, separados por vírgula                                          | `rows=Regiao,Categoria`                |
+| `cols`                              | Campos do eixo coluna                                                                | `cols=Ano`                             |
+| `filters`                           | Campos do eixo filtro (filtro de página)                                             | `filters=Segmento`                     |
+| `values`                            | Campos de valor como tuplas `Campo:agg`                                              | `values=Vendas:sum,Qty:avg`            |
+| `aggregate`                         | Agregação padrão quando omitida em `values`                                          | `aggregate=avg`                        |
+| `showDataAs`                        | Exibição: `normal`, `percentOfTotal`, `percentOfRow`, `percentOfCol`, `runningTotal` | `showDataAs=percentOfTotal`            |
+| `topN`                              | Mantém só os top-N (add-time; filtra origem)                                         | `topN=10`                              |
+| `labelFilter`                       | Filtro de rótulo `campo:tipo:valor` (add-time)                                       | `labelFilter=Regiao:beginsWith:N`      |
+| `calculatedField`                   | Campo calculado `Nome:=Formula` (add-time)                                           | `calculatedField=Margem:=Vendas-Custo` |
+| `sort`                              | Ordenação de rótulo: `asc`, `desc`, `locale`, `none`                                 | `sort=desc`                            |
+| `layout`                            | `compact` (padrão), `outline`, `tabular`                                             | `layout=tabular`                       |
+| `grandTotals`                       | `both` / `rows` / `cols` / `none`                                                    | `grandTotals=both`                     |
+| `subtotals`                         | `on` / `off` — subtotais do nível externo                                            | `subtotals=off`                        |
+| `repeatLabels`                      | Repete rótulos do eixo externo (fillDown)                                            | `repeatLabels=true`                    |
+| `blankRows`                         | Linha em branco após cada grupo                                                      | `blankRows=true`                       |
+| `style`                             | Estilo embutido, ex. `PivotStyleMedium9`                                             | `style=PivotStyleMedium9`              |
+| `showRowStripes` / `showColStripes` | Listras zebradas no estilo                                                           | `showRowStripes=true`                  |
+| `mergeLabels`                       | Mescla células do eixo externo (add-time)                                            | `mergeLabels=true`                     |
+| `showDrill`                         | Botões +/− de expandir/colapsar (add-time)                                           | `showDrill=false`                      |
 
 **Agregações disponíveis** (`agg`): `sum`, `avg`, `count`, `max`, `min`, `product`, `stdev`, `stdevp`, `var`, `varp`, `countNums`.
 

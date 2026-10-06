@@ -5,15 +5,15 @@ description: "Use this skill as the MANDATORY verification/audit layer for ANY c
 
 > **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — translate the surrounding shell syntax to PowerShell:
 >
-> | bash (macOS / Linux) | PowerShell (Windows) |
-> | --- | --- |
-> | `a && b` | run as two steps, or `a; if ($?) { b }` |
-> | `VAR=$(cmd)` → `$VAR` | `$VAR = cmd` |
-> | `cmd > /dev/null` | `cmd > $null` |
-> | `… \| grep PAT` | `… \| Select-String PAT` |
-> | `… \| jq …` | `… \| ConvertFrom-Json` |
-> | `python3 x.py` | `python x.py` (or `py x.py`) |
-> | `~/dir`, `/tmp` | `$env:USERPROFILE\dir`, `$env:TEMP` |
+> | bash (macOS / Linux)         | PowerShell (Windows)                                                                |
+> | ---------------------------- | ----------------------------------------------------------------------------------- |
+> | `a && b`                     | run as two steps, or `a; if ($?) { b }`                                             |
+> | `VAR=$(cmd)` → `$VAR`        | `$VAR = cmd`                                                                        |
+> | `cmd > /dev/null`            | `cmd > $null`                                                                       |
+> | `… \| grep PAT`              | `… \| Select-String PAT`                                                            |
+> | `… \| jq …`                  | `… \| ConvertFrom-Json`                                                             |
+> | `python3 x.py`               | `python x.py` (or `py x.py`)                                                        |
+> | `~/dir`, `/tmp`              | `$env:USERPROFILE\dir`, `$env:TEMP`                                                 |
 > | `cp` / `mkdir -p` / `rm -rf` | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
 
 # Planejamento de Obras — Protocolo de Verificação e Auditoria
@@ -77,42 +77,50 @@ Avalie pela capacidade de: **RECEBER DADOS → CALCULAR → PROPAGAR ALTERAÇÕE
 ## Fluxo de verificação
 
 ### 1. Estrutural (o que existe de fato)
+
 Abas, tabelas, intervalos, fórmulas, referências entre abas, validações, formatação condicional, gráficos. Para cada **coluna crítica**, classifique: **Entrada** · **Cálculo** · **Referência** · **Importado**.
 
 ### 2. Matemático (o cálculo está certo?)
+
 Recompute o CPM **independentemente** (forward + backward pass) e compare com o que está na planilha. Divergência de ES/EF/LS/LF/folga = bloqueio.
 
 ### 3. Dinâmico (propaga?)
+
 Preencha a matriz causa→efeito. Se uma entrada deveria mudar algo e **não muda**, é **FALHA**:
 
-| Entrada alterada | Deveria mudar | Mudou? | Correto? |
-|---|---|---|---|
-| Duração | CPM → datas → folga → crítica | | |
-| Predecessora / tipo / lag | CPM | | |
-| Data inicial | cronograma inteiro | | |
-| Produtividade | duração | | |
-| Quantidade | duração | | |
-| Equipe / nº equipes | duração / produção | | |
-| Realizado | avanço / desvio / curva S | | |
-| Baseline (snapshot) | desvio | | |
-| Local inicial/final | LOB | | |
-| Calendário / feriados | todas as datas | | |
+| Entrada alterada          | Deveria mudar                 | Mudou? | Correto? |
+| ------------------------- | ----------------------------- | ------ | -------- |
+| Duração                   | CPM → datas → folga → crítica |        |          |
+| Predecessora / tipo / lag | CPM                           |        |          |
+| Data inicial              | cronograma inteiro            |        |          |
+| Produtividade             | duração                       |        |          |
+| Quantidade                | duração                       |        |          |
+| Equipe / nº equipes       | duração / produção            |        |          |
+| Realizado                 | avanço / desvio / curva S     |        |          |
+| Baseline (snapshot)       | desvio                        |        |          |
+| Local inicial/final       | LOB                           |        |          |
+| Calendário / feriados     | todas as datas                |        |          |
 
 ### 4. Regressão
+
 Rode os **10 casos obrigatórios** de [CASOS-REGRESSAO.md](CASOS-REGRESSAO.md). Eles já ocorreram em auditoria real e não podem voltar.
 
 ### 5. Integridade
+
 Fórmulas quebradas (`#REF! #VALUE! #DIV/0! #NAME? #N/A #NUM!`), referências circulares, referências externas, células hardcoded onde deveria haver fórmula, fórmulas diferentes na mesma coluna, intervalos incompletos, gráficos apontando para intervalos errados, datas incompatíveis (EF<ES), unidades incompatíveis, atividades órfãs, predecessoras inexistentes, IDs duplicados/quebrados, folga negativa.
 
 Classifique cada achado: **CRÍTICO · ALTO · MÉDIO · BAIXO**.
 
 ### 6. Escalabilidade
+
 Teste 100 / 500 / 2.000 / 10.000 atividades, múltiplas frentes, múltiplos pavimentos, múltiplas obras. Nunca assumir intervalo fixo suficiente (colunas de Gantt/LOB, séries de gráfico, faixas de fórmula).
 
 ### 7. Fonte única da verdade
+
 Liste dados que aparecem em mais de um lugar (data de início em Cadastro/CPM/Gantt/LOB/Dashboard) e aponte **qual é a oficial**. Várias fontes independentes = risco arquitetural.
 
 ### 8. Rastreabilidade
+
 Para cada indicador, prove a cadeia: **indicador → cálculo → atividades → produção → dado de entrada**. Se a cadeia para num valor fixo, é problema.
 
 ---
@@ -130,7 +138,7 @@ Para cada indicador, prove a cadeia: **indicador → cálculo → atividades →
 
 ## Armadilhas técnicas validadas (Excel)
 
-- **Agregar coluna inteira da rede** (`MAXIFS`/`SUMPRODUCT`) cria **referência circular**. Use **slots limitados** (3 pred + 3 succ) com `INDEX/MATCH` — `INDEX(range,n)` depende só da célula *n*, então o grafo fica acíclico e **não precisa de cálculo iterativo**.
+- **Agregar coluna inteira da rede** (`MAXIFS`/`SUMPRODUCT`) cria **referência circular**. Use **slots limitados** (3 pred + 3 succ) com `INDEX/MATCH` — `INDEX(range,n)` depende só da célula _n_, então o grafo fica acíclico e **não precisa de cálculo iterativo**.
 - **`MAXIFS`/`MINIFS` não existem** em LibreOffice antigo / Excel < 2019 → use `SUMPRODUCT`.
 - **`MIN/MAX` dentro de `SUMPRODUCT` colapsam para escalar** → use clamp algébrico `(x>=1)*1+(x<1)*(x>0)*x`.
 - Fórmulas de data com **offset literal** (`WORKDAY(DATA_INICIAL,0.0,...)`) = cronograma **congelado** (CASO 01).
@@ -152,12 +160,19 @@ Para recalcular fora do Excel: `soffice --headless --convert-to xlsx --outdir <s
 
 ```markdown
 ## IMPLEMENTADO
+
 ## TESTADO
+
 ## AUDITADO
+
 ## REGRESSÃO
+
 ## PROBLEMAS ENCONTRADOS
+
 ## RISCOS
+
 ## PENDÊNCIAS
+
 ## STATUS: APROVADO | APROVADO COM RESSALVAS | BLOQUEADO POR ERRO
 ```
 
@@ -165,13 +180,13 @@ Formato de achado: **Onde está → Qual é o problema → Por que é um problem
 
 ## Classificação de nível (por evidência, não por impressão)
 
-| Nível | Critério |
-|---|---|
-| 1 Planilha visual | serve para apresentação |
-| 2 Planilha de controle | tem cálculos, mas depende muito de intervenção manual |
-| 3 Planilha paramétrica | dados estruturados + cálculos integrados |
-| 4 **Motor de planejamento** | gera/atualiza CPM, Gantt, LOB, produção e indicadores de forma integrada |
-| 5 Sistema de planejamento | arquitetura de dados, rastreabilidade, replanejamento, histórico, múltiplas obras |
+| Nível                       | Critério                                                                          |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| 1 Planilha visual           | serve para apresentação                                                           |
+| 2 Planilha de controle      | tem cálculos, mas depende muito de intervenção manual                             |
+| 3 Planilha paramétrica      | dados estruturados + cálculos integrados                                          |
+| 4 **Motor de planejamento** | gera/atualiza CPM, Gantt, LOB, produção e indicadores de forma integrada          |
+| 5 Sistema de planejamento   | arquitetura de dados, rastreabilidade, replanejamento, histórico, múltiplas obras |
 
 **Regra de ouro:** se o cálculo central (CPM) for **importado** em vez de calculado, o teto é **Nível 2** — não importa quantas abas/gráficos existam.
 

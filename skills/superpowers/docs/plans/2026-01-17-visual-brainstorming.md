@@ -13,6 +13,7 @@
 ## Task 1: Create the Server Foundation
 
 **Files:**
+
 - Create: `lib/brainstorm-server/index.js`
 - Create: `lib/brainstorm-server/package.json`
 
@@ -53,7 +54,9 @@ if (!fs.existsSync(SCREEN_DIR)) {
 
 // Create default screen if none exists
 if (!fs.existsSync(SCREEN_FILE)) {
-  fs.writeFileSync(SCREEN_FILE, `<!DOCTYPE html>
+  fs.writeFileSync(
+    SCREEN_FILE,
+    `<!DOCTYPE html>
 <html>
 <head>
   <title>Brainstorm Companion</title>
@@ -67,7 +70,8 @@ if (!fs.existsSync(SCREEN_FILE)) {
   <h1>Brainstorm Companion</h1>
   <p>Waiting for Claude to push a screen...</p>
 </body>
-</html>`);
+</html>`
+  );
 }
 
 const app = express();
@@ -109,7 +113,7 @@ app.get('/', (req, res) => {
 chokidar.watch(SCREEN_FILE).on('change', () => {
   console.log(JSON.stringify({ type: 'screen-updated', file: SCREEN_FILE }));
   // Notify all browsers to reload
-  clients.forEach(ws => {
+  clients.forEach((ws) => {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'reload' }));
     }
@@ -143,12 +147,13 @@ git commit -m "feat: add brainstorm server foundation"
 ## Task 2: Create the Helper Library
 
 **Files:**
+
 - Create: `lib/brainstorm-server/helper.js`
 
 **Step 1: Create helper.js with event auto-capture**
 
 ```javascript
-(function() {
+(function () {
   const WS_URL = 'ws://' + window.location.host;
   let ws = null;
   let eventQueue = [];
@@ -158,7 +163,7 @@ git commit -m "feat: add brainstorm server foundation"
 
     ws.onopen = () => {
       // Send any queued events
-      eventQueue.forEach(e => ws.send(JSON.stringify(e)));
+      eventQueue.forEach((e) => ws.send(JSON.stringify(e)));
       eventQueue = [];
     };
 
@@ -199,7 +204,7 @@ git commit -m "feat: add brainstorm server foundation"
       text: target.textContent.trim(),
       choice: target.dataset.choice || null,
       id: target.id || null,
-      className: target.className || null
+      className: target.className || null,
     });
   });
 
@@ -209,13 +214,15 @@ git commit -m "feat: add brainstorm server foundation"
     const form = e.target;
     const formData = new FormData(form);
     const data = {};
-    formData.forEach((value, key) => { data[key] = value; });
+    formData.forEach((value, key) => {
+      data[key] = value;
+    });
 
     send({
       type: 'submit',
       formId: form.id || null,
       formName: form.name || null,
-      data: data
+      data: data,
     });
   });
 
@@ -232,7 +239,7 @@ git commit -m "feat: add brainstorm server foundation"
         name: target.name || null,
         id: target.id || null,
         value: target.value,
-        inputType: target.type || target.tagName.toLowerCase()
+        inputType: target.type || target.tagName.toLowerCase(),
       });
     }, 500); // 500ms debounce
   });
@@ -240,7 +247,7 @@ git commit -m "feat: add brainstorm server foundation"
   // Expose for explicit use if needed
   window.brainstorm = {
     send: send,
-    choice: (value, metadata = {}) => send({ type: 'choice', value, ...metadata })
+    choice: (value, metadata = {}) => send({ type: 'choice', value, ...metadata }),
   };
 
   connect();
@@ -264,6 +271,7 @@ git commit -m "feat: add browser helper library for event capture"
 ## Task 3: Write Tests for the Server
 
 **Files:**
+
 - Create: `tests/brainstorm-server/server.test.js`
 - Create: `tests/brainstorm-server/package.json`
 
@@ -301,16 +309,18 @@ function cleanup() {
 }
 
 async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function fetch(url) {
   return new Promise((resolve, reject) => {
-    http.get(url, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve({ status: res.statusCode, body: data }));
-    }).on('error', reject);
+    http
+      .get(url, (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => resolve({ status: res.statusCode, body: data }));
+      })
+      .on('error', reject);
   });
 }
 
@@ -319,12 +329,16 @@ async function runTests() {
 
   // Start server
   const server = spawn('node', [SERVER_PATH], {
-    env: { ...process.env, BRAINSTORM_PORT: TEST_PORT, BRAINSTORM_SCREEN: TEST_SCREEN }
+    env: { ...process.env, BRAINSTORM_PORT: TEST_PORT, BRAINSTORM_SCREEN: TEST_SCREEN },
   });
 
   let stdout = '';
-  server.stdout.on('data', (data) => { stdout += data.toString(); });
-  server.stderr.on('data', (data) => { console.error('Server stderr:', data.toString()); });
+  server.stdout.on('data', (data) => {
+    stdout += data.toString();
+  });
+  server.stderr.on('data', (data) => {
+    console.error('Server stderr:', data.toString());
+  });
 
   await sleep(1000); // Wait for server to start
 
@@ -347,7 +361,7 @@ async function runTests() {
     console.log('Test 3: WebSocket relays events to stdout');
     stdout = ''; // Reset stdout capture
     const ws = new WebSocket(`ws://localhost:${TEST_PORT}`);
-    await new Promise(resolve => ws.on('open', resolve));
+    await new Promise((resolve) => ws.on('open', resolve));
 
     ws.send(JSON.stringify({ type: 'click', text: 'Test Button' }));
     await sleep(100);
@@ -360,7 +374,7 @@ async function runTests() {
     // Test 4: File change triggers reload notification
     console.log('Test 4: File change notifies browsers');
     const ws2 = new WebSocket(`ws://localhost:${TEST_PORT}`);
-    await new Promise(resolve => ws2.on('open', resolve));
+    await new Promise((resolve) => ws2.on('open', resolve));
 
     let gotReload = false;
     ws2.on('message', (data) => {
@@ -377,14 +391,13 @@ async function runTests() {
     console.log('  PASS');
 
     console.log('\nAll tests passed!');
-
   } finally {
     server.kill();
     cleanup();
   }
 }
 
-runTests().catch(err => {
+runTests().catch((err) => {
   console.error('Test failed:', err);
   process.exit(1);
 });
@@ -407,6 +420,7 @@ git commit -m "test: add brainstorm server integration tests"
 ## Task 4: Add Visual Companion to Brainstorming Skill
 
 **Files:**
+
 - Modify: `skills/brainstorming/SKILL.md`
 - Create: `skills/brainstorming/visual-companion.md` (supporting doc)
 
@@ -414,7 +428,7 @@ git commit -m "test: add brainstorm server integration tests"
 
 Create `skills/brainstorming/visual-companion.md`:
 
-```markdown
+````markdown
 # Visual Companion Reference
 
 ## Starting the Server
@@ -424,6 +438,7 @@ Run as a background job:
 ```bash
 node ${PLUGIN_ROOT}/lib/brainstorm-server/index.js
 ```
+````
 
 Tell the user: "I've started a visual companion at http://localhost:3333 - open it in a browser."
 
@@ -441,6 +456,7 @@ Check the background task output for JSON events:
 ```
 
 Event types:
+
 - **click**: User clicked button or `data-choice` element
 - **submit**: User submitted form (includes all form data)
 - **input**: User typed in field (debounced 500ms)
@@ -476,7 +492,7 @@ Event types:
 
 ```html
 <form>
-  <label>Priority: <input type="range" name="priority" min="1" max="5"></label>
+  <label>Priority: <input type="range" name="priority" min="1" max="5" /></label>
   <textarea name="notes" placeholder="Additional thoughts..."></textarea>
   <button type="submit">Submit</button>
 </form>
@@ -487,7 +503,8 @@ Event types:
 ```html
 <button onclick="brainstorm.choice('custom', {extra: 'data'})">Custom</button>
 ```
-```
+
+````
 
 **Step 2: Add visual companion section to brainstorming skill**
 
@@ -514,7 +531,7 @@ When brainstorming involves visual elements - UI mockups, wireframes, interactiv
 The terminal remains the primary conversation interface. The browser is a visual aid.
 
 **Reference:** See `visual-companion.md` in this skill directory for HTML patterns and API details.
-```
+````
 
 **Step 3: Verify the edits**
 
@@ -533,6 +550,7 @@ git commit -m "feat: add visual companion to brainstorming skill"
 ## Task 5: Add Server to Plugin Ignore (Optional Cleanup)
 
 **Files:**
+
 - Check if `.gitignore` needs node_modules exclusion for lib/brainstorm-server
 
 **Step 1: Check current gitignore**
@@ -542,6 +560,7 @@ Run: `cat .gitignore 2>/dev/null || echo "No .gitignore"`
 **Step 2: Add node_modules if needed**
 
 If not already present, add:
+
 ```
 lib/brainstorm-server/node_modules/
 ```
@@ -565,6 +584,7 @@ After completing all tasks:
 4. **Brainstorming skill** updated with visual companion section and `visual-companion.md` reference doc
 
 **To use:**
+
 1. Start server as background job: `node lib/brainstorm-server/index.js &`
 2. Tell user to open `http://localhost:3333`
 3. Write HTML to `/tmp/brainstorm/screen.html`

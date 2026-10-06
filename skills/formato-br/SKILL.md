@@ -16,18 +16,18 @@ Aplica formatação brasileira consistente em qualquer workbook .xlsx via office
 
 ## Tabela de numFmt canônicos (pt-BR)
 
-| Propósito | numFmt | Exibição (locale pt-BR) |
-|---|---|---|
-| Moeda | `'R$ #,##0.00'` | `R$ 1.234,56` |
-| Moeda, zeros como traço | `'R$ #,##0.00;(R$ #,##0.00);"-"'` | `R$ 1.234,56` / `-` |
-| Moeda negativa entre parênteses | `'R$ #,##0.00;(R$ #,##0.00)'` | `(R$ 1.234,56)` |
-| Inteiro com milhar | `'#,##0'` | `1.234` |
-| Decimal com milhar | `'#,##0.00'` | `1.234,56` |
-| Percentual (1 casa) | `'0.0%'` | `15,0%` |
-| Percentual inteiro | `'0%'` | `15%` |
-| Data curta | `'dd/mm/yyyy'` | `18/09/2026` |
-| Data/hora | `'dd/mm/yyyy hh:mm'` | `18/09/2026 14:30` |
-| Número como texto (ano, códigos) | `'@'` ou `--prop type=string` | `2026` (não `2.026`) |
+| Propósito                        | numFmt                            | Exibição (locale pt-BR) |
+| -------------------------------- | --------------------------------- | ----------------------- |
+| Moeda                            | `'R$ #,##0.00'`                   | `R$ 1.234,56`           |
+| Moeda, zeros como traço          | `'R$ #,##0.00;(R$ #,##0.00);"-"'` | `R$ 1.234,56` / `-`     |
+| Moeda negativa entre parênteses  | `'R$ #,##0.00;(R$ #,##0.00)'`     | `(R$ 1.234,56)`         |
+| Inteiro com milhar               | `'#,##0'`                         | `1.234`                 |
+| Decimal com milhar               | `'#,##0.00'`                      | `1.234,56`              |
+| Percentual (1 casa)              | `'0.0%'`                          | `15,0%`                 |
+| Percentual inteiro               | `'0%'`                            | `15%`                   |
+| Data curta                       | `'dd/mm/yyyy'`                    | `18/09/2026`            |
+| Data/hora                        | `'dd/mm/yyyy hh:mm'`              | `18/09/2026 14:30`      |
+| Número como texto (ano, códigos) | `'@'` ou `--prop type=string`     | `2026` (não `2.026`)    |
 
 Exemplos de uso:
 
@@ -44,13 +44,13 @@ officecli set "$FILE" /Sheet1/D1 --prop value=2026 --prop type=string           
 
 Use `'0'` para dígitos obrigatórios e `'-'`/`'.'`/`'/'` literais entre aspas no padrão. Em OOXML, literais em `numFmt` são escapados com `\` ou entre aspas duplas. Sample-safe (sempre conferir no `get`):
 
-| Máscara | numFmt | Exemplo |
-|---|---|---|
-| CPF | `000"."000"."000"-"00` | `123.456.789-00` |
-| CNPJ | `00"."000"."000"/"0000"-"00` | `12.345.678/0001-90` |
-| CEP | `00000"-"000` | `01310-100` |
-| Telefone fixo | `(00") "0000"-"0000` | `(11) 3456-7890` |
-| Celular | `(00") "00000"-"0000` | `(11) 98765-4321` |
+| Máscara       | numFmt                       | Exemplo              |
+| ------------- | ---------------------------- | -------------------- |
+| CPF           | `000"."000"."000"-"00`       | `123.456.789-00`     |
+| CNPJ          | `00"."000"."000"/"0000"-"00` | `12.345.678/0001-90` |
+| CEP           | `00000"-"000`                | `01310-100`          |
+| Telefone fixo | `(00") "0000"-"0000`         | `(11) 3456-7890`     |
+| Celular       | `(00") "00000"-"0000`        | `(11) 98765-4321`    |
 
 > **Atenção shell**: `aspas` e parênteses são metacaracteres. Escreva esses numFmt via **batch JSON** (sem processamento de shell) ou com aspas simples bem formadas, e SEMPRE confirme com `officecli get`. Se o `get` mostrar o padrão corrompido, reescreva via batch heredoc (ver seção `!` trap do officecli-xlsx).
 

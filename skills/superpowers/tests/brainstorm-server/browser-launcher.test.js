@@ -1,7 +1,5 @@
 const assert = require('assert');
-const {
-  browserLauncherForPlatform
-} = require('../../skills/brainstorming/scripts/server.cjs');
+const { browserLauncherForPlatform } = require('../../skills/brainstorming/scripts/server.cjs');
 
 let passed = 0;
 let failed = 0;
@@ -26,12 +24,12 @@ async function test(name, fn) {
     const launcher = browserLauncherForPlatform(url, {
       platform: 'win32',
       osRelease: '10.0.26200',
-      env: {}
+      env: {},
     });
 
     assert.deepStrictEqual(launcher, {
       bin: 'rundll32.exe',
-      args: ['url.dll,FileProtocolHandler', url]
+      args: ['url.dll,FileProtocolHandler', url],
     });
     assert(!launcher.args.includes('/c'), 'Windows launcher must not pass /c to a command interpreter');
   });
@@ -41,12 +39,12 @@ async function test(name, fn) {
     const launcher = browserLauncherForPlatform(url, {
       platform: 'linux',
       osRelease: '5.15.167.4-microsoft-standard-WSL2',
-      env: {}
+      env: {},
     });
 
     assert.deepStrictEqual(launcher, {
       bin: 'rundll32.exe',
-      args: ['url.dll,FileProtocolHandler', url]
+      args: ['url.dll,FileProtocolHandler', url],
     });
   });
 
@@ -55,7 +53,7 @@ async function test(name, fn) {
       browserLauncherForPlatform('http://localhost:1/', {
         platform: 'linux',
         osRelease: '6.0.0',
-        env: {}
+        env: {},
       }),
       null
     );

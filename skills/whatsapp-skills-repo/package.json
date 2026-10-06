@@ -3,33 +3,31 @@
   "version": "0.1.0",
   "description": "Agent Skills pack for Wassenger — automate WhatsApp Business for your business using Claude, Cursor, Codex, Copilot and any agent that supports the open Agent Skills format (agentskills.io).",
   "keywords": [
-    "wassenger",
-    "whatsapp",
-    "whatsapp-business",
     "agent-skills",
     "agentskills",
+    "ai-agent",
+    "automation",
+    "chatbot",
     "claude",
     "claude-code",
     "cursor",
     "mcp",
     "model-context-protocol",
-    "automation",
-    "ai-agent",
-    "chatbot",
-    "wa-business"
+    "wa-business",
+    "wassenger",
+    "whatsapp",
+    "whatsapp-business"
   ],
   "homepage": "https://github.com/wassengerhq/whatsapp-skills",
   "bugs": {
     "url": "https://github.com/wassengerhq/whatsapp-skills/issues"
   },
+  "license": "MIT",
+  "author": "Wassenger <support@wassenger.com> (https://wassenger.com)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wassengerhq/whatsapp-skills.git"
   },
-  "license": "MIT",
-  "author": "Wassenger <support@wassenger.com> (https://wassenger.com)",
-  "type": "module",
-  "main": "src/installer.js",
   "bin": {
     "wassenger-skills": "./bin/wassenger-skills.js"
   },
@@ -41,17 +39,19 @@
     "README.md",
     "LICENSE"
   ],
-  "devDependencies": {
-    "skills-ref": "^0.1.5"
+  "type": "module",
+  "main": "src/installer.js",
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "validate": "skills-ref validate ./skills/*",
     "test": "echo 'no tests yet' && exit 0"
   },
+  "devDependencies": {
+    "skills-ref": "^0.1.5"
+  },
   "engines": {
     "node": ">=18"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

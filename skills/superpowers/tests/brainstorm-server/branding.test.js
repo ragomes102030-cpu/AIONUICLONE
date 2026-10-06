@@ -10,9 +10,7 @@ const assert = require('assert');
 
 const REPO_ROOT = path.join(__dirname, '../..');
 const SERVER_PATH = path.join(REPO_ROOT, 'skills/brainstorming/scripts/server.cjs');
-const PACKAGE_VERSION = JSON.parse(
-  fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf-8')
-).version;
+const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf-8')).version;
 const TOKEN = 'testtoken-branding-0123456789abcdef';
 const ASSET_URL = 'https://primeradiant.com/brand/superpowers-visual-brainstorming-logo.png';
 
@@ -23,7 +21,7 @@ function cleanup(dir) {
 }
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function startServer({ port, dir, env = {}, serverPath = SERVER_PATH }) {
@@ -34,8 +32,8 @@ function startServer({ port, dir, env = {}, serverPath = SERVER_PATH }) {
       BRAINSTORM_PORT: String(port),
       BRAINSTORM_DIR: dir,
       BRAINSTORM_TOKEN: TOKEN,
-      ...env
-    }
+      ...env,
+    },
   });
 }
 
@@ -52,7 +50,9 @@ function waitForServer(server) {
         resolve();
       }
     });
-    server.stderr.on('data', (data) => { stderr += data.toString(); });
+    server.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
     server.on('error', reject);
   });
 }
@@ -60,11 +60,15 @@ function waitForServer(server) {
 function fetchHtml(port) {
   return new Promise((resolve, reject) => {
     const headers = { Cookie: `brainstorm-key-${port}=${TOKEN}` };
-    http.get(`http://localhost:${port}/`, { headers }, (res) => {
-      let body = '';
-      res.on('data', chunk => { body += chunk; });
-      res.on('end', () => resolve(body));
-    }).on('error', reject);
+    http
+      .get(`http://localhost:${port}/`, { headers }, (res) => {
+        let body = '';
+        res.on('data', (chunk) => {
+          body += chunk;
+        });
+        res.on('end', () => resolve(body));
+      })
+      .on('error', reject);
   });
 }
 
@@ -85,7 +89,7 @@ function createPackagedServerFixture(version) {
   );
   return {
     root,
-    serverPath: path.join(scriptDir, 'server.cjs')
+    serverPath: path.join(scriptDir, 'server.cjs'),
   };
 }
 
@@ -97,7 +101,7 @@ async function withServer(options, fn) {
   } finally {
     if (server.exitCode === null && server.signalCode === null) {
       server.kill();
-      await new Promise(resolve => server.once('exit', resolve));
+      await new Promise((resolve) => server.once('exit', resolve));
     }
     await sleep(100);
     cleanup(options.dir);
@@ -120,10 +124,7 @@ async function test(name, fn) {
 }
 
 function assertBrandedWithLogo(html, version = PACKAGE_VERSION) {
-  assert(
-    html.includes(`Superpowers v${version}`),
-    'branding text should include dynamic package version'
-  );
+  assert(html.includes(`Superpowers v${version}`), 'branding text should include dynamic package version');
   assert(
     !html.includes(`Superpowers v${version} by`),
     'branding text should not include "by" when the logo is visible'
@@ -144,10 +145,7 @@ function assertBrandedWithLogo(html, version = PACKAGE_VERSION) {
     /\.brand a\s*\{[^}]*max-width:\s*100%/i.test(html),
     'brand link should be constrained so it cannot overlap the status column'
   );
-  assert(
-    /\.brand\s*\{[^}]*line-height:\s*1/i.test(html),
-    'brand wrapper should not inherit the page line height'
-  );
+  assert(/\.brand\s*\{[^}]*line-height:\s*1/i.test(html), 'brand wrapper should not inherit the page line height');
   assert(
     /\.brand\s*\{[^}]*overflow:\s*hidden/i.test(html),
     'brand wrapper should clip before it reaches the status column'
@@ -171,14 +169,8 @@ function assertTelemetryImage(html, version = PACKAGE_VERSION) {
 }
 
 function assertLogoKeepsTransparentBackground(html) {
-  assert(
-    /\.brand-logo\s*\{[^}]*height:\s*1em/i.test(html),
-    'logo should match the surrounding brand text size'
-  );
-  assert(
-    /\.brand-logo\s*\{[^}]*display:\s*block/i.test(html),
-    'logo should not reserve inline-image descender space'
-  );
+  assert(/\.brand-logo\s*\{[^}]*height:\s*1em/i.test(html), 'logo should match the surrounding brand text size');
+  assert(/\.brand-logo\s*\{[^}]*display:\s*block/i.test(html), 'logo should not reserve inline-image descender space');
   assert(
     /\.brand-copy\s*\{[^}]*line-height:\s*1/i.test(html),
     'version text should use the same compact line height as the logo'
@@ -195,14 +187,8 @@ function assertLogoKeepsTransparentBackground(html) {
     /\.brand-logo\s*\{[^}]*filter:\s*invert\(1\)/i.test(html),
     'white logo asset should invert on light backgrounds'
   );
-  assert(
-    !/\.brand-logo\s*\{[^}]*background:/i.test(html),
-    'logo should keep its transparent background'
-  );
-  assert(
-    !/\.brand-logo\s*\{[^}]*padding:/i.test(html),
-    'logo should not rely on a padded backing'
-  );
+  assert(!/\.brand-logo\s*\{[^}]*background:/i.test(html), 'logo should keep its transparent background');
+  assert(!/\.brand-logo\s*\{[^}]*padding:/i.test(html), 'logo should not rely on a padded backing');
 }
 
 function assertFramedLogoSupportsDarkTheme(html) {

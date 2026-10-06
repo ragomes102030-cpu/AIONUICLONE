@@ -66,10 +66,12 @@ const getBackendJson = async (urlPath) => {
     return { status: 0, body: null, error: String(error) };
   }
 };
-const createTask = (mission, workspace, assistantId) => page.evaluate(
-  ({ mission: value, workspace: ws, assistantId: id }) => window.taskAPI.create(value, { workspace: ws, assistant_id: id }),
-  { mission, workspace, assistantId }
-);
+const createTask = (mission, workspace, assistantId) =>
+  page.evaluate(
+    ({ mission: value, workspace: ws, assistantId: id }) =>
+      window.taskAPI.create(value, { workspace: ws, assistant_id: id }),
+    { mission, workspace, assistantId }
+  );
 const getTask = (id) => page.evaluate((taskId) => window.taskAPI.get(taskId), id);
 const cancelTask = (id) => page.evaluate((taskId) => window.taskAPI.cancel(taskId), id);
 
@@ -119,14 +121,26 @@ async function runTask(agentKey, testCase, runNumber) {
   fs.mkdirSync(workspace, { recursive: true });
   runSetup(testCase.id, workspace);
   const startedAt = Date.now();
-  const initialTask = await createTask(replaceWorkspace(testCase.prompt, workspace), workspace.replaceAll('\\', '/'), agent.assistantId);
-  const initial = await waitForTerminal(initialTask.id, testCase.timeoutMs, testCase.requiresCancel ? testCase.cancelAfterMs : null);
+  const initialTask = await createTask(
+    replaceWorkspace(testCase.prompt, workspace),
+    workspace.replaceAll('\\', '/'),
+    agent.assistantId
+  );
+  const initial = await waitForTerminal(
+    initialTask.id,
+    testCase.timeoutMs,
+    testCase.requiresCancel ? testCase.cancelAfterMs : null
+  );
   let finalTask = initial.task;
   let resume = null;
 
   if (testCase.requiresCancel) {
     if (initial.task.status === 'cancelled' && testCase.resumePrompt) {
-      const resumeTask = await createTask(replaceWorkspace(testCase.resumePrompt, workspace), workspace.replaceAll('\\', '/'), agent.assistantId);
+      const resumeTask = await createTask(
+        replaceWorkspace(testCase.resumePrompt, workspace),
+        workspace.replaceAll('\\', '/'),
+        agent.assistantId
+      );
       resume = await waitForTerminal(resumeTask.id, testCase.timeoutMs, null);
       finalTask = resume.task;
     } else {
@@ -144,11 +158,13 @@ async function runTask(agentKey, testCase, runNumber) {
   const messagesBody = messages?.body?.data || messages?.body || null;
   const lastTokenUsage = conversationBody?.extra?.last_token_usage || conversationBody?.last_token_usage || null;
   const toolCalls = messagesBody ? countToolCallObjects(messagesBody) : null;
-  const verification = testCase.testable ? runVerifier(testCase.id, workspace) : {
-    exitCode: 2,
-    stdout: '',
-    stderr: testCase.notTestableReason || 'not testable',
-  };
+  const verification = testCase.testable
+    ? runVerifier(testCase.id, workspace)
+    : {
+        exitCode: 2,
+        stdout: '',
+        stderr: testCase.notTestableReason || 'not testable',
+      };
   const result = {
     runId,
     agentKey,
@@ -161,11 +177,18 @@ async function runTask(agentKey, testCase, runNumber) {
     finalTaskId: finalTask.id,
     status: finalTask.status,
     error: finalTask.error ?? null,
-    resultPreview: typeof finalTask.result === 'string' ? finalTask.result.slice(0, 1000) : finalTask.result ?? null,
+    resultPreview: typeof finalTask.result === 'string' ? finalTask.result.slice(0, 1000) : (finalTask.result ?? null),
     durationMs: Date.now() - startedAt,
     timedOut: initial.timedOut || Boolean(resume?.timedOut),
     harnessCancelApplied: initial.cancelApplied,
-    resume: resume ? { taskId: resume.task?.id ?? null, status: resume.task?.status ?? null, skipped: resume.skipped ?? false, reason: resume.reason ?? null } : null,
+    resume: resume
+      ? {
+          taskId: resume.task?.id ?? null,
+          status: resume.task?.status ?? null,
+          skipped: resume.skipped ?? false,
+          reason: resume.reason ?? null,
+        }
+      : null,
     toolCalls,
     lastTokenUsage,
     humanInterventions: testCase.id === '07-aprovacao-destrutiva' ? 1 : 0,
@@ -174,7 +197,16 @@ async function runTask(agentKey, testCase, runNumber) {
   };
   await page.screenshot({ path: path.join(workspace, 'task-screen.png') }).catch(() => undefined);
   fs.writeFileSync(path.join(workspace, 'run.json'), JSON.stringify(result, null, 2));
-  console.log(jsonOutput({ agent: agentKey, case: testCase.id, run: runNumber, status: result.status, verification: verification.exitCode, durationMs: result.durationMs }));
+  console.log(
+    jsonOutput({
+      agent: agentKey,
+      case: testCase.id,
+      run: runNumber,
+      status: result.status,
+      verification: verification.exitCode,
+      durationMs: result.durationMs,
+    })
+  );
   return result;
 }
 

@@ -65,10 +65,7 @@ let cardId: string;
 
 async function call(url: string, method = 'GET', body?: unknown) {
   const { res, captured } = fakeRes();
-  const handled = await handler(
-    fakeReq(url, method, body === undefined ? '' : JSON.stringify(body)),
-    res
-  );
+  const handled = await handler(fakeReq(url, method, body === undefined ? '' : JSON.stringify(body)), res);
   return { handled, status: captured.status, payload: captured.body ? JSON.parse(captured.body) : null };
 }
 

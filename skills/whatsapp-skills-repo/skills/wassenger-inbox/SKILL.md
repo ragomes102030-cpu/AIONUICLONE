@@ -4,9 +4,9 @@ description: Manage chats in the Wassenger WhatsApp inbox — chat lifecycle (ac
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Inbox
@@ -24,14 +24,14 @@ The day-to-day chat triage layer: read what's coming in, decide where it goes, m
 
 For specific atomic operations, route to the dedicated skill:
 
-| If the user wants to… | Go to |
-|---|---|
-| Auto-assign / route by department / escalate | `wassenger-routing` |
-| Create or apply labels (CRUD) | `wassenger-labels` |
-| Add / remove agents, manage roles | `wassenger-team` |
-| Set up welcome / out-of-office auto-replies | `wassenger-auto-replies` |
-| Build a library of canned responses | `wassenger-quick-replies` |
-| Send a message (one-off or template) | `wassenger-messaging` |
+| If the user wants to…                        | Go to                     |
+| -------------------------------------------- | ------------------------- |
+| Auto-assign / route by department / escalate | `wassenger-routing`       |
+| Create or apply labels (CRUD)                | `wassenger-labels`        |
+| Add / remove agents, manage roles            | `wassenger-team`          |
+| Set up welcome / out-of-office auto-replies  | `wassenger-auto-replies`  |
+| Build a library of canned responses          | `wassenger-quick-replies` |
+| Send a message (one-off or template)         | `wassenger-messaging`     |
 
 ## Prerequisites
 
@@ -41,13 +41,13 @@ For specific atomic operations, route to the dedicated skill:
 
 ## Concepts
 
-| Concept | What it is |
-|---|---|
-| **Chat** | A single conversation thread with one contact. |
+| Concept         | What it is                                                                      |
+| --------------- | ------------------------------------------------------------------------------- |
+| **Chat**        | A single conversation thread with one contact.                                  |
 | **Chat status** | Lifecycle: `active`, `pending`, `resolved`, `archived`. **Mutually exclusive**. |
-| **Assignment** | Which team member owns the chat. One owner at a time. |
-| **Label** | Free-form tag (`vip`, `intent:billing`). **Stackable**. See `wassenger-labels`. |
-| **Note** | Internal-only annotation. Team sees it, the contact never does. |
+| **Assignment**  | Which team member owns the chat. One owner at a time.                           |
+| **Label**       | Free-form tag (`vip`, `intent:billing`). **Stackable**. See `wassenger-labels`. |
+| **Note**        | Internal-only annotation. Team sees it, the contact never does.                 |
 
 ## Recipes
 
@@ -199,7 +199,7 @@ Heavy operation. For repeated queries, cache the chat→intent classification on
 
 ## Common pitfalls
 
-- **Statuses vs labels.** Don't use labels to track `pending`/`resolved` — that's what `status` is for. Labels are for *qualitative* tags (`vip`, `bug`, `prospect`). See `wassenger-labels` for the namespace convention.
+- **Statuses vs labels.** Don't use labels to track `pending`/`resolved` — that's what `status` is for. Labels are for _qualitative_ tags (`vip`, `bug`, `prospect`). See `wassenger-labels` for the namespace convention.
 - **Notes vs messages.** Notes are internal-only. Don't accidentally use the messaging tools to leave team annotations; the recipient receives the text and is confused. Always go through the `/notes` endpoint.
 - **Archive vs Resolved confusion.** Resolved = handled. Archived = out of view. Use both, in that order.
 - **`get_whatsapp_chats` is paginated.** Default `limit=20`, **max 100**. Loop with `offset` for large inboxes.

@@ -24,21 +24,22 @@ The response includes a `secret` — store it; you need it to verify signatures.
 
 ## Field renames (inbound message)
 
-| Twilio form field | Wassenger JSON |
-|---|---|
-| `MessageSid` | `data.message.id` |
-| `From` = `whatsapp:+E164` | `data.message.from` = `E164` |
-| `Body` | `data.message.body` |
-| `NumMedia` / `MediaUrl0` | `data.media` |
-| `ProfileName` | `data.chat.contact.name` |
-| `WaId` | `data.chat.contact.phone` |
-| (event type implicit per URL) | `event` = `message:in:new` |
+| Twilio form field             | Wassenger JSON               |
+| ----------------------------- | ---------------------------- |
+| `MessageSid`                  | `data.message.id`            |
+| `From` = `whatsapp:+E164`     | `data.message.from` = `E164` |
+| `Body`                        | `data.message.body`          |
+| `NumMedia` / `MediaUrl0`      | `data.media`                 |
+| `ProfileName`                 | `data.chat.contact.name`     |
+| `WaId`                        | `data.chat.contact.phone`    |
+| (event type implicit per URL) | `event` = `message:in:new`   |
 
 ## Node — handler before/after
 
 Before (Twilio, Express):
+
 ```js
-import twilio from 'twilio'
+import twilio from 'twilio';
 
 app.post('/twilio', express.urlencoded({ extended: false }), (req, res) => {
   const valid = twilio.validateRequest(
@@ -46,40 +47,44 @@ app.post('/twilio', express.urlencoded({ extended: false }), (req, res) => {
     req.headers['x-twilio-signature'],
     'https://hooks.example.com/twilio',
     req.body
-  )
-  if (!valid) return res.sendStatus(403)
-  const from = req.body.From.replace('whatsapp:', '')
-  const text = req.body.Body
-  handleInbound(from, text)
-  res.sendStatus(200)
-})
+  );
+  if (!valid) return res.sendStatus(403);
+  const from = req.body.From.replace('whatsapp:', '');
+  const text = req.body.Body;
+  handleInbound(from, text);
+  res.sendStatus(200);
+});
 ```
 
 After (Wassenger, Express — note `express.raw` for signature):
+
 ```js
-import crypto from 'node:crypto'
+import crypto from 'node:crypto';
 
 app.post('/wassenger', express.raw({ type: 'application/json' }), (req, res) => {
-  const sig = req.headers['x-wassenger-signature'] || ''
-  const expected = sig.replace(/^sha256=/, '')
-  const actual = crypto.createHmac('sha256', process.env.WASSENGER_WEBHOOK_SECRET)
-    .update(req.body)                       // raw Buffer
-    .digest('hex')
-  const ok = expected.length === actual.length &&
-    crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(actual, 'hex'))
-  if (!ok) return res.sendStatus(403)
+  const sig = req.headers['x-wassenger-signature'] || '';
+  const expected = sig.replace(/^sha256=/, '');
+  const actual = crypto
+    .createHmac('sha256', process.env.WASSENGER_WEBHOOK_SECRET)
+    .update(req.body) // raw Buffer
+    .digest('hex');
+  const ok =
+    expected.length === actual.length &&
+    crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(actual, 'hex'));
+  if (!ok) return res.sendStatus(403);
 
-  const evt = JSON.parse(req.body.toString())
+  const evt = JSON.parse(req.body.toString());
   if (evt.event === 'message:in:new') {
-    handleInbound(evt.data.message.from, evt.data.message.body)
+    handleInbound(evt.data.message.from, evt.data.message.body);
   }
-  res.sendStatus(200)
-})
+  res.sendStatus(200);
+});
 ```
 
 ## Python — handler before/after (FastAPI)
 
 Before (Twilio):
+
 ```python
 from twilio.request_validator import RequestValidator
 
@@ -96,6 +101,7 @@ async def twilio_hook(request: Request):
 ```
 
 After (Wassenger):
+
 ```python
 import hmac, hashlib, os, json
 

@@ -4,9 +4,9 @@ description: Send WhatsApp messages with Wassenger on the official WhatsApp Busi
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Messaging
@@ -32,10 +32,10 @@ If the user wants to broadcast to many contacts at once, route to `wassenger-cam
 
 Every send falls into one of two modes:
 
-| Mode | When it applies | Tool to call |
-|---|---|---|
-| **Free-form** | The recipient sent a message to this device in the last 24 hours. | `send_whatsapp_message` with `action:"text"` / `"media"` / `"poll"` / etc. |
-| **Template** | The last inbound message is older than 24 hours, **or** no prior conversation exists. | `send_whatsapp_message` with `action:"template"` + `template: { name, language, body, … }`. |
+| Mode          | When it applies                                                                       | Tool to call                                                                                |
+| ------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Free-form** | The recipient sent a message to this device in the last 24 hours.                     | `send_whatsapp_message` with `action:"text"` / `"media"` / `"poll"` / etc.                  |
+| **Template**  | The last inbound message is older than 24 hours, **or** no prior conversation exists. | `send_whatsapp_message` with `action:"template"` + `template: { name, language, body, … }`. |
 
 **Decision flow:**
 

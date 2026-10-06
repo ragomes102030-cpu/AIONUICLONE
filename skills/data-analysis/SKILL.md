@@ -5,17 +5,17 @@ description: "Use this skill to analyze and prepare tabular data in Excel — ty
 
 > **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — the underlying tool/CLI commands are usually cross-platform, but the surrounding shell syntax is not. Translate it to PowerShell before running:
 >
-> | bash (macOS / Linux) | PowerShell (Windows) |
-> | --- | --- |
-> | `a && b` | run as two steps, or `a; if ($?) { b }` |
-> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool |
-> | `VAR=$(cmd)` … `$VAR` | `$VAR = cmd` … `$VAR` |
-> | `cmd > /dev/null` | `cmd > $null` |
-> | `… \| grep PAT` | `… \| Select-String PAT` |
-> | `… \| jq …` | `… \| ConvertFrom-Json`, then read the fields |
-> | `python3 x.py` | `python x.py` (or `py x.py`) |
-> | `~/dir`, `/tmp` | `$env:USERPROFILE\dir`, `$env:TEMP` |
-> | `cp` / `mkdir -p` / `rm -rf` | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
+> | bash (macOS / Linux)              | PowerShell (Windows)                                                                |
+> | --------------------------------- | ----------------------------------------------------------------------------------- |
+> | `a && b`                          | run as two steps, or `a; if ($?) { b }`                                             |
+> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool                 |
+> | `VAR=$(cmd)` … `$VAR`             | `$VAR = cmd` … `$VAR`                                                               |
+> | `cmd > /dev/null`                 | `cmd > $null`                                                                       |
+> | `… \| grep PAT`                   | `… \| Select-String PAT`                                                            |
+> | `… \| jq …`                       | `… \| ConvertFrom-Json`, then read the fields                                       |
+> | `python3 x.py`                    | `python x.py` (or `py x.py`)                                                        |
+> | `~/dir`, `/tmp`                   | `$env:USERPROFILE\dir`, `$env:TEMP`                                                 |
+> | `cp` / `mkdir -p` / `rm -rf`      | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
 >
 > If a command has no obvious Windows equivalent, prefer the built-in file/HTTP tools over raw shell.
 
@@ -74,6 +74,7 @@ Run the phases in order.
 ### Phase 1 — Intake & objectives
 
 Get from the user (or the leader agent):
+
 - The source file(s) / sheets.
 - The questions to answer (what decisions does this analysis inform?).
 - Any business definitions (what counts as "active", "duplicate", "outlier").
@@ -118,7 +119,7 @@ Remove duplicates only into the **Clean** sheet (never in place), and log: key d
 
 **3c. Missing values.** For each column, count blanks, then decide per column: leave-as-gap, fill with a disclosed constant (0, "N/A"), or fill with a disclosed statistic (mean/median, N stated). Record the decision + count in the log. Any fill rule is a config parameter, never a buried constant.
 
-**3d. Outliers.** Define the outlier rule in config — e.g. `outside mean ± 3σ`, or `outside Q1−1.5·IQR .. Q3+1.5·IQR`, or an explicit business bound (e.g. "0..100"). Count and *list* offenders (never auto-delete). Log: rule, count, list (or "see sheet"). Outliers are flagged in the Clean sheet (e.g. CF highlight), not removed — removal is a business decision.
+**3d. Outliers.** Define the outlier rule in config — e.g. `outside mean ± 3σ`, or `outside Q1−1.5·IQR .. Q3+1.5·IQR`, or an explicit business bound (e.g. "0..100"). Count and _list_ offenders (never auto-delete). Log: rule, count, list (or "see sheet"). Outliers are flagged in the Clean sheet (e.g. CF highlight), not removed — removal is a business decision.
 
 ```bash
 # IQR probe per numeric column — pure formula approach (quartiles):
@@ -169,7 +170,7 @@ If anything fails, fix at source and re-run the full cycle.
 
 - The xlsx engine's cached values may lag live formulas in non-recalculating viewers (→ officecli-xlsx cache-drift). Re-issue downstream formulas after upstream edits.
 - `SUMPRODUCT` array-predicate forms may cache `0` in some build paths — prefer helper-column + `SUMIF` (→ officecli-data-dashboard D-17).
-- Statistical interpretation (what an outlier *means*) is analysis, not arithmetic — present evidence, propose, let the user decide. Never auto-delete data.
+- Statistical interpretation (what an outlier _means_) is analysis, not arithmetic — present evidence, propose, let the user decide. Never auto-delete data.
 
 ## Reference
 

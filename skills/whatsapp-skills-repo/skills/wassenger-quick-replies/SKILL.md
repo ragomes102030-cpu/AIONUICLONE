@@ -4,9 +4,9 @@ description: Manage the library of canned reply templates Wassenger agents use i
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: capability
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger Quick Replies
@@ -15,13 +15,13 @@ The canned-response library every support / sales team needs. Agents type a shor
 
 ## When to use
 
-- *"Create a quick reply for 'shipping address' questions."*
-- *"What quick replies do we have? I can't find the one for returns."*
-- *"Make this shipping reply available to the whole team — right now it's only mine."*
-- *"Import these 30 canned responses from our old helpdesk."*
-- *"Add a PDF (our terms of service) to the 'terms' quick reply."*
+- _"Create a quick reply for 'shipping address' questions."_
+- _"What quick replies do we have? I can't find the one for returns."_
+- _"Make this shipping reply available to the whole team — right now it's only mine."_
+- _"Import these 30 canned responses from our old helpdesk."_
+- _"Add a PDF (our terms of service) to the 'terms' quick reply."_
 
-This skill is about **managing the library** (CRUD). For *sending* a quick reply inside a conversation — that's the agent typing the shortcut in the Wassenger console — no API call needed.
+This skill is about **managing the library** (CRUD). For _sending_ a quick reply inside a conversation — that's the agent typing the shortcut in the Wassenger console — no API call needed.
 
 For **rule-based automatic** responses (welcome, out-of-office), see `wassenger-auto-replies`. For **WABA approved templates** used to message a customer outside the 24h window, see `wassenger-messaging` Recipe 3.
 
@@ -33,11 +33,11 @@ For **rule-based automatic** responses (welcome, out-of-office), see `wassenger-
 
 ## The visibility model
 
-| Visibility | Who sees it | When to use |
-|---|---|---|
-| **`public`** | Whole team | Standard responses (shipping policy, business hours, return process) |
-| **`readonly`** | Whole team can use, only admins can edit | Brand-sensitive copy (legal disclaimers, terms) |
-| **`private`** | Only the creator | Personal shortcuts (`/me` for a personal greeting) |
+| Visibility     | Who sees it                              | When to use                                                          |
+| -------------- | ---------------------------------------- | -------------------------------------------------------------------- |
+| **`public`**   | Whole team                               | Standard responses (shipping policy, business hours, return process) |
+| **`readonly`** | Whole team can use, only admins can edit | Brand-sensitive copy (legal disclaimers, terms)                      |
+| **`private`**  | Only the creator                         | Personal shortcuts (`/me` for a personal greeting)                   |
 
 The endpoint accepts `scope: wa` (used by any device on the account) or `scope: chat` (device-scoped, only the specific WhatsApp number where the agent is logged in).
 
@@ -195,6 +195,6 @@ Soft-delete first if you can: rename the shortcut to `/zz-shipping-old` for 30 d
 ## See also
 
 - `wassenger-messaging` — for sending messages and using WABA templates.
-- `wassenger-auto-replies` — for *automatic* responses (welcome, out-of-office).
+- `wassenger-auto-replies` — for _automatic_ responses (welcome, out-of-office).
 - `wassenger-inbox` — where agents actually use these in conversations.
 - `wassenger-team` — control who can edit shared replies (admin role).

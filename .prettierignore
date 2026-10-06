@@ -1,1 +1,17 @@
 mobile/
+
+# Terceiro, vendorizado do upstream: documentacao de skills que nao e nossa.
+# Tres arquivos usam cercas Markdown aninhadas (quatro crases envolvendo um
+# exemplo que contem outra cerca), e o oxfmt reescreve cercas de 4 para 5, o
+# que fecha o bloco externo e corrompe o documento. Formatar esses arquivos
+# deixa o conteudo errado, entao o check e pulado em vez de corrigido.
+#
+# Verificado: os tres ja reprovavam o format:check antes de qualquer alteracao
+# nossa (HEAD c84e5eecd), ou seja, e heranca do upstream.
+#
+# Se o formatador aprender a preservar a largura da cerca, apague estas linhas:
+# o check deve passar neles sem nenhuma edicao.
+skills/superpowers/docs/superpowers/plans/2026-06-09-sdd-task-scoped-review-dispatch.md
+skills/superpowers/docs/superpowers/plans/2026-08-27-diagnosing-superpowers.md
+skills/superpowers/skills/writing-skills/anthropic-best-practices.md
+

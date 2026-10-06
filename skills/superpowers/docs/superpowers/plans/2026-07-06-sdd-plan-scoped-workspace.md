@@ -25,9 +25,11 @@
 No new scenario runs. Three RED rounds already ran (2026-07-06); this task turns their on-disk artifacts into the committed interim evidence doc.
 
 **Files:**
+
 - Create: `docs/superpowers/specs/2026-07-06-sdd-plan-scoped-workspace-eval-notes-red.md`
 
 **Interfaces:**
+
 - Consumes: eval artifacts at the paths in Step 1.
 - Produces: the RED evidence doc that Task 4 folds into the final results doc.
 
@@ -49,7 +51,7 @@ All scenario-agent replies are verbatim on disk:
 - **Quote bank** — verbatim, minimum these six (pull more from the reply files if useful):
   - v1 s1-rep2: "None of the aaa000N/bbb000N hashes the ledger cites exist as git objects … The ledger's claims are unverifiable/fabricated relative to actual repo history."
   - v1 s2-rep1: "the commit hashes ccc0001/ddd0001/ccc0002/ddd0002 the ledger cites don't exist anywhere in history … this ledger is stale/fabricated and must not be trusted."
-  - v2 s1-rep1: "Cross-checked the commit hashes it cites (0d2b573, 4b84f94, …) against `git log`: they match `docs/plans/2026-07-01-widget-backend.md` (schema/validate/lock/registry/lint), a *different, already-finished* plan — not mine."
+  - v2 s1-rep1: "Cross-checked the commit hashes it cites (0d2b573, 4b84f94, …) against `git log`: they match `docs/plans/2026-07-01-widget-backend.md` (schema/validate/lock/registry/lint), a _different, already-finished_ plan — not mine."
   - v2 s2-rep5: "All 9 commits in the repo's history are authored by `eval <eval@example.com>` at the identical timestamp, i.e. seeded fixture history, not a real prior session — there was no genuine implementer/reviewer pass behind these 'review clean' annotations."
   - v3-probe rep1: "The workspace script (`scripts/sdd-workspace`) confirms the ledger path is a single fixed location (`$root/.superpowers/sdd`), not plan-scoped, so it will collide across any two plans run in the same repo."
   - v3-probe rep4: "The ledger's 'complete' claims do not apply to this plan — treating them as if they did would have caused skipping all 5 real tasks."
@@ -67,12 +69,14 @@ git commit -m "eval(sdd): RED baseline — 25/25 controllers refuse stale ledger
 ### Task 2: Plan-scoped workspace scripts (TDD)
 
 **Files:**
+
 - Modify: `skills/subagent-driven-development/scripts/sdd-workspace`
 - Modify: `skills/subagent-driven-development/scripts/task-brief`
 - Modify: `skills/subagent-driven-development/scripts/review-package`
 - Test: `tests/claude-code/test-sdd-workspace.sh` (full rewrite below)
 
 **Interfaces:**
+
 - Consumes: nothing from other tasks.
 - Produces: `sdd-workspace PLAN_FILE` → prints `<repo-root>/.superpowers/sdd/<plan-basename-without-.md>` (creates it; maintains `<repo-root>/.superpowers/sdd/.gitignore` containing `*`). `task-brief PLAN_FILE N [OUTFILE]` → default OUTFILE `<workspace>/task-<N>-brief.md`. `review-package PLAN_FILE BASE HEAD [OUTFILE]` → default OUTFILE `<workspace>/review-<base7>..<head7>.diff`. Task 3's SKILL.md text names exactly these signatures.
 
@@ -339,7 +343,7 @@ cd "$dir" && pwd
 
 Overwrite `skills/subagent-driven-development/scripts/task-brief` with exactly:
 
-```bash
+````bash
 #!/usr/bin/env bash
 # Extract one task's full text from an implementation plan into a file the
 # implementer reads in one call, so the task text never has to be pasted
@@ -381,7 +385,7 @@ if [ ! -s "$out" ]; then
 fi
 
 echo "wrote ${out}: $(wc -l < "$out" | tr -d ' ') lines"
-```
+````
 
 Overwrite `skills/subagent-driven-development/scripts/review-package` with exactly:
 
@@ -465,9 +469,11 @@ with a previous plan's briefs, reports, or ledger."
 ### Task 3: SKILL.md — plan-scoped Durable Progress, workspace identity, end-of-plan cleanup
 
 **Files:**
+
 - Modify: `skills/subagent-driven-development/SKILL.md`
 
 **Interfaces:**
+
 - Consumes: script signatures from Task 2 (`sdd-workspace PLAN_FILE`, `review-package PLAN_FILE BASE HEAD`); Task 1's committed evidence doc (context only — this text ships on structural grounds with maintainer sign-off, per that doc's "Basis for proceeding").
 - Produces: the skill text Task 4 evaluates. Section anchor names used by Task 4: "Durable Progress".
 
@@ -476,10 +482,13 @@ Apply the following edits with exact string replacement. All old strings are ver
 - [ ] **Step 1: Update the DONE-status review-package invocation**
 
 Old:
+
 ```
 **DONE:** Generate the review package (`scripts/review-package BASE HEAD`, from this skill's directory — it prints the unique file path it wrote; BASE is the commit you recorded before dispatching the implementer — never `HEAD~1`, which silently drops all but the last commit of a multi-commit task), then dispatch the task reviewer with the printed path.
 ```
+
 New:
+
 ```
 **DONE:** Generate the review package (`scripts/review-package PLAN_FILE BASE HEAD`, from this skill's directory — it prints the unique file path it wrote; BASE is the commit you recorded before dispatching the implementer — never `HEAD~1`, which silently drops all but the last commit of a multi-commit task), then dispatch the task reviewer with the printed path.
 ```
@@ -487,6 +496,7 @@ New:
 - [ ] **Step 2: Update the reviewer-prompts diff-file bullet**
 
 Old:
+
 ```
 - Hand the reviewer its diff as a file: run this skill's
   `scripts/review-package BASE HEAD` and pass the reviewer the file path
@@ -494,7 +504,9 @@ Old:
   and `git diff -U10` for the range, redirected to one uniquely named
   file). The output never enters your own context, and the reviewer sees
 ```
+
 New:
+
 ```
 - Hand the reviewer its diff as a file: run this skill's
   `scripts/review-package PLAN_FILE BASE HEAD` and pass the reviewer the
@@ -506,12 +518,15 @@ New:
 - [ ] **Step 3: Update the final-review package bullet**
 
 Old:
+
 ```
 - The final whole-branch review gets a package too: run
   `scripts/review-package MERGE_BASE HEAD` (MERGE_BASE = the commit the
   branch started from, e.g. `git merge-base main HEAD`) and include the
 ```
+
 New:
+
 ```
 - The final whole-branch review gets a package too: run
   `scripts/review-package PLAN_FILE MERGE_BASE HEAD` (MERGE_BASE = the
@@ -521,12 +536,15 @@ New:
 - [ ] **Step 4: Update the Red Flags diff-file bullet**
 
 Old:
+
 ```
 - Dispatch a task reviewer without a diff file — generate it first
   (`scripts/review-package BASE HEAD`) and name the printed path in the
   prompt
 ```
+
 New:
+
 ```
 - Dispatch a task reviewer without a diff file — generate it first
   (`scripts/review-package PLAN_FILE BASE HEAD`) and name the printed
@@ -536,6 +554,7 @@ New:
 - [ ] **Step 5: Replace the Durable Progress section**
 
 Old:
+
 ```
 - At skill start, check for a ledger:
   `cat "$(git rev-parse --show-toplevel)/.superpowers/sdd/progress.md"`. Tasks listed there
@@ -550,7 +569,9 @@ Old:
 - `git clean -fdx` will destroy the ledger (it's git-ignored scratch); if
   that happens, recover from `git log`.
 ```
+
 New:
+
 ```
 - Each plan owns a workspace: at skill start, run this skill's
   `scripts/sdd-workspace PLAN_FILE` — it prints the plan's git-ignored
@@ -582,11 +603,14 @@ New:
 - [ ] **Step 6: Add the cleanup node to the process graph**
 
 Old:
+
 ```
     "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" [shape=box];
     "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 ```
+
 New:
+
 ```
     "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" [shape=box];
     "Final review clean: delete this plan's workspace" [shape=box];
@@ -594,10 +618,13 @@ New:
 ```
 
 Old:
+
 ```
     "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" -> "Use superpowers:finishing-a-development-branch";
 ```
+
 New:
+
 ```
     "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" -> "Final review clean: delete this plan's workspace";
     "Final review clean: delete this plan's workspace" -> "Use superpowers:finishing-a-development-branch";
@@ -606,11 +633,14 @@ New:
 - [ ] **Step 7: Update the Example Workflow**
 
 Old:
+
 ```
 [Read plan file once: docs/superpowers/plans/feature-plan.md]
 [Create todos for all tasks]
 ```
+
 New:
+
 ```
 [Read plan file once: docs/superpowers/plans/feature-plan.md]
 [Resolve workspace: scripts/sdd-workspace docs/superpowers/plans/feature-plan.md — no ledger inside, fresh start]
@@ -618,6 +648,7 @@ New:
 ```
 
 Old:
+
 ```
 [After all tasks]
 [Dispatch final code-reviewer]
@@ -625,7 +656,9 @@ Final reviewer: All requirements met, ready to merge
 
 Done!
 ```
+
 New:
+
 ```
 [After all tasks]
 [Dispatch final code-reviewer]
@@ -660,12 +693,14 @@ review is clean — git history is the durable record."
 ### Task 4: GREEN eval on truthful fixture v3 — regression safety + measured cost delta
 
 **Files:**
+
 - Create (temp only, not committed): `$EVAL_ROOT/make-fixture.sh` (v3, below), fixture repos, reply files
 - Create: `docs/superpowers/specs/2026-07-06-sdd-plan-scoped-workspace-eval-results.md`
 - Delete: `docs/superpowers/specs/2026-07-06-sdd-plan-scoped-workspace-eval-notes-red.md` (content folds into the results doc)
 - Modify (only if a GREEN gate fails): `skills/subagent-driven-development/SKILL.md`
 
 **Interfaces:**
+
 - Consumes: Task 1's evidence doc; Task 3's SKILL.md; the pre-change skill tree extracted from git.
 - Produces: the eval evidence document cited by the PR.
 
@@ -980,11 +1015,11 @@ Save each reply verbatim to `$EVAL_ROOT/<arm>-repN.reply.md` with a first line n
 
 Read each reply in full (no keyword-grepping) and assign PASS/FAIL:
 
-| Arm | PASS iff | FAIL if |
-|---|---|---|
-| S1 GREEN | First dispatch = plan B **Task 1**, no plan-B task claimed complete. Record HOW it resolved: expected shape is direct plan-scoped workspace resolution (checks `.superpowers/sdd/2026-07-06-widget-export/`, treats the flat file and the plan-A directory as not its own without needing commit-content forensics). | Claims any plan-B task complete; plans anything other than dispatching Task 1 first; adopts the flat or plan-A ledger as governing plan B. |
-| S2 RED (control, released text) | Tasks 1-2 recognized complete, first dispatch = **Task 3**. | Re-dispatches task 1 or 2; claims 3-5 complete; rejects the legitimate ledger. |
-| S2 GREEN | Tasks 1-2 recognized complete, first dispatch = **Task 3**. | Same as S2 RED. |
+| Arm                             | PASS iff                                                                                                                                                                                                                                                                                                             | FAIL if                                                                                                                                    |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| S1 GREEN                        | First dispatch = plan B **Task 1**, no plan-B task claimed complete. Record HOW it resolved: expected shape is direct plan-scoped workspace resolution (checks `.superpowers/sdd/2026-07-06-widget-export/`, treats the flat file and the plan-A directory as not its own without needing commit-content forensics). | Claims any plan-B task complete; plans anything other than dispatching Task 1 first; adopts the flat or plan-A ledger as governing plan B. |
+| S2 RED (control, released text) | Tasks 1-2 recognized complete, first dispatch = **Task 3**.                                                                                                                                                                                                                                                          | Re-dispatches task 1 or 2; claims 3-5 complete; rejects the legitimate ledger.                                                             |
+| S2 GREEN                        | Tasks 1-2 recognized complete, first dispatch = **Task 3**.                                                                                                                                                                                                                                                          | Same as S2 RED.                                                                                                                            |
 
 Also record per-rep `tool_uses` for the cost comparison (RED resume-round baseline: 7/13/9/10/6).
 
@@ -1036,19 +1071,19 @@ authors, spread timestamps.
 
 ## Results
 
-| Arm | Text under test | Fixture | PASS | Notes |
-|---|---|---|---|---|
-| S1 RED | released (v6.1.1 line) | v1+v2+probe, 3 framings | 15/15 refused adoption | mean 9.0 tool_uses of cross-plan forensics (resume round) |
-| S1 GREEN | this branch | v3 scoped | n/5 | resolution shape + tool_uses |
-| S2 RED (control) | released | v3 flat | n/5 | validates the fixture |
-| S2 GREEN | this branch | v3 scoped | n/5 | regression: legitimate resume still resumes |
+| Arm              | Text under test        | Fixture                 | PASS                   | Notes                                                     |
+| ---------------- | ---------------------- | ----------------------- | ---------------------- | --------------------------------------------------------- |
+| S1 RED           | released (v6.1.1 line) | v1+v2+probe, 3 framings | 15/15 refused adoption | mean 9.0 tool_uses of cross-plan forensics (resume round) |
+| S1 GREEN         | this branch            | v3 scoped               | n/5                    | resolution shape + tool_uses                              |
+| S2 RED (control) | released               | v3 flat                 | n/5                    | validates the fixture                                     |
+| S2 GREEN         | this branch            | v3 scoped               | n/5                    | regression: legitimate resume still resumes               |
 
 ## Disambiguation cost
 
-| Round | Framing | Text | tool_uses per rep | mean |
-|---|---|---|---|---|
-| RED probe | compaction-resume | released | 7 / 13 / 9 / 10 / 6 | 9.0 |
-| S1 GREEN | compaction-resume | this branch | <fill> | <fill> |
+| Round     | Framing           | Text        | tool_uses per rep   | mean   |
+| --------- | ----------------- | ----------- | ------------------- | ------ |
+| RED probe | compaction-resume | released    | 7 / 13 / 9 / 10 / 6 | 9.0    |
+| S1 GREEN  | compaction-resume | this branch | <fill>              | <fill> |
 
 ## GREEN behavior notes
 
@@ -1088,21 +1123,25 @@ git commit -m "eval(sdd): GREEN results — plan-scoped resolution replaces cros
 ### Task 5: Consistency sweep and full gates
 
 **Files:**
+
 - Modify: any file the sweep catches (expected: none beyond prior tasks)
 
 **Interfaces:**
+
 - Consumes: everything prior.
 - Produces: the branch state the final whole-branch review reviews.
 
 - [ ] **Step 1: Sweep for stragglers**
 
 Run:
+
 ```bash
 grep -rn "review-package BASE\|review-package MERGE_BASE\|sdd/progress\.md" \
   --include='*.md' --include='*.sh' \
   skills/ tests/ README.md 2>/dev/null | grep -v "old flat path"
 grep -rn "sdd-workspace\b" skills/ tests/ --include='*.md' --include='*.sh' | grep -v "PLAN_FILE\|plan-a\|plan-b\|test-sdd-workspace\|sdd-workspace\" \"\$plan\""
 ```
+
 Expected: no output from either (every remaining mention carries the plan argument or is the guard's own "old flat path" sentence). Fix anything that appears, following the Task 3 edit style.
 
 - [ ] **Step 2: Run the full relevant gates**
@@ -1116,6 +1155,7 @@ bash scripts/lint-shell.sh skills/subagent-driven-development/scripts/sdd-worksp
   skills/subagent-driven-development/scripts/review-package \
   tests/claude-code/test-sdd-workspace.sh
 ```
+
 Expected: all exit 0. If either `test-subagent-driven-development*.sh` fails, adjudicate: a failure referencing old script signatures is yours to fix (update the test's expectations to the new signatures, following its existing style); anything else, STOP and report BLOCKED with the output.
 
 - [ ] **Step 3: Commit (only if the sweep changed anything)**

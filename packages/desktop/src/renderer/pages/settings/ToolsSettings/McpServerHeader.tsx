@@ -1,6 +1,17 @@
 import type { IMcpServer } from '@/common/config/storage';
 import { Button, Dropdown, Menu, Popover, Tooltip } from '@arco-design/web-react';
-import { Check, CloseSmall, Info, LoadingOne, Refresh, Write, DeleteFour, SettingOne, Login, Toolkit } from '@icon-park/react';
+import {
+  Check,
+  CloseSmall,
+  Info,
+  LoadingOne,
+  Refresh,
+  Write,
+  DeleteFour,
+  SettingOne,
+  Login,
+  Toolkit,
+} from '@icon-park/react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { McpOAuthStatus } from '@/renderer/hooks/mcp/useMcpOAuth';

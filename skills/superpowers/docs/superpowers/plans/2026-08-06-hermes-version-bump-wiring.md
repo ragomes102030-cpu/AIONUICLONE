@@ -34,11 +34,13 @@
 ### Task 1: Wire Hermes Into The Existing Version-Bump Script
 
 **Files:**
+
 - Create: `tests/version-bump/test-bump-version.sh`
 - Modify: `scripts/bump-version.sh`
 - Modify: `.version-bump.json`
 
 **Interfaces:**
+
 - Consumes: `.version-bump.json` records shaped as `{ "path": string, "field": string }`.
 - Produces: `read_manifest_field FILE FIELD`, `write_manifest_field FILE FIELD VALUE`, and `preflight_manifests` Bash helpers.
 

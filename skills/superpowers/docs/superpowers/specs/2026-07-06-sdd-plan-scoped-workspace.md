@@ -106,7 +106,7 @@ plan's cleanup.
 ### 4. SKILL.md touch points
 
 - **Durable Progress** section: workspace resolution via `sdd-workspace
-  PLAN_FILE`; ledger check scoped to the plan's own workspace; ledger-creation
+PLAN_FILE`; ledger check scoped to the plan's own workspace; ledger-creation
   format including the plan line; the mismatch guard; completion deletion; the
   `git clean -fdx` hazard note updated to the new path.
 - **Handling Implementer Status / Constructing Reviewer Prompts / File

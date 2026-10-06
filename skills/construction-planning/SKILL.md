@@ -5,17 +5,17 @@ description: "Use this skill to build construction planning workbooks in Excel �
 
 > **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — the underlying tool/CLI commands are usually cross-platform, but the surrounding shell syntax is not. Translate it to PowerShell before running:
 >
-> | bash (macOS / Linux) | PowerShell (Windows) |
-> | --- | --- |
-> | `a && b` | run as two steps, or `a; if ($?) { b }` |
-> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool |
-> | `VAR=$(cmd)` … `$VAR` | `$VAR = cmd` … `$VAR` |
-> | `cmd > /dev/null` | `cmd > $null` |
-> | `… \| grep PAT` | `… \| Select-String PAT` |
-> | `… \| jq …` | `… \| ConvertFrom-Json`, then read the fields |
-> | `python3 x.py` | `python x.py` (or `py x.py`) |
-> | `~/dir`, `/tmp` | `$env:USERPROFILE\dir`, `$env:TEMP` |
-> | `cp` / `mkdir -p` / `rm -rf` | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
+> | bash (macOS / Linux)              | PowerShell (Windows)                                                                |
+> | --------------------------------- | ----------------------------------------------------------------------------------- |
+> | `a && b`                          | run as two steps, or `a; if ($?) { b }`                                             |
+> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool                 |
+> | `VAR=$(cmd)` … `$VAR`             | `$VAR = cmd` … `$VAR`                                                               |
+> | `cmd > /dev/null`                 | `cmd > $null`                                                                       |
+> | `… \| grep PAT`                   | `… \| Select-String PAT`                                                            |
+> | `… \| jq …`                       | `… \| ConvertFrom-Json`, then read the fields                                       |
+> | `python3 x.py`                    | `python x.py` (or `py x.py`)                                                        |
+> | `~/dir`, `/tmp`                   | `$env:USERPROFILE\dir`, `$env:TEMP`                                                 |
+> | `cp` / `mkdir -p` / `rm -rf`      | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
 >
 > If a command has no obvious Windows equivalent, prefer the built-in file/HTTP tools over raw shell.
 
@@ -95,6 +95,7 @@ officecli close "$FILE"
 ```
 
 Sheet roles:
+
 - **Config** — parameters (blue inputs).
 - **EAP** — the work-breakdown tree (codes + names + weights per node).
 - **Calendario** — working-day calendar: one row per date, flag working/rest/holiday (drives date math).
@@ -121,6 +122,7 @@ officecli set "$FILE" /Config/B7 --prop value="."          --prop font.color=000
 Columns: `Nível` (L1..L4), `Código` (composed, e.g. `=B2&Config!$B$7&C2&…` or typed), `Nome`, `Disciplina`, `Peso` (weight for progress rollup; unit from Config) and `Peso %` (formula). EAP codes are unique keys — every Atividades row references its EAP code (data validation dropdown against the EAP code column, → validation list).
 
 Weight rules:
+
 - Leaf nodes (serviços) carry weights (cost or quantity, from the user — never invented).
 - Parent weights = Σ children (formula).
 - Peso % = peso / Σ siblings (formula) — rollups use these.
@@ -189,7 +191,7 @@ LEAK=$(officecli query "$FILE" 'cell:has(formula)' --json \
 [ "$LEAK" -eq 0 ] && echo "Gate CP-2 OK (no obra-specific literals in formulas)" || { echo "REJECT Gate CP-2: $LEAK literal(s)"; exit 1; }
 ```
 
-(Adapt the regex to the actual obra codes/names — the check is *formulas must reference cells, not hardcoded obra values*.)
+(Adapt the regex to the actual obra codes/names — the check is _formulas must reference cells, not hardcoded obra values_.)
 
 **Gate CP-3 — Baseline immutable.** No Atividades baseline column carries a formula that depends on atual columns (baseline only depends on Config/inputs + its own snapshot). Verify by reading baseline formula cells: they must not reference atual columns.
 

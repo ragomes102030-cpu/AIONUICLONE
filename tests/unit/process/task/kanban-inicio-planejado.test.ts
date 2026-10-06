@@ -13,7 +13,13 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createKanbanCard, ensureKanbanSchema, listKanbanBoards, updateKanbanCard, type KanbanDatabase } from '@process/task/kanbanRepository';
+import {
+  createKanbanCard,
+  ensureKanbanSchema,
+  listKanbanBoards,
+  updateKanbanCard,
+  type KanbanDatabase,
+} from '@process/task/kanbanRepository';
 
 const DAY = 24 * 60 * 60 * 1000;
 // Fixed Monday 28/09/2026 12:00 UTC. A test that reads the wall clock passes on

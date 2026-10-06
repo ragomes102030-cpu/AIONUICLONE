@@ -4,10 +4,10 @@ description: Automate WhatsApp for real estate agents and agencies using Wasseng
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: industry
   vertical: real-estate
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger for Real Estate
@@ -108,13 +108,13 @@ Cap alerts to **1-2 per week per lead**. More than that = unsubscribes.
 
 When a lead inquires but doesn't engage past the initial property pack:
 
-| Day | Touch |
-|---|---|
-| +2 | "¿Has tenido tiempo de revisar los datos de {{property}}?" |
-| +5 | Send 2 similar listings as alternatives |
-| +10 | "¿Cambió tu búsqueda? Cuéntame qué priorizas ahora." |
-| +21 | Soft re-engagement: market update / area report |
-| +45 | Move to dormant; quarterly market emails only |
+| Day | Touch                                                      |
+| --- | ---------------------------------------------------------- |
+| +2  | "¿Has tenido tiempo de revisar los datos de {{property}}?" |
+| +5  | Send 2 similar listings as alternatives                    |
+| +10 | "¿Cambió tu búsqueda? Cuéntame qué priorizas ahora."       |
+| +21 | Soft re-engagement: market update / area report            |
+| +45 | Move to dormant; quarterly market emails only              |
 
 Implement as scheduled `send_whatsapp_message` with `deliverAt`. **Cancel** the cadence as soon as the lead replies.
 
@@ -150,7 +150,7 @@ For e-signature, link to your provider (DocuSign, Signaturit). Don't try to sign
 ## Anti-patterns
 
 - **Generic auto-reply.** "Thanks for your message" with no property data is useless. Always parse the inbound for a property reference and respond with that property's details.
-- **Asking for criteria already on the portal.** If the lead clicked a 2BR rental, don't ask "what type are you looking for?". Ask what *else* matters (move-in date, parking, pets).
+- **Asking for criteria already on the portal.** If the lead clicked a 2BR rental, don't ask "what type are you looking for?". Ask what _else_ matters (move-in date, parking, pets).
 - **Sending too many listings per message.** Pick the **top 1-2 matches** by criteria. A 10-listing dump is overwhelming and reduces engagement on each.
 - **Viewing requests with no calendar integration.** Manually checking the agent's availability every time loses leads. Wire `wassenger-webhooks` to a scheduling API.
 - **No nurture for "not now" leads.** A "not ready" lead today is a buyer in 6-18 months. Tag them and let the cadence run.

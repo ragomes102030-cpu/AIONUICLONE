@@ -31,7 +31,6 @@ const FORK_CHANNEL_PREFIX = `https://raw.githubusercontent.com/ragomes102030-cpu
 
 let _originalFetch = undefined;
 
-
 vi.mock('electron', () => ({
   app: {
     getVersion: vi.fn(() => '1.0.0'),
@@ -91,7 +90,8 @@ const makeGitHubReleaseResponse = () => [
       },
       {
         name: 'AionUi-1.9.22-win-x64.exe',
-        browser_download_url: 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-win-x64.exe',
+        browser_download_url:
+          'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-win-x64.exe',
         size: 456,
         content_type: 'application/vnd.microsoft.portable-executable',
       },
@@ -200,13 +200,17 @@ describe('updateBridge CDN URL rewriting', () => {
 
       const macAsset = assets.find((a: { name: string }) => a.name === 'AionUi-1.9.22-mac-arm64.dmg');
       expect(macAsset).toBeDefined();
-      expect(macAsset?.url).toBe('https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/1.9.22/AionUi-1.9.22-mac-arm64.dmg');
+      expect(macAsset?.url).toBe(
+        'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/1.9.22/AionUi-1.9.22-mac-arm64.dmg'
+      );
       expect(macAsset?.fallbackUrl).toBe(
         'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-mac-arm64.dmg'
       );
 
       const linuxAsset = assets.find((a: { name: string }) => a.name === 'AionUi-1.9.22-linux-amd64.deb');
-      expect(linuxAsset?.url).toBe('https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/1.9.22/AionUi-1.9.22-linux-amd64.deb');
+      expect(linuxAsset?.url).toBe(
+        'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/1.9.22/AionUi-1.9.22-linux-amd64.deb'
+      );
       expect(fetchMock).toHaveBeenCalled();
     } finally {
       restoreFetch();
@@ -220,7 +224,9 @@ describe('updateBridge CDN URL rewriting', () => {
       const handler = await getCheckHandler();
       const result = await handler({ repo: FORK_REPO });
       const asset = result.data?.latest?.assets?.[0];
-      expect(asset?.url).toMatch(/^https:\/\/raw\.githubusercontent\.com\/ragomes102030-cpu\/AIONUICLONE\/main\/releases\/1\.9\.22\//);
+      expect(asset?.url).toMatch(
+        /^https:\/\/raw\.githubusercontent\.com\/ragomes102030-cpu\/AIONUICLONE\/main\/releases\/1\.9\.22\//
+      );
       expect(asset?.url).not.toMatch(/\/v1\.9\.22\//);
     } finally {
       restoreFetch();

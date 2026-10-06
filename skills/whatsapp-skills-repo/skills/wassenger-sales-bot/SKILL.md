@@ -4,10 +4,10 @@ description: Build WhatsApp sales workflows with Wassenger — qualify inbound l
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: industry
   vertical: sales
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger for Sales
@@ -127,14 +127,14 @@ For no-shows, fire a "did you forget?" message 10 min after the start time, then
 
 A typical post-demo cadence:
 
-| Day | Touch | Channel |
-|---|---|---|
-| 0 | Demo completed | Live |
-| +1 | Recap + next-steps WhatsApp message | WA, free-form (within 24h) |
-| +3 | Case study / social proof | WA template if outside 24h |
-| +7 | "Any blockers?" check-in | WA |
-| +14 | "Last chance for current pricing" | WA template |
-| +30 | "Closing the file unless you reach out" | Email + WA |
+| Day | Touch                                   | Channel                    |
+| --- | --------------------------------------- | -------------------------- |
+| 0   | Demo completed                          | Live                       |
+| +1  | Recap + next-steps WhatsApp message     | WA, free-form (within 24h) |
+| +3  | Case study / social proof               | WA template if outside 24h |
+| +7  | "Any blockers?" check-in                | WA                         |
+| +14 | "Last chance for current pricing"       | WA template                |
+| +30 | "Closing the file unless you reach out" | Email + WA                 |
 
 Wire each step as a scheduled job (`deliverAt` or your own cron):
 
@@ -169,14 +169,14 @@ Don't dump a fully-resolved bot conversation on a human without a one-line summa
 
 Every meaningful event should mirror to the CRM:
 
-| WhatsApp event | CRM action |
-|---|---|
-| First message from new lead | Create contact + deal (stage: new) |
-| Qualification answers | Update deal custom fields |
-| Meeting booked | Move deal to "meeting scheduled" |
-| Meeting completed | Move to "demo done" + log meeting note |
-| No reply 14 days | Move to "stalled" + create task |
-| `STOP` keyword | Mark unsubscribed + close deal as lost |
+| WhatsApp event              | CRM action                             |
+| --------------------------- | -------------------------------------- |
+| First message from new lead | Create contact + deal (stage: new)     |
+| Qualification answers       | Update deal custom fields              |
+| Meeting booked              | Move deal to "meeting scheduled"       |
+| Meeting completed           | Move to "demo done" + log meeting note |
+| No reply 14 days            | Move to "stalled" + create task        |
+| `STOP` keyword              | Mark unsubscribed + close deal as lost |
 
 For HubSpot / Pipedrive / Salesforce / Attio, the easiest path is an n8n workflow with `wassengerhq/n8n-wassenger` + the CRM's official nodes. For lighter setups, a small Cloudflare Worker / Vercel Function works too.
 

@@ -29,10 +29,12 @@
 ### Task 1: T1 — SDD worker-review prohibition
 
 **Files:**
+
 - Modify: `skills/subagent-driven-development/implementer-prompt.md` (insert new section before `## Code Organization`)
 - Modify: `skills/subagent-driven-development/SKILL.md` (dispatch bullet + Red Flags row)
 
 **Interfaces:**
+
 - Consumes: nothing from other tasks.
 - Produces: commit `fix(sdd): implementers never dispatch subagents` — the T1 PR cherry-picks exactly this commit.
 
@@ -94,15 +96,17 @@ across four corpora in the codex-efficiency eval campaign."
 ### Task 2: T3 — codex-tools.md version-honest multi-agent rewrite
 
 **Files:**
+
 - Modify: `skills/using-superpowers/references/codex-tools.md` (replace the paragraph after the config block)
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: the rewritten base section Tasks 3 and 4 append after; commit `fix(codex): correct multi-agent guidance against Codex source` (T3 PR).
 
 - [ ] **Step 1: Replace the multi-agent paragraph**
 
-In `skills/using-superpowers/references/codex-tools.md`, replace the entire single paragraph beginning `This enables \`spawn_agent\`, \`wait_agent\`, and \`close_agent\`` (and ending `...carrying the brief, the report file, and the findings.`) with:
+In `skills/using-superpowers/references/codex-tools.md`, replace the entire single paragraph beginning `This enables \`spawn_agent\`, \`wait_agent\`, and \`close_agent\``(and ending`...carrying the brief, the report file, and the findings.`) with:
 
 ```
 This enables the multi-agent tools that skills like
@@ -157,9 +161,11 @@ docs/2026-07-29-codex-multiagent-v2-capabilities.md."
 ### Task 3: T2 — codex-tools.md event-driven waiting section
 
 **Files:**
+
 - Modify: `skills/using-superpowers/references/codex-tools.md` (new section after Task 2's block, before `## Environment Detection`)
 
 **Interfaces:**
+
 - Consumes: Task 2's rewritten base section (append directly after it).
 - Produces: commit `fix(codex): event-driven waiting instead of short polls` (T2 PR; declares dependency on T3's PR).
 
@@ -208,9 +214,11 @@ polls at identical wake latency."
 ### Task 4: T5 — codex-tools.md model routing on spawns
 
 **Files:**
+
 - Modify: `skills/using-superpowers/references/codex-tools.md` (new section after Task 3's, before `## Environment Detection`)
 
 **Interfaces:**
+
 - Consumes: Tasks 2–3 in place.
 - Produces: commit `fix(codex): explicit model+effort on every spawn, config backstop` (T5 PR; declares dependency on T3's and T2's PRs).
 
@@ -258,6 +266,7 @@ without reasoning_effort resets effort to the model default."
 ### Task 5: T4 — brainstorming three-path router (variant C)
 
 **Files:**
+
 - Modify: `skills/brainstorming/SKILL.md`
 
 The frontmatter `description:` is untouched. Edits below are complete replacements for the named regions; everything not named stays byte-identical.
@@ -362,7 +371,7 @@ your path and complete them in order.
 
 - [ ] **Step 3: Replace the Process Flow graph**
 
-Replace the entire ```dot ... ``` block under `## Process Flow` with:
+Replace the entire `dot ... ` block under `## Process Flow` with:
 
 ```
 digraph brainstorming {
@@ -455,10 +464,12 @@ paths natively."
 ### Task 6: Fix arm + hypothesis log
 
 **Files:**
+
 - Create: `superpowers-autoresearch/logs/2026-07-30-codex-efficiency-fixes.md`
 - Create (filesystem, not committed): `/tmp/sp-arm-fix` worktree
 
 **Interfaces:**
+
 - Consumes: Tasks 1–5 committed on `codex-efficiency-fixes`.
 - Produces: the arm every battery runs against; the log every later task appends to.
 
@@ -489,10 +500,12 @@ git commit -m "docs: open the codex-efficiency fix-cycle hypothesis log"
 ### Task 7: Micro — variant C + adversarial briefs
 
 **Files:**
+
 - Modify: `superpowers-autoresearch/campaigns/codex-efficiency/ceremony-path-micro.py`
 - Create: `superpowers-autoresearch/campaigns/codex-efficiency/out/` micro outputs (NOT committed; aggregates go in the log)
 
 **Interfaces:**
+
 - Consumes: Task 5's shipped router text (the variant must quote it), Task 6's log.
 - Produces: micro verdict for T4 layer 1.
 
@@ -523,11 +536,13 @@ Append the results table and verdict to the log (criteria from Step 2). Privacy-
 ### Task 8: Shared SDD battery (T1, T2, T5)
 
 **Files:**
+
 - Create: `superpowers-autoresearch/campaigns/codex-efficiency/out/` fix-arm aggregates (rep-range filenames)
 - Modify: `superpowers-autoresearch/logs/2026-07-30-codex-efficiency-fixes.md` (pre-registration + verdicts)
 - Possibly modify: `superpowers-autoresearch/campaigns/codex-efficiency/run-quorum.sh` (only if the `fix` arm name needs wiring — read it first; the campaign convention maps ARM → `/tmp/sp-arm-$ARM`)
 
 **Interfaces:**
+
 - Consumes: Tasks 1–6.
 - Produces: T1/T2/T5 verdicts; the runs Task 11's regression comparison may reuse.
 
@@ -546,9 +561,11 @@ Append the results table and verdict to the log (criteria from Step 2). Privacy-
 ### Task 9: Codex ceremony battery (T4 layer 2)
 
 **Files:**
+
 - Modify: log (pre-registration + verdict); `out/` aggregates.
 
 **Interfaces:**
+
 - Consumes: Tasks 5, 6; Task 7 must have PASSED.
 - Produces: T4 layer-2 verdict.
 
@@ -567,11 +584,13 @@ Append the results table and verdict to the log (criteria from Step 2). Privacy-
 ### Task 10: ATIF ceremony census scorer (for the global battery)
 
 **Files:**
+
 - Create: `superpowers-autoresearch/campaigns/codex-efficiency/score_t4_regression.py`
 - Create: `superpowers-autoresearch/campaigns/codex-efficiency/test_score_t4_regression.py`
 - Create: `superpowers-autoresearch/campaigns/codex-efficiency/fixtures/atif-ceremony/` (synthetic `trajectory.json` fixtures)
 
 **Interfaces:**
+
 - Consumes: quorum's per-run `trajectory.json` (ATIF v1.7; tool calls with file paths and step timestamps — see `superpowers/evals/src/atif/types.ts` for the shape).
 - Produces: per-run census dict: `{spec_docs_written: int, plan_docs_written: int, doc_writes_before_first_code: int, first_code_file: str|null, user_turns_before_first_code: int, writing_plans_invoked: bool}`; consumed by Task 11.
 
@@ -586,10 +605,12 @@ Append the results table and verdict to the log (criteria from Step 2). Privacy-
 ### Task 11: Global regression battery (T4 layer 3) — Claude Code + Gemini
 
 **Files:**
+
 - Create: `superpowers-autoresearch/campaigns/codex-efficiency/scenarios/cc-ceremony-{spike,bounded,arch}/` (copies of the `cx-` scenarios with the `# coding-agents:` line set to `claude,gemini`; strip any codex-only setup)
 - Modify: log (pre-registration + verdict); `out/` aggregates.
 
 **Interfaces:**
+
 - Consumes: Task 10's scorer; Tasks 5–6; lane containers with Claude/Gemini auth (Claude: `ANTHROPIC_API_KEY`; Gemini: `GEMINI_API_KEY` — see `superpowers/evals/README.md` and `coding-agents/*-context/HOWTO.md`).
 - Produces: T4 layer-3 verdict (the cross-harness regression evidence the T4 PR requires).
 
@@ -608,9 +629,11 @@ Append the results table and verdict to the log (criteria from Step 2). Privacy-
 ### Task 12: Triggering acceptance check (all three harnesses)
 
 **Files:**
+
 - Modify: log (pre-registration + verdict).
 
 **Interfaces:**
+
 - Consumes: `/tmp/sp-arm-fix`; the containerized triggering approach (host runs are confounded — `superpowers-autoresearch` docs and `scripts/evals-container`).
 - Produces: the "brainstorming still auto-triggers" evidence line every T4 PR cites.
 
@@ -625,10 +648,12 @@ Append the results table and verdict to the log (criteria from Step 2). Privacy-
 ### Task 13: Cut the treatment PRs
 
 **Files:**
+
 - Create: five branches `fix/t1-sdd-no-worker-reviewers`, `fix/t3-codex-tools-corrections`, `fix/t2-codex-event-waits`, `fix/t5-codex-spawn-routing`, `fix/t4-brainstorming-three-paths`, each cherry-picked from `codex-efficiency-fixes` onto `origin/dev`
 - Create: PR body files under the SDD workspace (drafted from `.github/PULL_REQUEST_TEMPLATE.md`)
 
 **Interfaces:**
+
 - Consumes: verdicts from Tasks 7–12; only treatments whose criteria PASSED get a PR.
 - Produces: pushed branches + draft PR bodies. **STOP before opening PRs: present the PR set (diffs + bodies + verdict table) to Jesse. PRs open only on his go; merges are his.**
 
@@ -641,10 +666,12 @@ Append the results table and verdict to the log (criteria from Step 2). Privacy-
 ### Task 14: Campaign closeout
 
 **Files:**
+
 - Modify: `superpowers-autoresearch/logs/2026-07-30-codex-efficiency-fixes.md` (closing summary + final ledger)
 - Create: `superpowers-autoresearch/reports/2026-07-codex-efficiency-fix-cycle.md` (verdict table: five treatments × criterion × result × PR link; phase-2 queue restated with what each item still needs)
 
 **Interfaces:**
+
 - Consumes: everything above.
 - Produces: the record phase 2 starts from.
 
@@ -666,11 +693,13 @@ the SDD controller text. Then re-run the battery.
 ### Task 15: T1-ext — no-subagents contract in all reviewer templates
 
 **Files:**
+
 - Modify: `skills/subagent-driven-development/task-reviewer-prompt.md`
 - Modify: `skills/subagent-driven-development/re-review-prompt.md`
 - Modify: `skills/requesting-code-review/code-reviewer.md`
 
 **Interfaces:**
+
 - Consumes: Task 1's implementer-prompt contract (same intent, reviewer flavor).
 - Produces: commit `fix(sdd): reviewers never dispatch subagents either` — joins the T1 PR with Task 1's commit.
 
@@ -714,9 +743,11 @@ sub-reviewers; the contract now reaches every dispatched role."
 ### Task 16: T2-strong — wait discipline in the SDD controller text
 
 **Files:**
+
 - Modify: `skills/subagent-driven-development/SKILL.md`
 
 **Interfaces:**
+
 - Consumes: nothing new.
 - Produces: commit `fix(sdd): controllers wait long or not at all` — joins the T2 PR.
 
@@ -773,6 +804,7 @@ new design decision).
 ### Task 17: T2 round 3 — bounded waits + reconcile
 
 **Files:**
+
 - Modify: `skills/subagent-driven-development/SKILL.md` (replace Task 16's paragraph)
 - Modify: `skills/using-superpowers/references/codex-tools.md` (revise two bullets of `## Waiting on children`)
 
@@ -833,6 +865,7 @@ reconcile keep the efficiency and restore observability."
 ### Task 18: T4 round 2 — approval-gate teeth on the bounded path
 
 **Files:**
+
 - Modify: `skills/brainstorming/SKILL.md`
 
 - [ ] **Step 1: Strengthen the bounded bullet in `## Three Paths`**
@@ -904,6 +937,7 @@ silent-wait finding, not a treatment change); spike — smoke healthy.
 ### Task 19: wait guidance — non-blocking delivery preferred
 
 **Files:**
+
 - Modify: `skills/subagent-driven-development/SKILL.md` (one sentence added inside the wait paragraph)
 
 - [ ] **Step 1: Insert the preference sentence**
@@ -956,6 +990,7 @@ provision an OPENAI_API_KEY so the codex leg can run before the T4 PR.
 ### Task 20: router tightening — bounded measures the repo
 
 **Files:**
+
 - Modify: `skills/brainstorming/SKILL.md`
 
 - [ ] **Step 1: Tighten the bounded bullet's definition**

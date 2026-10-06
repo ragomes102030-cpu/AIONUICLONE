@@ -5,17 +5,17 @@ description: "Use this skill to build construction cost-control workbooks in Exc
 
 > **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — the underlying tool/CLI commands are usually cross-platform, but the surrounding shell syntax is not. Translate it to PowerShell before running:
 >
-> | bash (macOS / Linux) | PowerShell (Windows) |
-> | --- | --- |
-> | `a && b` | run as two steps, or `a; if ($?) { b }` |
-> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool |
-> | `VAR=$(cmd)` … `$VAR` | `$VAR = cmd` … `$VAR` |
-> | `cmd > /dev/null` | `cmd > $null` |
-> | `… \| grep PAT` | `… \| Select-String PAT` |
-> | `… \| jq …` | `… \| ConvertFrom-Json`, then read the fields |
-> | `python3 x.py` | `python x.py` (or `py x.py`) |
-> | `~/dir`, `/tmp` | `$env:USERPROFILE\dir`, `$env:TEMP` |
-> | `cp` / `mkdir -p` / `rm -rf` | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
+> | bash (macOS / Linux)              | PowerShell (Windows)                                                                |
+> | --------------------------------- | ----------------------------------------------------------------------------------- |
+> | `a && b`                          | run as two steps, or `a; if ($?) { b }`                                             |
+> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool                 |
+> | `VAR=$(cmd)` … `$VAR`             | `$VAR = cmd` … `$VAR`                                                               |
+> | `cmd > /dev/null`                 | `cmd > $null`                                                                       |
+> | `… \| grep PAT`                   | `… \| Select-String PAT`                                                            |
+> | `… \| jq …`                       | `… \| ConvertFrom-Json`, then read the fields                                       |
+> | `python3 x.py`                    | `python x.py` (or `py x.py`)                                                        |
+> | `~/dir`, `/tmp`                   | `$env:USERPROFILE\dir`, `$env:TEMP`                                                 |
+> | `cp` / `mkdir -p` / `rm -rf`      | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
 >
 > If a command has no obvious Windows equivalent, prefer the built-in file/HTTP tools over raw shell.
 
@@ -77,6 +77,7 @@ Help reflects the installed CLI version. When this skill and help disagree, **he
 ### Phase 1 — Intake
 
 Get from the user/leader:
+
 - Which cost structure: with EAP (reference the EAP from construction-planning) or flat register by category?
 - The saldo convention: Previsto − Realizado, or Previsto − (Comprometido + Realizado)?
 - Currency, and whether values are stored in thousands.
@@ -98,6 +99,7 @@ officecli close "$FILE"
 ```
 
 Sheet roles:
+
 - **Config** — parameters: currency, saldo convention, tolerance, cost categories (blue inputs).
 - **Orcado** — budget source of truth (one row per EAP/serviço or per category; values are inputs).
 - **Comprometido** — commitments source of truth (contract/PO register: line, valor, data, EAP link).
@@ -124,6 +126,7 @@ officecli set "$FILE" '/Orcado/A1:F1' --prop fill=1F3864 --prop font.color=FFFFF
 officecli set "$FILE" /Orcado/B2 --prop value="Código EAP" --prop font.bold=true
 officecli set "$FILE" /Orcado/C2 --prop value="Descricao" --prop font.bold=true
 ```
+
 (Adjust columns to the register layout.)
 
 ### Phase 5 — Registro de Custos (comparison view)
@@ -150,6 +153,7 @@ Copy the formulas down the register. CF: deviation highlight with tolerance from
 # By category (when no EAP): totals per category from Registro:
 officecli set "$FILE" /Rollup/B5 --prop 'formula==SUMIFS("Registro de Custos"!$H$2:$H$500,"Registro de Custos"!$B$2:$B$500,$A5)'
 ```
+
 (With an EAP present, aggregate by disciplina code prefix per construction-planning EAP code conventions. All rollups = `SUMIFS` per discipline/category — formulas only.)
 
 ### Phase 7 — Summary & KPIs

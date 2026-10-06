@@ -8,29 +8,84 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@arco-design/web-react', () => ({
   Alert: ({ content }: { content: string }) => <div data-testid='alert'>{content}</div>,
-  Button: ({ children, onClick, loading, type, 'data-testid': testId }: { children: React.ReactNode; onClick?: () => void; loading?: boolean; type?: string; 'data-testid'?: string }) => (
-    <button onClick={onClick} disabled={loading} data-button-type={type} data-testid={testId}>{children}</button>
+  Button: ({
+    children,
+    onClick,
+    loading,
+    type,
+    'data-testid': testId,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    loading?: boolean;
+    type?: string;
+    'data-testid'?: string;
+  }) => (
+    <button onClick={onClick} disabled={loading} data-button-type={type} data-testid={testId}>
+      {children}
+    </button>
   ),
   Input: Object.assign(
-    ({ value, onChange, placeholder, ...props }: { value: string; onChange: (value: string) => void; placeholder?: string }) => (
+    ({
+      value,
+      onChange,
+      placeholder,
+      ...props
+    }: {
+      value: string;
+      onChange: (value: string) => void;
+      placeholder?: string;
+    }) => (
       <input value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} {...props} />
     ),
     {
-      TextArea: ({ value, onChange, placeholder, ...props }: { value: string; onChange: (value: string) => void; placeholder?: string }) => (
-        <textarea value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} {...props} />
+      TextArea: ({
+        value,
+        onChange,
+        placeholder,
+        ...props
+      }: {
+        value: string;
+        onChange: (value: string) => void;
+        placeholder?: string;
+      }) => (
+        <textarea
+          value={value}
+          placeholder={placeholder}
+          onChange={(event) => onChange(event.target.value)}
+          {...props}
+        />
       ),
     }
   ),
-  Modal: ({ visible, onOk, okText, children }: { visible: boolean; onOk: () => void; okText: string; children: React.ReactNode }) =>
+  Modal: ({
+    visible,
+    onOk,
+    okText,
+    children,
+  }: {
+    visible: boolean;
+    onOk: () => void;
+    okText: string;
+    children: React.ReactNode;
+  }) =>
     visible ? (
       <div>
         {children}
         <button onClick={onOk}>{okText}</button>
       </div>
     ) : null,
-  Radio: Object.assign(({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) => <label>{children}{disabled ? ' disabled' : ''}</label>, {
-    Group: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  }),
+  Radio: Object.assign(
+    ({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) => (
+      <label>
+        {children}
+        {disabled ? ' disabled' : ''}
+      </label>
+    ),
+    {
+      Group: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    }
+  ),
   Space: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 

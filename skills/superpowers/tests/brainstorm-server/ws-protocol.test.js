@@ -131,7 +131,7 @@ function runTests() {
   test('encodes pong frame with payload', () => {
     const payload = Buffer.from('ping-data');
     const frame = ws.encodeFrame(ws.OPCODES.PONG, payload);
-    assert.strictEqual(frame[0], 0x8A); // FIN + PONG
+    assert.strictEqual(frame[0], 0x8a); // FIN + PONG
     assert.strictEqual(frame[1], payload.length);
     assert.strictEqual(frame.slice(2).toString(), 'ping-data');
   });
@@ -254,7 +254,7 @@ function runTests() {
     // Server MUST reject unmasked client frames per RFC 6455 Section 5.1
     const buf = Buffer.alloc(7);
     buf[0] = 0x81; // FIN + TEXT
-    buf[1] = 5;    // length 5, NO mask bit
+    buf[1] = 5; // length 5, NO mask bit
     Buffer.from('Hello').copy(buf, 2);
     assert.throws(() => ws.decodeFrame(buf), /mask/i, 'Should reject unmasked client frame');
   });
@@ -277,7 +277,7 @@ function runTests() {
   test('correctly unmasks with all mask byte values', () => {
     // Use a known mask to verify unmasking arithmetic
     const payload = Buffer.from('ABCDEFGH');
-    const mask = Buffer.from([0xFF, 0x00, 0xAA, 0x55]);
+    const mask = Buffer.from([0xff, 0x00, 0xaa, 0x55]);
     const masked = Buffer.alloc(payload.length);
     for (let i = 0; i < payload.length; i++) {
       masked[i] = payload[i] ^ mask[i % 4];

@@ -4,10 +4,10 @@ description: Run a WhatsApp customer support operation with Wassenger — multi-
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: industry
   vertical: customer-support
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger for Customer Support
@@ -44,14 +44,14 @@ NEW ─► PENDING ─► IN PROGRESS ─► WAITING ON CUSTOMER ─► RESOLVED
 
 Map this to Wassenger primitives:
 
-| Lifecycle stage | Wassenger state |
-|---|---|
-| NEW / PENDING | `chat.status = active`, no `assignedTo` |
-| IN PROGRESS | `chat.status = active`, `assignedTo = agent` |
-| WAITING ON CUSTOMER | label `waiting-customer`, status still active |
-| RESOLVED | `chat.status = resolved` |
-| CLOSED | `chat.status = archived` (no further action expected) |
-| ESCALATED | label `escalated` + reassign |
+| Lifecycle stage     | Wassenger state                                       |
+| ------------------- | ----------------------------------------------------- |
+| NEW / PENDING       | `chat.status = active`, no `assignedTo`               |
+| IN PROGRESS         | `chat.status = active`, `assignedTo = agent`          |
+| WAITING ON CUSTOMER | label `waiting-customer`, status still active         |
+| RESOLVED            | `chat.status = resolved`                              |
+| CLOSED              | `chat.status = archived` (no further action expected) |
+| ESCALATED           | label `escalated` + reassign                          |
 
 ## Recipes
 
@@ -112,11 +112,11 @@ Use the chat's `analyze_whatsapp_chat_messages` tool for LLM-based intent extrac
 
 Define SLAs per chat tier:
 
-| Tier | First response | Resolution |
-|---|---|---|
-| Standard | 30 min | 24h |
-| Premium (label `vip`) | 10 min | 4h |
-| Enterprise | 5 min | 2h |
+| Tier                  | First response | Resolution |
+| --------------------- | -------------- | ---------- |
+| Standard              | 30 min         | 24h        |
+| Premium (label `vip`) | 10 min         | 4h         |
+| Enterprise            | 5 min          | 2h         |
 
 Implement via scheduled job:
 

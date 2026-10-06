@@ -1,6 +1,6 @@
 ---
 name: empacotamento-aionui
-description: "Regras verificadas para empacotar, instalar e diagnosticar o AionUi clone sem repetir erros conhecidos. Use ao rodar npm run dist:win / build-with-builder / prepare-aioncore, ao instalar ou atualizar o app no Windows, ao ler logs do processo principal, ao descobrir a porta da API, ou ao preparar o ambiente de testes (ABI nativa). Cobre: variável de compressão do electron-builder, resolução de caminhos extraResources, cache do Electron, instalação NSIS sobreposta, dual ABI do better-sqlite3, tsc verde que quebra o bundle, limite de 30s que mata build em background, AionCore local vs release do upstream, diagnóstico BOOTSTRAP_DATA_INIT_FAILED/database.newer_than_app, leitura de logs e armadilhas de teste. NÃO substitui a validação: sempre confira o artefato gerado por hash."
+description: 'Regras verificadas para empacotar, instalar e diagnosticar o AionUi clone sem repetir erros conhecidos. Use ao rodar npm run dist:win / build-with-builder / prepare-aioncore, ao instalar ou atualizar o app no Windows, ao ler logs do processo principal, ao descobrir a porta da API, ou ao preparar o ambiente de testes (ABI nativa). Cobre: variável de compressão do electron-builder, resolução de caminhos extraResources, cache do Electron, instalação NSIS sobreposta, dual ABI do better-sqlite3, tsc verde que quebra o bundle, limite de 30s que mata build em background, AionCore local vs release do upstream, diagnóstico BOOTSTRAP_DATA_INIT_FAILED/database.newer_than_app, leitura de logs e armadilhas de teste. NÃO substitui a validação: sempre confira o artefato gerado por hash.'
 ---
 
 # Empacotamento e diagnóstico — AionUi clone
@@ -56,7 +56,7 @@ declare const Option: <T extends OptionProps>(props) => JSX.Element   # existe c
 Option: typeof Option;                                                # Select.Option
 ```
 
-`Option` é membro **estático de `Select`**. O *namespace merging* faz `import { Option }` compilar, porque o `.d.ts` declara o nome no escopo do módulo. O JS de runtime só o expõe como `Select.Option`.
+`Option` é membro **estático de `Select`**. O _namespace merging_ faz `import { Option }` compilar, porque o `.d.ts` declara o nome no escopo do módulo. O JS de runtime só o expõe como `Select.Option`.
 
 **Regra:** import nomeado só é seguro se o pacote de fato exporta o nome. Antes de confiar no typecheck, **confirme o padrão no repositório** — é mais rápido e mais confiável que confiar em `.d.ts`:
 
@@ -117,6 +117,7 @@ Relançar sem ler transforma um erro de 5 segundos em 13 minutos.
 ```
 AionUi-2.2.2-win-x64.exe /S
 ```
+
 O instalador valida a instalação existente (`registry-heal phase=valid-install-location`) e **sai sem copiar nada**. Não há erro visível. Diagnóstico em:
 
 ```
@@ -163,7 +164,6 @@ Por isso o `prepare-aioncore` prefere, nesta ordem: `AIONCORE_BIN_PATH` → chec
 ```
 
 O binário precisa estar no pacote: `resources/bundled-aioncore/<plataforma>-<arch>/aioncore.exe` **e** a pasta `managed-resources/`. Sem `managed-resources/`, o prepare cai no download de novo.
-
 
 ---
 
@@ -248,7 +248,6 @@ Falha idêntica nos dois lados = pré-existente, não regressão sua.
 
 `node --check arquivo.ts` falha em `import`. Isso **não** é erro de sintaxe — não use como critério de aprovação de TS. Use o runner.
 
-
 ---
 
 ## 6. Limpeza de disco: nunca apague pasta do repo em bloco
@@ -312,11 +311,11 @@ E a checagem que faltou: **rodar a suíte antes do commit**, não depois de acha
 
 Três vezes na mesma sessão falei como se tivesse medido, sem ter medido:
 
-| eu disse | o que era |
-| --- | --- |
+| eu disse                    | o que era                                                           |
+| --------------------------- | ------------------------------------------------------------------- |
 | "está tudo bem com o clone" | o `tsc` **da raiz** acusava 3 erros num arquivo que eu tinha criado |
-| "14 cartões duplicados" | 23 abertos viraram **15** — meu filtro incluía concluídos |
-| "os 8 atrasados" | contagem com filtro diferente, sem avisar que mudou |
+| "14 cartões duplicados"     | 23 abertos viraram **15** — meu filtro incluía concluídos           |
+| "os 8 atrasados"            | contagem com filtro diferente, sem avisar que mudou                 |
 
 **Regra:** número que vai para a conversa sai de uma medição visível, com o filtro escrito. Se a contagem muda de uma frase para a outra, **diga isso**.
 
@@ -385,11 +384,11 @@ O terceiro — e o mais barato de todos — é **rodar a suíte antes do commit*
 
 Contexto para não "consertar" algo que já foi consertado de propósito:
 
-| área | decisão do clone | por quê |
-|---|---|---|
-| AionCore do pacote | sempre o binário local | release do upstream é anterior ao schema deste fork |
-| MCP semeados | só chrome-devtools + browser + image-gen | servidores de exemplo exigem pacote local/token e ficavam eternamente "desconectados"; e o bootstrap **reeseedeia** qualquer padrão ausente, então apagar pela tela não durava |
-| Teste E2E do Kanban | relógio fixo + banco isolado | ver seção 5 |
-| Backup do banco | antes de qualquer mutação, 1 a cada 6 h, mantém 10 | upgrade ruim era perda definitiva |
+| área                | decisão do clone                                   | por quê                                                                                                                                                                        |
+| ------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| AionCore do pacote  | sempre o binário local                             | release do upstream é anterior ao schema deste fork                                                                                                                            |
+| MCP semeados        | só chrome-devtools + browser + image-gen           | servidores de exemplo exigem pacote local/token e ficavam eternamente "desconectados"; e o bootstrap **reeseedeia** qualquer padrão ausente, então apagar pela tela não durava |
+| Teste E2E do Kanban | relógio fixo + banco isolado                       | ver seção 5                                                                                                                                                                    |
+| Backup do banco     | antes de qualquer mutação, 1 a cada 6 h, mantém 10 | upgrade ruim era perda definitiva                                                                                                                                              |
 
-Convenção do repositório: **PT-BR no texto, inglês nos identificadores e nomes de função.** Comentário de código explica o *porquê*, não o *o quê*.
+Convenção do repositório: **PT-BR no texto, inglês nos identificadores e nomes de função.** Comentário de código explica o _porquê_, não o _o quê_.

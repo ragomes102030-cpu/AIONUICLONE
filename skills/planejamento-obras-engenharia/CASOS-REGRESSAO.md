@@ -11,12 +11,14 @@ Formato de cada caso: **Sintoma → Evidência → Por que é erro → Regra per
 **Sintoma:** existem colunas ES/EF/LS/LF/Folga/Crítica, mas alterar a duração não muda nada.
 
 **Evidência (real):**
+
 ```excel
 E4 = =IF($D4="","",WORKDAY(DATA_INICIAL,0.0,FERIADOS))    ← "0.0" literal
 F4 = =IF($D4="","",WORKDAY(DATA_INICIAL,5.0-1,FERIADOS))  ← "5.0" literal
 K4 (Folga)   = 0      ← valor fixo
 L4 (Crítica) = SIM    ← valor fixo
 ```
+
 O offset da atividade foi **assado dentro da fórmula** em vez de referenciar o ES calculado.
 
 **Por que é erro:** o cronograma é um retrato importado, não um cálculo. Sem propagação não existe replanejamento.
@@ -61,6 +63,7 @@ O offset da atividade foi **assado dentro da fórmula** em vez de referenciar o 
 **Sintoma:** o desvio é sempre 0.
 
 **Evidência (real):**
+
 ```excel
 P4 = =$E4      Q4 = =$F4        (baseline = planejamento atual)
 BASELINE!F4 (desvio) = 0        sempre
@@ -69,6 +72,7 @@ BASELINE!F4 (desvio) = 0        sempre
 **Por que é erro:** baseline é a **referência histórica**; se ela se move com o plano, não existe comparação e nenhuma decisão de reprogramação é possível.
 
 **Regra permanente:**
+
 - **Baseline = SNAPSHOT CONGELADO** (valores).
 - **Planejamento atual = DINÂMICO** (fórmulas).
 - **Desvio = Atual − Baseline**, de duas fontes distintas.
@@ -82,9 +86,11 @@ BASELINE!F4 (desvio) = 0        sempre
 **Sintoma:** todas as atividades plotadas em todos os pavimentos, com ritmo fixo.
 
 **Evidência (real):**
+
 ```excel
 =IF(1<=17,WORKDAY(ATIVIDADES!$E4,(1-1)*1,FERIADOS),"")
 ```
+
 Condição `1<=17` é sempre verdadeira; ritmo = `ROUND(duração/10)` literal.
 
 **Por que é erro:** a LOB não representa o **escopo** (faixa de pavimentos) nem o **ritmo real** de cada serviço; não serve para achar interferência.
@@ -114,6 +120,7 @@ Condição `1<=17` é sempre verdadeira; ritmo = `ROUND(duração/10)` literal.
 **Por que é erro:** sem mão de obra/equipamento/material não há nivelamento, detecção de sobrecarga nem produtividade real.
 
 **Regra permanente:** verificar estrutura para:
+
 - **Mão de obra:** equipe, quantidade, produtividade, capacidade.
 - **Equipamentos:** disponibilidade, utilização, conflito.
 - **Materiais:** necessidade, disponibilidade, impacto no prazo.
@@ -129,9 +136,11 @@ Condição `1<=17` é sempre verdadeira; ritmo = `ROUND(duração/10)` literal.
 **Por que é erro:** o planejamento deixa de reagir a mudanças de quantidade ou produtividade — a essência do planejamento físico.
 
 **Regra permanente:**
+
 ```
 Duração = Quantidade ÷ Produção por período ÷ Nº de equipes
 ```
+
 considerando unidade, equipe, calendário e capacidade. Se a duração for **manual por decisão**, rotular explicitamente como **entrada manual**.
 
 **Como testar:** alterar a produtividade e a quantidade; a duração deve mudar. Se não mudar, é entrada manual — confirmar se está rotulada.

@@ -19,11 +19,11 @@ Se algum passo falhar, leia "Quando algo dá errado" no fim.
 
 ## O que o GitHub faz e o que ele NÃO faz
 
-| | |
-|---|---|
-| ✅ Compila sozinho quando você faz `git push` | `Build Windows Installer` dispara automaticamente |
-| ✅ Deixa o instalador pronto na aba **Actions** | baixa como artifact, expira em ~90 dias |
-| ❌ **Não publica a release sozinho** | publicar é passo manual, seu |
+|                                                 |                                                   |
+| ----------------------------------------------- | ------------------------------------------------- |
+| ✅ Compila sozinho quando você faz `git push`   | `Build Windows Installer` dispara automaticamente |
+| ✅ Deixa o instalador pronto na aba **Actions** | baixa como artifact, expira em ~90 dias           |
+| ❌ **Não publica a release sozinho**            | publicar é passo manual, seu                      |
 
 Isso é proposital: uma build quebrada nunca chega ao cliente sem você ver.
 
@@ -132,23 +132,23 @@ curl -sL -o /dev/null -w "exe: HTTP %{http_code}\n" https://github.com/ragomes10
 
 ## O que o cliente vê na hora de atualizar
 
-Ele abre *Configurações → Atualizações*, o app procura a versão no **seu** repositório e baixa. Não há como ele receber a versão do AionUi oficial — confirmei que os quatro pontos de atualização (dois em `updateBridge.ts`, um em `updateFeed.ts`, um em `electron-builder.yml`) apontam todos para `ragomes102030-cpu/AIONUICLONE`.
+Ele abre _Configurações → Atualizações_, o app procura a versão no **seu** repositório e baixa. Não há como ele receber a versão do AionUi oficial — confirmei que os quatro pontos de atualização (dois em `updateBridge.ts`, um em `updateFeed.ts`, um em `electron-builder.yml`) apontam todos para `ragomes102030-cpu/AIONUICLONE`.
 
-**Aviso do Windows:** o instalador não é assinado. O cliente vai ver a janela azul *"O Windows protegeu seu PC"* e precisa clicar em **"Executar mesmo assim"**. Isso está escrito nas notas da release. Se quiser avisar antes, diga isso ao cliente na mensagem de entrega.
+**Aviso do Windows:** o instalador não é assinado. O cliente vai ver a janela azul _"O Windows protegeu seu PC"_ e precisa clicar em **"Executar mesmo assim"**. Isso está escrito nas notas da release. Se quiser avisar antes, diga isso ao cliente na mensagem de entrega.
 
 ---
 
 ## Quando algo dá errado
 
-| Sintoma | Causa | Correção |
-|---|---|---|
-| `no matches found for /tmp/...` | `gh` não entende path MSYS | Use path nativo `C:/...` |
-| `ELECTRON_BUILDER_COMPRESSION_LEVEL must be a single digit` | Você exportou essa variável | **Não exporte.** O `build-with-builder.js` já define |
-| Instalador sem as skills | `from` no `electron-builder.yml` relativo ao arquivo, não à raiz | `from` é relativo à pasta com `package.json`. Confira no disco depois do build |
-| Build falha com `TS2304` (import não encontrado) | `tsc` não roda antes | `bun run tsc --noEmit` antes de empacotar |
-| Build morre sem erro claro | Estouro de memória | O script já usa `--max-old-space-size=8192`; em máquina fraca use `dist:win` com `ELECTRON_BUILDER_COMPRESSION_LEVEL=1` |
-| Cliente não recebe a atualização | Nenhuma release publicada | `gh api repos/.../releases` — precisa listar ao menos 1 |
-| Cliente vê versão antiga | Versão do `latest.yml` menor que a dele | Confira o campo `version:` no `latest.yml` |
+| Sintoma                                                     | Causa                                                            | Correção                                                                                                                |
+| ----------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `no matches found for /tmp/...`                             | `gh` não entende path MSYS                                       | Use path nativo `C:/...`                                                                                                |
+| `ELECTRON_BUILDER_COMPRESSION_LEVEL must be a single digit` | Você exportou essa variável                                      | **Não exporte.** O `build-with-builder.js` já define                                                                    |
+| Instalador sem as skills                                    | `from` no `electron-builder.yml` relativo ao arquivo, não à raiz | `from` é relativo à pasta com `package.json`. Confira no disco depois do build                                          |
+| Build falha com `TS2304` (import não encontrado)            | `tsc` não roda antes                                             | `bun run tsc --noEmit` antes de empacotar                                                                               |
+| Build morre sem erro claro                                  | Estouro de memória                                               | O script já usa `--max-old-space-size=8192`; em máquina fraca use `dist:win` com `ELECTRON_BUILDER_COMPRESSION_LEVEL=1` |
+| Cliente não recebe a atualização                            | Nenhuma release publicada                                        | `gh api repos/.../releases` — precisa listar ao menos 1                                                                 |
+| Cliente vê versão antiga                                    | Versão do `latest.yml` menor que a dele                          | Confira o campo `version:` no `latest.yml`                                                                              |
 
 ---
 

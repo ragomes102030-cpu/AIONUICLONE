@@ -69,9 +69,7 @@ describe('kanban precedence engine — deliberate disconnection', () => {
       .filter((file) => {
         const src = fs.readFileSync(file, 'utf-8');
         // Strip comments so prose in a JSDoc block cannot count as a call.
-        const code = src
-          .replace(/\/\*[\s\S]*?\*\//g, '')
-          .replace(/(^|[^:])\/\/.*$/gm, '$1');
+        const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
         return new RegExp(`\\b${fn}\\s*\\(`).test(code);
       });
 
@@ -99,10 +97,7 @@ describe('kanban precedence engine — deliberate disconnection', () => {
   });
 
   it('the removed screens are not drawn, with the reason at the call site', () => {
-    const board = fs.readFileSync(
-      path.join(PACKAGES, 'desktop/src/renderer/pages/kanban/index.tsx'),
-      'utf-8'
-    );
+    const board = fs.readFileSync(path.join(PACKAGES, 'desktop/src/renderer/pages/kanban/index.tsx'), 'utf-8');
     // The column stays in the database for existing customers but is not drawn.
     expect(board).toContain('DECISIONS_COLUMN_KEY) return null');
     expect(board).toMatch(/PRECEDENCE ENGINE/);

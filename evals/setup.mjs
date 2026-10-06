@@ -37,9 +37,10 @@ switch (caseId) {
     remove('resposta-contexto.txt');
     for (let index = 1; index <= 16; index += 1) {
       const name = `entrada-${String(index).padStart(2, '0')}.txt`;
-      const content = index === 11
-        ? 'Marcador: ALVO-UNICO-7F3A\nEste é o único arquivo com o token alvo.\n'
-        : `Ruído suficiente para contextualizar o arquivo ${index}.\n`;
+      const content =
+        index === 11
+          ? 'Marcador: ALVO-UNICO-7F3A\nEste é o único arquivo com o token alvo.\n'
+          : `Ruído suficiente para contextualizar o arquivo ${index}.\n`;
       write(name, content);
     }
     break;

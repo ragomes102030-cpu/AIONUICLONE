@@ -67,12 +67,13 @@ const result = {
   mapsV2NoTodoTool: v2Result.text.includes('no todo tool'),
   mapsV2MutationToPatch: v2Result.text.includes('`patch` with `patchText`'),
   mapsV2Shell: v2Result.text.includes('`shell`'),
-  staleV1ToolsInV2: v2Result.text.includes('`apply_patch`') || v2Result.text.includes('`todowrite`') || v2Result.text.includes('`subagent_type`'),
+  staleV1ToolsInV2:
+    v2Result.text.includes('`apply_patch`') ||
+    v2Result.text.includes('`todowrite`') ||
+    v2Result.text.includes('`subagent_type`'),
 };
 
-const failures = scenario === 'present'
-  ? assertPresentBootstrap(result)
-  : assertMissingBootstrap(result);
+const failures = scenario === 'present' ? assertPresentBootstrap(result) : assertMissingBootstrap(result);
 
 if (scenario === 'present') {
   failures.push(...assertV2Bootstrap(result));
@@ -95,23 +96,25 @@ function isBootstrapSkillPath(filePath) {
 
 function makeOutput(text) {
   return {
-    messages: [{
-      info: { role: 'user' },
-      parts: [{ type: 'text', text }],
-    }],
+    messages: [
+      {
+        info: { role: 'user' },
+        parts: [{ type: 'text', text }],
+      },
+    ],
   };
 }
 
 function countBootstrapParts(output) {
-  return output.messages[0].parts.filter(
-    (part) => part.type === 'text' && part.text.includes('EXTREMELY_IMPORTANT')
-  ).length;
+  return output.messages[0].parts.filter((part) => part.type === 'text' && part.text.includes('EXTREMELY_IMPORTANT'))
+    .length;
 }
 
 function bootstrapText(output) {
-  return output.messages[0].parts.find(
-    (part) => part.type === 'text' && part.text.includes('EXTREMELY_IMPORTANT')
-  )?.text || '';
+  return (
+    output.messages[0].parts.find((part) => part.type === 'text' && part.text.includes('EXTREMELY_IMPORTANT'))?.text ||
+    ''
+  );
 }
 
 function assertPresentBootstrap(result) {
@@ -126,10 +129,14 @@ function assertPresentBootstrap(result) {
     failures.push(`expected first transform to read SKILL.md once, got ${result.firstReadCount}`);
   }
   if (result.secondReadCount !== result.firstReadCount) {
-    failures.push(`expected cached second transform to do no additional reads, got ${result.secondReadCount - result.firstReadCount}`);
+    failures.push(
+      `expected cached second transform to do no additional reads, got ${result.secondReadCount - result.firstReadCount}`
+    );
   }
   if (result.secondExistsCount !== result.firstExistsCount) {
-    failures.push(`expected cached second transform to do no additional exists checks, got ${result.secondExistsCount - result.firstExistsCount}`);
+    failures.push(
+      `expected cached second transform to do no additional exists checks, got ${result.secondExistsCount - result.firstExistsCount}`
+    );
   }
   if (result.staleMentionMapping) {
     failures.push('expected OpenCode bootstrap not to teach @mention subagent syntax');
@@ -161,7 +168,9 @@ function assertMissingBootstrap(result) {
     failures.push('expected first transform to check whether SKILL.md exists');
   }
   if (result.secondExistsCount !== result.firstExistsCount) {
-    failures.push(`expected missing-file result to be cached, got ${result.secondExistsCount - result.firstExistsCount} extra exists checks`);
+    failures.push(
+      `expected missing-file result to be cached, got ${result.secondExistsCount - result.firstExistsCount} extra exists checks`
+    );
   }
   return failures;
 }

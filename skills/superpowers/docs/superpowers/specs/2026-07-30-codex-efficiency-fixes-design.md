@@ -48,6 +48,7 @@ worker's job; "self-review" in the implementer prompt gets reified into a
 reviewer subagent on harnesses where children can spawn (Codex).
 
 **Changes:**
+
 - `skills/subagent-driven-development/implementer-prompt.md`: an explicit
   "You do not dispatch subagents" clause — self-review means reading your
   own diff; the controller owns all review dispatch; a reviewer you spawn
@@ -75,6 +76,7 @@ into the parent's mailbox and drained into the next model request with no
 wait at all.
 
 **Changes** (`skills/using-superpowers/references/codex-tools.md`):
+
 - Never short-timeout poll.
 - While local work remains, do not wait — child results arrive with your
   next turn via the mailbox.
@@ -92,6 +94,7 @@ cache-rebill estimate — the rebill figure stays labeled as an estimate).
 
 **Evidence:** five claims in the current guidance are contradicted by the
 Codex source (all file:line-cited in the capabilities doc):
+
 1. `close_agent` does not exist in multi-agent V2 (V1-only). V2 LRU-evicts
    finished children automatically; not closing costs nothing;
    `followup_task` transparently reloads an evicted child.
@@ -127,6 +130,7 @@ approval gate.
 
 **Design (variant C):** three paths scale the ARTIFACT; every path keeps
 human approval before implementation:
+
 - **Spike** (feasibility question, explicitly throwaway): present the
   question and the intended probe in 2–3 sentences, get a nod, go. No
   docs. Findings return as a recommendation; anything built stays labeled
@@ -139,6 +143,7 @@ human approval before implementation:
   writing-plans.
 
 **Guards (all ship with the router):**
+
 - Classification is said out loud ("this looks bounded, so I'll present a
   short design here rather than write a spec") so the human can override.
 - When in doubt between two paths, take the heavier one.
@@ -157,6 +162,7 @@ writing-skills methodology and ships only with the full eval evidence
 below.
 
 **Graded by (three layers):**
+
 1. **Micro** (`ceremony-path-micro.py`, adapted): variant C literal text,
    plus adversarially ambiguous briefs the campaign never tested (a task
    that pattern-matches bounded but hides a public interface change).
@@ -181,6 +187,7 @@ below.
 to the MODEL's default, not the parent's.
 
 **Changes** (`skills/using-superpowers/references/codex-tools.md`):
+
 - Every spawn you issue — including as a child — sets `model` AND
   `reasoning_effort`; the effort-reset trap is named.
 - Advise `[agents].default_subagent_model` and
@@ -230,6 +237,7 @@ the operative mechanism.
 ## Phase 2 queue (baseline-first; not in this plan's tasks)
 
 Each item requires a failing baseline before any fix ships:
+
 1. **Dispatch routing / long-session drift** — needs a long-session
    elicitation rig (fresh sessions don't reproduce the pathology at CLI
    0.146). Drew's stack informs the treatment shape.

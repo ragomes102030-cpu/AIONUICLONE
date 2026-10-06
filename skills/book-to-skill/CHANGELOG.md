@@ -13,12 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.4.0] - 2026-08-10
 
 ### Added
+
 - Warn on unknown CLI flags instead of silently ignoring (#89)
 - Make the site indexable and shareable
 - Add Booklin banner and hand-made share card
 - Apply pdftotext cleanup to pypdf and pdfminer paths too (#101)
 
 ### Documentation
+
 - Sync architecture, skill spec, and README with v1.3.0
 - Reserve README project listings for sponsors
 - Add Booklin mascot to the README (#106)
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - State that scanned PDFs need OCR first (#132)
 
 ### Fixed
+
 - Gate lowercase Roman behind heading context, add FP coverage (#88)
 - CJK-aware token estimate (rescued from #70) (#103)
 - Support documented help flags (#97)
@@ -45,13 +48,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stop duplicating the PR number in generated entries (#131)
 
 ### Miscellaneous
+
 - Untrack stale compiled bytecode (#94)
 - Generate CHANGELOG from commits with git-cliff (#104)
 
 ### Notes on selected changes
 
-*Written by hand before this file became generated; kept for the detail the
-one-line entries above do not carry.*
+_Written by hand before this file became generated; kept for the detail the
+one-line entries above do not carry._
 
 **CJK-aware token estimate** — `estimate_tokens` now counts CJK codepoints
 directly (against `CJK_CHARS_PER_TOKEN`) instead of whitespace-delimited words,
@@ -70,6 +74,7 @@ or `__pycache__/` path is tracked.
 ## [1.3.0] - 2026-07-30
 
 ### Added
+
 - **Korean chapter headings** — `제N장` (and `제N절`/`제N관`/`제N편`, plus the statutory
   inserted-article `의N` form) are now detected, with the `제` prefix required so the
   everyday counter `장` (e.g. `사진 10장` = "10 photos") never false-matches. Validated
@@ -81,6 +86,7 @@ or `__pycache__/` path is tracked.
   treated as headings.
 
 ### Documentation
+
 - Clarified the two install paths so they are not confused: **`git clone` into a
   skills folder** registers the `/book-to-skill` agent skill (Claude Code / Copilot
   CLI / Amp), while **`pip install book-to-skill`** installs only the standalone
@@ -91,6 +97,7 @@ or `__pycache__/` path is tracked.
   screen instead of being buried mid-page.
 
 ### Security
+
 - **Generated-skill prompt-injection scan** — a dependency-free advisory scanner
   flags instruction-override phrases, model control tags, invisible Unicode,
   generated frontmatter that widens authority, and exfiltration-shaped content
@@ -112,6 +119,7 @@ or `__pycache__/` path is tracked.
   covers the `pip` ecosystem.
 
 ### Changed
+
 - **The `pdf` extra now installs `pypdf` instead of the deprecated `PyPDF2`**
   (`pip install book-to-skill[pdf]`). `pypdf` is the maintained successor;
   `PyPDF2` is end-of-life and no longer receives security fixes (#54).
@@ -122,6 +130,7 @@ or `__pycache__/` path is tracked.
   mid-page content is never removed).
 
 ### Fixed
+
 - Consolidated chapter detection now analyzes extracted source text without the generated
   `SOURCE:` boundary banners, preventing those banners from becoming phantom setext headings
   and collapsing `chapters_detected` to 2 for short source paths (#81).
@@ -129,7 +138,7 @@ or `__pycache__/` path is tracked.
   matched neither existing pattern (`_EXPLICIT_CHAPTER` required Arabic digits after the
   chapter word; `_ROMAN_HEAD` required the numeral to start the line), so books using
   this common form segmented on footnote cross-references instead of chapters. Measured
-  on Project Gutenberg #132 (*The Art of War*, Giles translation): 2 detected "chapters",
+  on Project Gutenberg #132 (_The Art of War_, Giles translation): 2 detected "chapters",
   both footnote citations, become the 13 real headings.
 - PDF text extracted via `pdftotext` is now decoded as UTF-8 rather than the
   process locale encoding, so accented characters and punctuation are no longer
@@ -154,6 +163,7 @@ or `__pycache__/` path is tracked.
 ## [1.2.0] — 2026-06-17
 
 ### Added
+
 - **Installable Python package.** The extractor is now a proper `book_to_skill`
   package with a `pyproject.toml` (hatchling build backend), a `book-to-skill`
   console script, and `python -m book_to_skill`. Optional extractors are exposed
@@ -176,6 +186,7 @@ or `__pycache__/` path is tracked.
   German, Italian, and Dutch (#44).
 
 ### Fixed
+
 - **Full-width Arabic digits in CJK chapter headings** — `第１章` (U+FF10–FF19),
   common in Japanese typesetting, is now detected like `第1章` (#46).
 - **Parser errors are no longer swallowed silently.** Unexpected exceptions in
@@ -189,6 +200,7 @@ or `__pycache__/` path is tracked.
   (`str | None`), so the package imports and runs cleanly on Python 3.9 (#34).
 
 ### Security
+
 - **CI security scanning** — CodeQL (Python, security-and-quality + weekly
   schedule), Bandit (gates on HIGH severity; reports MEDIUM+ informationally),
   and Zizmor (GitHub Actions workflow audit, informational), plus a Dependabot
@@ -196,12 +208,14 @@ or `__pycache__/` path is tracked.
   Bandit B314 (`xml.etree.ElementTree.fromstring` in the DOCX parser).
 
 ### Changed
+
 - CI test matrix now includes Python 3.9 so the import path above is guarded and
   cannot silently re-break.
 
 ## [1.1.0] — 2026-06-12
 
 ### Added
+
 - **GitHub Copilot CLI as a first-class target** — the same `SKILL.md` now
   discovers, installs, and runs across GitHub Copilot CLI, Amp, and Claude Code
   via the open Agent Skills standard. Skill Locations cover 8 discovery paths and
@@ -212,12 +226,14 @@ or `__pycache__/` path is tracked.
   run (best-effort, never fails the run).
 
 ### Changed
+
 - `SKILL.md` frontmatter trimmed toward the open-standard minimum and the
   description now names all three hosts so each agent's auto-loader picks it up (#30).
 - README headline + "Agent Skills" badge; install/usage sections cover all three
   hosts. `docs/ARCHITECTURE.md` shows per-host destination paths (#30).
 
 ### Notes
+
 - `allowed-tools` was dropped from the frontmatter for host-neutrality; the skill
   is conformant on all three hosts (validated with all three lenses). If Claude
   users hit permission-prompt friction, the Bash grant from #18 will be restored
@@ -229,6 +245,7 @@ First formally tagged release. The converter is stable, multi-format, and
 validated on real books.
 
 ### Added
+
 - **Multi-format extraction** — PDF, EPUB, DOCX, HTML, Markdown, reStructuredText,
   AsciiDoc, RTF, and MOBI/AZW/AZW3 (via Calibre), through a modular `extractor`
   package with per-format parsers and graceful stdlib fallbacks.
@@ -247,6 +264,7 @@ validated on real books.
   smoke test, and SKILL.md Claude-conformance validation (#15, #18).
 
 ### Changed
+
 - **README positioning** — copyright & fair-use section, "Beyond books" use cases,
   context-dump / RAG / 1M-window FAQ, and a measured Discovery Loop Tax + real
   per-conversion cost table across four books (#19, #27).
@@ -254,6 +272,7 @@ validated on real books.
   directories also supported (#13, #14).
 
 ### Fixed
+
 - **Chapter detection** — scans the full text (was capped at 50k chars) and counts
   distinct explicit `Chapter N` / `Capítulo N` headings, rejecting numbered list
   items, inline cross-references, and years; adds Portuguese support (#26).
@@ -264,8 +283,9 @@ validated on real books.
   the whole run; explicit input order is preserved (#7).
 
 ### Known limitations
+
 - Chapter auto-detection needs explicit `Chapter N` / `Capítulo N` or Roman-numeral
-  headings. Books that head chapter bodies with bare titles (e.g. *Moby-Dick*, where
+  headings. Books that head chapter bodies with bare titles (e.g. _Moby-Dick_, where
   numerals appear only in the table of contents) or use section titles (e.g. Pro Git)
   do not auto-segment.
 - Technical PDFs extracted in text mode may lose heading structure; use technical

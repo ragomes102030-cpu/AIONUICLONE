@@ -4,10 +4,10 @@ description: Automate WhatsApp for online stores using Wassenger — order confi
 license: MIT
 metadata:
   author: Wassenger
-  version: "1.0.0"
+  version: '1.0.0'
   category: industry
   vertical: ecommerce
-  requires-mcp: "mcp-wassenger"
+  requires-mcp: 'mcp-wassenger'
 ---
 
 # Wassenger for E-commerce
@@ -47,7 +47,7 @@ For low-code users, the handler can be an n8n workflow using `wassengerhq/n8n-wa
 
 > "When a customer places an order, send them a WhatsApp confirmation with the order number and a tracking link."
 
-Wire the store's `order.created` (or `order.paid`) webhook to a handler. A fresh order is almost always **outside the 24h window** (the customer hasn't messaged you yet — a checkout/consent event does *not* open it), so lead with a **Utility template**:
+Wire the store's `order.created` (or `order.paid`) webhook to a handler. A fresh order is almost always **outside the 24h window** (the customer hasn't messaged you yet — a checkout/consent event does _not_ open it), so lead with a **Utility template**:
 
 ```
 on order.created (from Shopify / Woo / …):

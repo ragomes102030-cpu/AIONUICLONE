@@ -3,6 +3,7 @@
 ## Send text
 
 Before (Twilio SDK):
+
 ```python
 from twilio.rest import Client
 client = Client(TWILIO_SID, TWILIO_TOKEN)
@@ -15,6 +16,7 @@ client.messages.create(
 ```
 
 After (Wassenger, `requests`):
+
 ```python
 import os, requests
 
@@ -47,6 +49,7 @@ requests.post(
 ## Send a template
 
 Before:
+
 ```python
 client.messages.create(
     from_="whatsapp:+14155238886",
@@ -57,6 +60,7 @@ client.messages.create(
 ```
 
 After:
+
 ```python
 requests.post(
     "https://api.wassenger.com/v1/messages",
