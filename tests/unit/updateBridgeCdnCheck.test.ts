@@ -97,12 +97,16 @@ path: AionUi-2.1.45-mac-arm64.zip
 releaseDate: '2026-07-31T14:45:19.381Z'
 `;
 
+const FORK_REPO = 'ragomes102030-cpu/AIONUICLONE';
+const FORK_CDN = 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases';
+const FORK_CHANNEL_PREFIX = 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/latest';
+
 const GITHUB_RELEASES = [
   {
     tag_name: 'v2.1.45',
     name: 'v2.1.45',
     body: 'changelog body',
-    html_url: 'https://github.com/iOfficeAI/AionUi/releases/tag/v2.1.45',
+    html_url: `https://github.com/${FORK_REPO}/releases/tag/v2.1.45`,
     prerelease: false,
     draft: false,
     assets: [],
@@ -120,15 +124,20 @@ const getCheckHandler = async () => {
   return lastCall[0];
 };
 
+
 type FetchScenario = {
   cdn?: () => Promise<Response> | Response;
   github?: () => Promise<Response> | Response;
 };
 
+let _originalFetch: any = undefined;
+
 const stubFetch = (scenario: FetchScenario) => {
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
-    if (url.startsWith('https://static.aionui.com/releases/latest')) {
+    // Fork AIONUICLONE é o canal oficial de produção (DEFAULT_REPO/CDN_BASE_URL):
+    // intercepta o prefixo do canal do fork, não o do upstream iOfficeAI.
+    if (url.startsWith(FORK_CHANNEL_PREFIX)) {
       if (!scenario.cdn) throw new Error('unexpected CDN request');
       return scenario.cdn();
     }
@@ -138,7 +147,10 @@ const stubFetch = (scenario: FetchScenario) => {
     }
     throw new Error(`unexpected fetch: ${url}`);
   });
-  vi.stubGlobal('fetch', fetchMock);
+  if (typeof globalThis.fetch === 'function') {
+    _originalFetch = globalThis.fetch;
+  }
+  (globalThis as any).fetch = fetchMock;
   return fetchMock;
 };
 
@@ -151,7 +163,12 @@ describe('update.check CDN-first', () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    if (_originalFetch !== undefined) {
+      (globalThis as any).fetch = _originalFetch;
+      _originalFetch = undefined;
+    } else {
+      delete (globalThis as any).fetch;
+    }
   });
 
   it('reports an update from the CDN manifest and attaches GitHub notes', async () => {
@@ -162,9 +179,9 @@ describe('update.check CDN-first', () => {
     expect(res.data?.updateAvailable).toBe(true);
     expect(res.data?.latest?.version).toBe('2.1.45');
     expect(res.data?.latest?.body).toBe('changelog body');
-    expect(res.data?.latest?.htmlUrl).toBe('https://github.com/iOfficeAI/AionUi/releases/tag/v2.1.45');
+    expect(res.data?.latest?.htmlUrl).toBe(`https://github.com/${FORK_REPO}/releases/tag/v2.1.45`);
     expect(res.data?.latest?.recommendedAsset?.url).toBe(
-      'https://static.aionui.com/releases/2.1.45/AionUi-2.1.45-mac-arm64.dmg'
+      `${FORK_CDN}/2.1.45/AionUi-2.1.45-mac-arm64.dmg`
     );
   });
 

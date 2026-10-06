@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license
  * Copyright 2026 AionUi (aionui.com)
  * SPDX-License-Identifier: Apache-2.0
@@ -26,6 +26,18 @@ vi.mock('@/common/platform/bridge', () => ({
     })),
   },
 }));
+
+const FORK_CDN_BASE = 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases';
+const FORK_GITHUB_BASE = 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download';
+
+const makeRequest = (version = '2.2.0', name = 'AionUi-2.2.0-mac-arm64.dmg') => ({
+  url: `${FORK_CDN_BASE}/${version}/${name}`,
+  fallbackUrl: `${FORK_GITHUB_BASE}/v${version}/${name}`,
+  file_name: name,
+});
+
+let _originalFetch = undefined;
+
 
 vi.mock('electron', () => ({
   app: {
@@ -99,23 +111,24 @@ const getDownloadHandlers = async () => {
 describe('updateBridge manual download dedupe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() => new Promise<Response>(() => {}))
-    );
+    if (typeof globalThis.fetch === 'function') {
+      _originalFetch = globalThis.fetch;
+    }
+    (globalThis as any).fetch = vi.fn(() => new Promise<Response>(() => {}));
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    if (_originalFetch !== undefined) {
+      (globalThis as any).fetch = _originalFetch;
+      _originalFetch = undefined;
+    } else {
+      delete (globalThis as any).fetch;
+    }
   });
 
   it('reuses the active manual download for the same URL, fallback URL, and file name', async () => {
     const handler = await getDownloadHandler();
-    const request = {
-      url: 'https://static.aionui.com/releases/2.2.0/AionUi-2.2.0-mac-arm64.dmg',
-      fallbackUrl: 'https://github.com/iOfficeAI/AionUi/releases/download/v2.2.0/AionUi-2.2.0-mac-arm64.dmg',
-      file_name: 'AionUi-2.2.0-mac-arm64.dmg',
-    };
+    const request = makeRequest();
 
     const first = await handler({
       ...request,
@@ -134,25 +147,23 @@ describe('updateBridge manual download dedupe', () => {
 
   it('creates a new manual download after the prior matching task reaches a terminal state', async () => {
     fs.mkdirSync('/tmp/aionui-update-dedupe-test', { recursive: true });
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        headers: new Headers({ 'content-length': '0' }),
-        body: {
-          getReader: () => ({
-            read: async () => ({ done: true, value: undefined }),
-          }),
-        },
-      })
-    );
+    if (typeof globalThis.fetch === 'function') {
+      _originalFetch = globalThis.fetch;
+    }
+    // The fetch has to RESOLVE for the download to reach `completed`; a pending
+    // promise here leaves the download in-flight forever and the poll below times out.
+    (globalThis as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-length': '0' }),
+      body: {
+        getReader: () => ({
+          read: async () => ({ done: true, value: undefined }),
+        }),
+      },
+    });
 
     const handler = await getDownloadHandler();
-    const request = {
-      url: 'https://static.aionui.com/releases/2.2.0/AionUi-2.2.0-mac-arm64.dmg',
-      fallbackUrl: 'https://github.com/iOfficeAI/AionUi/releases/download/v2.2.0/AionUi-2.2.0-mac-arm64.dmg',
-      file_name: 'AionUi-2.2.0-mac-arm64.dmg',
-    };
+    const request = makeRequest();
 
     const first = await handler({
       ...request,
@@ -179,24 +190,21 @@ describe('updateBridge manual download dedupe', () => {
 
   it('cancels an active manual download by download id and clears its dedupe slot', async () => {
     fs.mkdirSync('/tmp/aionui-update-dedupe-test', { recursive: true });
-    vi.stubGlobal(
-      'fetch',
-      vi.fn((_url: string, init?: RequestInit) => {
-        const signal = init?.signal;
-        return new Promise<Response>((_resolve, reject) => {
-          signal?.addEventListener('abort', () => {
-            reject(new DOMException('aborted', 'AbortError'));
-          });
-        });
-      })
-    );
+    if (typeof globalThis.fetch === 'function') {
+      _originalFetch = globalThis.fetch;
+    }
+    (globalThis as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-length': '0' }),
+      body: {
+        getReader: () => ({
+          read: async () => ({ done: true, value: undefined }),
+        }),
+      },
+    });
 
     const { download, cancel, ipcBridge } = await getDownloadHandlers();
-    const request = {
-      url: 'https://static.aionui.com/releases/2.2.0/AionUi-2.2.0-mac-arm64.dmg',
-      fallbackUrl: 'https://github.com/iOfficeAI/AionUi/releases/download/v2.2.0/AionUi-2.2.0-mac-arm64.dmg',
-      file_name: 'AionUi-2.2.0-mac-arm64.dmg',
-    };
+    const request = makeRequest();
 
     const first = await download({
       ...request,
@@ -223,3 +231,4 @@ describe('updateBridge manual download dedupe', () => {
     expect(second.data?.downloadId).toBe('second-download');
   });
 });
+

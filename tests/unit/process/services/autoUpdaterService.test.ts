@@ -170,7 +170,7 @@ describe('AutoUpdaterService', () => {
     expect(result).toEqual({ success: true, updateInfo });
   });
 
-  it('configures electron-updater to read stable metadata from the CDN', async () => {
+  it('configures electron-updater to read stable metadata from the fork CDN', async () => {
     const { autoUpdaterService } = await import('@/process/services/autoUpdaterService');
     const { CdnGenericProvider } = await import('@/process/services/cdnGenericProvider');
 
@@ -178,7 +178,7 @@ describe('AutoUpdaterService', () => {
 
     expect(autoUpdaterMock.setFeedURL).toHaveBeenCalledWith({
       provider: 'custom',
-      url: 'https://static.aionui.com/releases',
+      url: 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases',
       updateProvider: CdnGenericProvider,
     });
   });

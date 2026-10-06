@@ -25,6 +25,12 @@ vi.mock('@/common/platform/bridge', () => ({
     })),
   },
 }));
+const FORK_REPO = 'ragomes102030-cpu/AIONUICLONE';
+const FORK_CDN_BASE = 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases';
+const FORK_CHANNEL_PREFIX = `https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/latest`;
+
+let _originalFetch = undefined;
+
 
 vi.mock('electron', () => ({
   app: {
@@ -71,7 +77,7 @@ const makeGitHubReleaseResponse = () => [
     tag_name: 'v1.9.22',
     name: 'v1.9.22',
     body: 'release notes',
-    html_url: 'https://github.com/iOfficeAI/AionUi/releases/tag/v1.9.22',
+    html_url: 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/tag/v1.9.22',
     published_at: '2026-04-29T00:00:00Z',
     prerelease: false,
     draft: false,
@@ -79,20 +85,20 @@ const makeGitHubReleaseResponse = () => [
       {
         name: 'AionUi-1.9.22-mac-arm64.dmg',
         browser_download_url:
-          'https://github.com/iOfficeAI/AionUi/releases/download/v1.9.22/AionUi-1.9.22-mac-arm64.dmg',
+          'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-mac-arm64.dmg',
         size: 123,
         content_type: 'application/x-apple-diskimage',
       },
       {
         name: 'AionUi-1.9.22-win-x64.exe',
-        browser_download_url: 'https://github.com/iOfficeAI/AionUi/releases/download/v1.9.22/AionUi-1.9.22-win-x64.exe',
+        browser_download_url: 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-win-x64.exe',
         size: 456,
         content_type: 'application/vnd.microsoft.portable-executable',
       },
       {
         name: 'AionUi-1.9.22-linux-amd64.deb',
         browser_download_url:
-          'https://github.com/iOfficeAI/AionUi/releases/download/v1.9.22/AionUi-1.9.22-linux-amd64.deb',
+          'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-linux-amd64.deb',
         size: 789,
       },
     ],
@@ -151,7 +157,7 @@ releaseDate: '2026-04-29T00:00:00Z'
 const stubCdnAndGitHubFetch = () => {
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
-    if (url.startsWith('https://static.aionui.com/releases/latest')) {
+    if (url.startsWith('https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/latest')) {
       return new Response(CDN_CHANNEL_YML, { status: 200 });
     }
     if (url.startsWith('https://api.github.com/')) {
@@ -159,8 +165,20 @@ const stubCdnAndGitHubFetch = () => {
     }
     throw new Error(`unexpected fetch: ${url}`);
   });
-  vi.stubGlobal('fetch', fetchMock);
+  if (typeof globalThis.fetch === 'function') {
+    _originalFetch = globalThis.fetch;
+  }
+  (globalThis as any).fetch = fetchMock;
   return fetchMock;
+};
+
+const restoreFetch = () => {
+  if (_originalFetch !== undefined) {
+    (globalThis as any).fetch = _originalFetch;
+    _originalFetch = undefined;
+  } else {
+    delete (globalThis as any).fetch;
+  }
 };
 
 describe('updateBridge CDN URL rewriting', () => {
@@ -173,7 +191,7 @@ describe('updateBridge CDN URL rewriting', () => {
 
     try {
       const handler = await getCheckHandler();
-      const result = await handler({ repo: 'iOfficeAI/AionUi' });
+      const result = await handler({ repo: FORK_REPO });
 
       expect(result.success).toBe(true);
       expect(result.data?.currentVersion).toBe('1.0.0');
@@ -182,16 +200,16 @@ describe('updateBridge CDN URL rewriting', () => {
 
       const macAsset = assets.find((a: { name: string }) => a.name === 'AionUi-1.9.22-mac-arm64.dmg');
       expect(macAsset).toBeDefined();
-      expect(macAsset?.url).toBe('https://static.aionui.com/releases/1.9.22/AionUi-1.9.22-mac-arm64.dmg');
+      expect(macAsset?.url).toBe('https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/1.9.22/AionUi-1.9.22-mac-arm64.dmg');
       expect(macAsset?.fallbackUrl).toBe(
-        'https://github.com/iOfficeAI/AionUi/releases/download/v1.9.22/AionUi-1.9.22-mac-arm64.dmg'
+        'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-mac-arm64.dmg'
       );
 
       const linuxAsset = assets.find((a: { name: string }) => a.name === 'AionUi-1.9.22-linux-amd64.deb');
-      expect(linuxAsset?.url).toBe('https://static.aionui.com/releases/1.9.22/AionUi-1.9.22-linux-amd64.deb');
+      expect(linuxAsset?.url).toBe('https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/1.9.22/AionUi-1.9.22-linux-amd64.deb');
       expect(fetchMock).toHaveBeenCalled();
     } finally {
-      vi.unstubAllGlobals();
+      restoreFetch();
     }
   });
 
@@ -200,18 +218,18 @@ describe('updateBridge CDN URL rewriting', () => {
 
     try {
       const handler = await getCheckHandler();
-      const result = await handler({ repo: 'iOfficeAI/AionUi' });
+      const result = await handler({ repo: FORK_REPO });
       const asset = result.data?.latest?.assets?.[0];
-      expect(asset?.url).toMatch(/^https:\/\/static\.aionui\.com\/releases\/1\.9\.22\//);
+      expect(asset?.url).toMatch(/^https:\/\/raw\.githubusercontent\.com\/ragomes102030-cpu\/AIONUICLONE\/main\/releases\/1\.9\.22\//);
       expect(asset?.url).not.toMatch(/\/v1\.9\.22\//);
     } finally {
-      vi.unstubAllGlobals();
+      restoreFetch();
     }
   });
 });
 
 describe('updateBridge allowlist includes CDN host', () => {
-  it('accepts static.aionui.com URLs for download', async () => {
+  it('accepts the fork CDN host for download', async () => {
     vi.resetModules();
     vi.clearAllMocks();
 
@@ -224,7 +242,10 @@ describe('updateBridge allowlist includes CDN host', () => {
         }),
       },
     });
-    vi.stubGlobal('fetch', fetchMock);
+    if (typeof globalThis.fetch === 'function') {
+      _originalFetch = globalThis.fetch;
+    }
+    (globalThis as any).fetch = fetchMock;
 
     try {
       const { initUpdateBridge } = await import('@process/bridge/updateBridge');
@@ -239,14 +260,14 @@ describe('updateBridge allowlist includes CDN host', () => {
 
       const result = await handler({
         downloadId: 'manual-download-1',
-        url: 'https://static.aionui.com/releases/1.9.22/AionUi-1.9.22-mac-arm64.dmg',
+        url: 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/1.9.22/AionUi-1.9.22-mac-arm64.dmg',
         file_name: 'AionUi-1.9.22-mac-arm64.dmg',
       });
 
       expect(result.success).toBe(true);
       expect(result.data?.downloadId).toBe('manual-download-1');
     } finally {
-      vi.unstubAllGlobals();
+      restoreFetch();
     }
   });
 
