@@ -352,32 +352,62 @@ const resolveFactorySkillsDir = (): string | null => {
   return null;
 };
 
-const FACTORY_SKILL_ALLOWLIST = new Set([
-  'construction',
-  'superpowers',
-  'context7',
-  'book-to-skill',
-  'whatsapp-skills-repo',
-]);
+const SKIP_SEED_DIRS = new Set(['.git', 'node_modules', 'docs', 'assets', 'bin', 'hooks', 'evals']);
+
+/**
+ * Depth-first walk that yields every directory under `root` containing a
+ * `SKILL.md` manifest, in shallowest-first order.
+ *
+ * Three different layouts live under `skills/` and a flat top-level check
+ * misses two of them:
+ *   - a skill itself:      `gantt/SKILL.md`
+ *   - a collection:        `construction/<skill>/SKILL.md`  (15 of them)
+ *   - a whole repo:         `superpowers/skills/<skill>/SKILL.md`, and
+ *                           `whatsapp-skills-repo/skills/<skill>/SKILL.md`
+ * A top-level `SKILL.md` probe therefore seeds only the 18 single-skill
+ * directories and silently drops the three collections. Descending to the
+ * first level that actually carries a manifest seeds all 21 and needs no
+ * hardcoded list — the packaging surface and the seed surface stay in sync
+ * by construction.
+ *
+ * `.git`, `node_modules`, `docs` and `assets` are never yielded: they hold
+ * no manifest, and descending into them is wasted I/O at first run.
+ */
+const collectSkillDirs = async (root: string, depth = 0): Promise<string[]> => {
+  const found: string[] = [];
+  let entries;
+  try {
+    entries = await fs.readdir(root, { withFileTypes: true });
+  } catch {
+    return found;
+  }
+
+  // This directory is itself a skill — do not descend past the manifest.
+  if (entries.some((e) => e.isFile() && e.name === 'SKILL.md')) {
+    return [root];
+  }
+  // Bound the walk so a stray deep tree can never hang startup.
+  if (depth >= 3) return found;
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    if (SKIP_SEED_DIRS.has(entry.name)) continue;
+    found.push(...(await collectSkillDirs(path.join(root, entry.name), depth + 1)));
+  }
+  return found;
+};
 
 /**
  * Copy only entries that do NOT already exist in the destination.
  * Never overwrites user-modified skills — factory seed is additive.
- * Only allowlisted top-level factory skills are seeded; stray files
- * (docs, configs, .git) bundled next to them are ignored.
  */
 const copyMissingEntries = async (srcDir: string, destDir: string): Promise<number> => {
   let seeded = 0;
-  const entries = await fs.readdir(srcDir, { withFileTypes: true });
-  for (const entry of entries) {
-    // Skip VCS metadata accidentally bundled with a skill clone.
-    if (entry.name === '.git') continue;
-    if (!FACTORY_SKILL_ALLOWLIST.has(entry.name)) continue;
-    if (!entry.isDirectory()) continue;
-    const srcPath = path.join(srcDir, entry.name);
-    const destPath = path.join(destDir, entry.name);
+  for (const skillDir of await collectSkillDirs(srcDir)) {
+    const name = path.basename(skillDir);
+    const destPath = path.join(destDir, name);
     if (existsSync(destPath)) continue;
-    await copyDirectoryRecursively(srcPath, destPath);
+    await copyDirectoryRecursively(skillDir, destPath);
     seeded += 1;
   }
   return seeded;
