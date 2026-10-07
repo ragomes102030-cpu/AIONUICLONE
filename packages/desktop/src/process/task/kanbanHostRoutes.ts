@@ -6,6 +6,7 @@
 
 import Database from 'better-sqlite3';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import fs from 'node:fs';
 import path from 'node:path';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import type { HostRouteHandler } from '@aionui/web-host';
@@ -95,7 +96,6 @@ export function createKanbanHostRoutes(
 ): HostRouteHandler {
   const { allowRemote, dataDir } = opts;
   let secretCache: string | null = null;
-  let secretDb: Database.Database | null = null;
 
   const resolveJwtSecret = (): string | null => {
     // Env override mirrors aioncore's `resolve_jwt_secret` priority.
@@ -103,14 +103,25 @@ export function createKanbanHostRoutes(
     if (envSecret) return envSecret;
     if (allowRemote) {
       if (secretCache !== null) return secretCache;
+      // The users table lives in the backend's auth DB. The desktop app calls
+      // it `aiondb.db`; the standalone WebUI uses the aioncore default
+      // `aionui-backend.db`. Try both so the same code path works either way.
+      const candidates = ['aiondb.db', 'aionui-backend.db'];
       try {
-        if (!secretDb) {
-          secretDb = new Database(path.join(dataDir, 'aiondb.db'));
+        for (const name of candidates) {
+          const dbPath = path.join(dataDir, name);
+          if (!fs.existsSync(dbPath)) continue;
+          // A throwaway read-only connection: SQLite allows concurrent readers
+          // alongside the backend's own connection (WAL), and we close it at
+          // once so the file lock is released before the next lookup.
+          const conn = new Database(dbPath);
+          const row = conn.prepare('SELECT jwt_secret FROM users LIMIT 1').get() as { jwt_secret?: string } | undefined;
+          conn.close();
+          if (row?.jwt_secret) {
+            secretCache = row.jwt_secret;
+            return secretCache;
+          }
         }
-        const row = secretDb.prepare('SELECT jwt_secret FROM users LIMIT 1').get() as
-          | { jwt_secret?: string }
-          | undefined;
-        secretCache = row?.jwt_secret ?? null;
       } catch (e) {
         console.error('[Kanban] failed to read jwt_secret from DB:', e);
       }

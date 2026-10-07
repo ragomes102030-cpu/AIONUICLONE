@@ -25,6 +25,7 @@ import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { startWebHost } from '@aionui/web-host';
+import { createKanbanDbProvider, createKanbanHostRoutes } from '../packages/desktop/src/process/task/kanbanHostRoutes';
 import { openBrowserUrl, shouldAutoOpenBrowser } from '../packages/web-cli/src/browser.js';
 
 // Aligned with packages/desktop/src/common/config/constants.ts WEBUI_DEFAULT_PORT.
@@ -247,9 +248,14 @@ async function main(): Promise<void> {
       kind: 'ownBackend',
       resolveBackend: () => backendBin,
     },
-    // Standalone webui does NOT expose hostRoutes/kanban: the board lives in
-    // tasks.db (desktop-only) and has no WebUI surface in --remote mode.
-    // Any /api/kanban/* call falls through to the proxy and 404s.
+    // The board lives in tasks.db (opened by createKanbanDbProvider).
+    // In --remote mode the network-facing handler enforces JWT auth; in
+    // local-only mode loopback isolation is sufficient. Either way the browser
+    // phone gets the board instead of the empty 404 it used to see.
+    hostRoutes: createKanbanHostRoutes(createKanbanDbProvider(workDir), {
+      allowRemote: allowRemote,
+      dataDir: workDir,
+    }),
   });
 
   console.log('');
