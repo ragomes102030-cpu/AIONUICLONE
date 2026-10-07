@@ -138,25 +138,47 @@ function runPackageIfNeeded(): void {
 }
 
 function resolveBackendBinary(): string {
-  if (process.env.AIONUI_BACKEND_BIN) return process.env.AIONUI_BACKEND_BIN;
-
-  const bundledBase = process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', 'bundled-aioncore');
-  const runtimeKey = `${process.platform}-${process.arch}`;
-  const bundled = path.join(bundledBase, runtimeKey, BACKEND_BINARY);
-  if (fs.existsSync(bundled)) return bundled;
-
-  try {
-    const cmd = process.platform === 'win32' ? `where ${BACKEND_BINARY}` : `which ${BACKEND_BINARY}`;
-    const found = execSync(cmd, { encoding: 'utf-8', timeout: 5000 }).trim().split(/\r?\n/)[0];
-    if (found && fs.existsSync(found)) return found;
-  } catch {
-    // fall through
+  // 1) Explicit env override (honored verbatim, then normalized below).
+  // 2) Bundled binary under resources/bundled-aioncore/<plat-arch>/aioncore(.exe).
+  // 3) where / which on PATH.
+  // 4) Hard fail with an actionable message.
+  let raw: string | undefined = process.env.AIONUI_BACKEND_BIN;
+  if (!raw) {
+    const bundledBase =
+      process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', 'bundled-aioncore');
+    const runtimeKey = process.platform + '-' + process.arch;
+    const bundled = path.join(bundledBase, runtimeKey, BACKEND_BINARY);
+    if (fs.existsSync(bundled)) raw = bundled;
   }
-
-  throw new Error(
-    `Cannot find "${BACKEND_BINARY}". Set AIONUI_BACKEND_BIN, put it on PATH, or place it at ${bundled}.`
-  );
-}
+  if (!raw) {
+    try {
+      const cmd =
+        process.platform === 'win32' ? 'where ' + BACKEND_BINARY : 'which ' + BACKEND_BINARY;
+      // 'where' on Windows can return CRLF lines; split safely without a regex
+      // literal that embeds a raw newline character.
+      const found = execSync(cmd, { encoding: 'utf-8', timeout: 5000 })
+        .trim()
+        .split(new RegExp('\r\n|\n|\r'))[0];
+      if (found && fs.existsSync(found)) raw = found;
+    } catch {
+      // not on PATH
+    }
+  }
+  if (!raw) {
+    const bundledBase =
+      process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', 'bundled-aioncore');
+    throw new Error(
+      'Cannot find ' + BACKEND_BINARY + '. Set AIONUI_BACKEND_BIN, put it on PATH, or place it at ' + path.join(bundledBase, process.platform + '-' + process.arch, BACKEND_BINARY) + '.',
+    );
+  }
+  // Normalize: aioncore must be an absolute native-OS path. A POSIX-style path
+  // like /c/Users/... breaks child_process.spawn on win32 (CreateProcess does
+  // not understand /c/ prefixes), causing a misleading ENOENT spawn_error.
+  if (process.platform === 'win32') {
+    const m = raw.match(/^\/([A-Za-z])\/(.*)$/);
+    if (m) return path.resolve(m[1] + ':/' + m[2]);
+  }
+  return path.resolve(raw);
 
 /**
  * Prepend all nvm-managed Node bin dirs to PATH. Electron's main process does
