@@ -111,12 +111,15 @@ extraResources:
   # user skills dir on first run (see seedFactorySkills in initStorage.ts).
   # Source of truth lives in the repo root `skills/` directory.
   #
-  # NOTE: `from` is resolved from the PROJECT ROOT (the directory holding
-  # package.json), not from this config file. The previous `../../skills` pointed
-  # at <parent-of-repo>/skills, which does not exist, so electron-builder skipped
-  # it silently and no factory skill reached the package. Every other `from` here
-  # (public, resources/*, out/main/static) is project-root relative.
-  - from: skills
+  # NOTE: electron-builder 26.x resolves `from` RELATIVE to the config file path,
+  # not the project root (contrary to older docs). This config lives in
+  # packages/desktop/, so `../../skills` => <repo-root>/skills = where the
+  # civil-engineering agents (structuro/topobot/pathoscan/chronos/docbuild/
+  # civil-tutor) are committed. Without the explicit `../../` prefix the path is
+  # resolved as packages/desktop/skills (does not exist) and electron-builder
+  # silently skips the whole extraResource entry — verified empty at
+  # out/win-unpacked/factory-skills in v2.3.0.
+  - from: ../../skills
     to: factory-skills
   # aioncore binary (pre-compiled per platform/arch, ships its own bun runtime)
   - from: resources/bundled-aioncore
