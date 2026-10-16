@@ -82,6 +82,7 @@ try {
       'Uninstall Arquimedes.exe',
       'resources\app.asar',
       'resources\app-update.yml',
+      'resources\bundled-arquimedes-core\win32-x64\arquimedes-core.exe',
       'resources\bundled-aioncore\win32-x64\aioncore.exe'
     )
     $known = @(

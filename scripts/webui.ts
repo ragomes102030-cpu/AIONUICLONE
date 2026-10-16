@@ -15,7 +15,7 @@
  *   AIONUI_LOG_DIR        : override log dir (default <dataDir>/logs)
  *   AIONUI_STATIC_DIR     : override static dir (default out/renderer)
  *   AIONUI_BACKEND_BIN    : absolute path to aioncore binary (else PATH lookup)
- *   AIONUI_BACKEND_BUNDLED_DIR : dir containing bundled-aioncore/<plat-arch>/binary
+ *   AIONUI_BACKEND_BUNDLED_DIR : dir containing bundled-arquimedes-core/<plat-arch>/binary
  *   AIONUI_OPEN_BROWSER   : "1"/"true" to force open, "0"/"false" to disable
  */
 
@@ -34,7 +34,10 @@ const DEFAULT_PORT = (() => {
   if (process.env.AIONUI_MULTI_INSTANCE === '1') return 25810;
   return 25809;
 })();
-const BACKEND_BINARY = process.platform === 'win32' ? 'aioncore.exe' : 'aioncore';
+const BACKEND_BINARY = process.platform === 'win32' ? 'arquimedes-core.exe' : 'arquimedes-core';
+const LEGACY_BACKEND_BINARY = process.platform === 'win32' ? 'aioncore.exe' : 'aioncore';
+const BUNDLED_DIR_NAME = 'bundled-arquimedes-core';
+const LEGACY_BUNDLED_DIR_NAME = 'bundled-aioncore';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..');
@@ -139,16 +142,24 @@ function runPackageIfNeeded(): void {
 
 function resolveBackendBinary(): string {
   // 1) Explicit env override (honored verbatim, then normalized below).
-  // 2) Bundled binary under resources/bundled-aioncore/<plat-arch>/aioncore(.exe).
+  // 2) Bundled binary under resources/bundled-arquimedes-core/<plat-arch>/arquimedes-core(.exe).
   // 3) where / which on PATH.
   // 4) Hard fail with an actionable message.
   let raw: string | undefined = process.env.AIONUI_BACKEND_BIN;
   if (!raw) {
-    const bundledBase =
-      process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', 'bundled-aioncore');
     const runtimeKey = process.platform + '-' + process.arch;
-    const bundled = path.join(bundledBase, runtimeKey, BACKEND_BINARY);
-    if (fs.existsSync(bundled)) raw = bundled;
+    const bundledBase =
+      process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', BUNDLED_DIR_NAME);
+    const legacyBundledBase =
+      process.env.AIONUI_BACKEND_BUNDLED_DIR ??
+      path.join(repoRoot, 'resources', LEGACY_BUNDLED_DIR_NAME);
+    const bundled = [
+      path.join(bundledBase, runtimeKey, BACKEND_BINARY),
+      path.join(bundledBase, runtimeKey, LEGACY_BACKEND_BINARY),
+      path.join(legacyBundledBase, runtimeKey, BACKEND_BINARY),
+      path.join(legacyBundledBase, runtimeKey, LEGACY_BACKEND_BINARY),
+    ].find((candidate) => fs.existsSync(candidate));
+    if (bundled) raw = bundled;
   }
   if (!raw) {
     try {
@@ -166,7 +177,7 @@ function resolveBackendBinary(): string {
   }
   if (!raw) {
     const bundledBase =
-      process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', 'bundled-aioncore');
+      process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', BUNDLED_DIR_NAME);
     throw new Error(
       'Cannot find ' + BACKEND_BINARY + '. Set AIONUI_BACKEND_BIN, put it on PATH, or place it at ' + path.join(bundledBase, process.platform + '-' + process.arch, BACKEND_BINARY) + '.',
     );
@@ -179,6 +190,7 @@ function resolveBackendBinary(): string {
     if (m) return path.resolve(m[1] + ':/' + m[2]);
   }
   return path.resolve(raw);
+}
 
 /**
  * Prepend all nvm-managed Node bin dirs to PATH. Electron's main process does

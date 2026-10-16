@@ -1,7 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 
+const BUNDLED_DIR_NAME = 'bundled-arquimedes-core';
+const LEGACY_BUNDLED_DIR_NAME = 'bundled-aioncore';
+
+/** Packaged binary name (rebranded). */
 function backendBinaryName(platform) {
+  return platform === 'win32' ? 'arquimedes-core.exe' : 'arquimedes-core';
+}
+
+/** Pre-rebrand binary name; still accepted in bundles produced before the rename. */
+function legacyBackendBinaryName(platform) {
   return platform === 'win32' ? 'aioncore.exe' : 'aioncore';
 }
 
@@ -9,8 +18,10 @@ function normalize(relativePath) {
   return relativePath.split(path.sep).join('/');
 }
 
+let activeDirName = BUNDLED_DIR_NAME;
+
 function bundledPath(runtimeKey, ...parts) {
-  return normalize(path.join('bundled-aioncore', runtimeKey, ...parts));
+  return normalize(path.join(activeDirName, runtimeKey, ...parts));
 }
 
 function isFile(filePath) {
@@ -326,14 +337,27 @@ function requireContractDirectory(baseDir, runtimeKey, cli, root, relativePath, 
   }
 }
 
+function resolveBundledLayout(resourcesDir, runtimeKey, platform) {
+  const dirNames = [BUNDLED_DIR_NAME, LEGACY_BUNDLED_DIR_NAME];
+  const binaryNames = [backendBinaryName(platform), legacyBackendBinaryName(platform)];
+  for (const dirName of dirNames) {
+    for (const binaryName of binaryNames) {
+      if (isFile(path.join(resourcesDir, dirName, runtimeKey, binaryName))) return { dirName, binaryName };
+    }
+  }
+  return { dirName: BUNDLED_DIR_NAME, binaryName: backendBinaryName(platform) };
+}
+
 function verifyBundledAioncoreResources({ resourcesDir, electronPlatformName, targetArch }) {
   const runtimeKey = `${electronPlatformName}-${targetArch}`;
-  const baseDir = path.join(resourcesDir, 'bundled-aioncore', runtimeKey);
+  const layout = resolveBundledLayout(resourcesDir, runtimeKey, electronPlatformName);
+  activeDirName = layout.dirName;
+  const baseDir = path.join(resourcesDir, layout.dirName, runtimeKey);
   const checked = [];
   const missing = [];
   const failures = [];
 
-  requireRelativePath(baseDir, runtimeKey, [backendBinaryName(electronPlatformName)], checked, missing, failures);
+  requireRelativePath(baseDir, runtimeKey, [layout.binaryName], checked, missing, failures);
   verifyBundleManifest(baseDir, runtimeKey, electronPlatformName, targetArch, checked, missing, failures);
   requireRelativeDirectory(baseDir, runtimeKey, ['managed-resources'], checked, missing, failures);
   verifyManagedResourcesContract(baseDir, runtimeKey, checked, missing, failures);

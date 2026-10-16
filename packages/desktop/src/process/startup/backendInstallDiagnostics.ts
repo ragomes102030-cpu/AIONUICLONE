@@ -52,7 +52,8 @@ export type BackendInstallDiagnostics = {
 };
 
 const MANIFEST_FILE_NAME = 'manifest.json';
-const BUNDLED_AIONCORE_DIR = 'bundled-aioncore';
+const BUNDLED_BACKEND_DIR = 'bundled-arquimedes-core';
+const LEGACY_BUNDLED_BACKEND_DIR = 'bundled-aioncore';
 
 function getString(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
@@ -143,9 +144,21 @@ export function collectBackendInstallDiagnostics(
   const resourcesPath = getString(details?.resourcesPath) ?? env.resourcesPath;
   const runtimeKey = getString(details?.runtimeKey);
   const binaryName = getString(details?.binaryName);
-  const bundledDirPath = resourcesPath ? pathApi.join(resourcesPath, BUNDLED_AIONCORE_DIR) : undefined;
-  const runtimeDirPath =
-    resourcesPath && runtimeKey ? pathApi.join(resourcesPath, BUNDLED_AIONCORE_DIR, runtimeKey) : undefined;
+  const bundledDirPathFor = (dirName: string): string | undefined =>
+    resourcesPath ? pathApi.join(resourcesPath, dirName) : undefined;
+  const runtimeDirPathFor = (dirName: string): string | undefined =>
+    resourcesPath && runtimeKey ? pathApi.join(resourcesPath, dirName, runtimeKey) : undefined;
+  const currentRuntimeDirPath = runtimeDirPathFor(BUNDLED_BACKEND_DIR);
+  const legacyRuntimeDirPath = runtimeDirPathFor(LEGACY_BUNDLED_BACKEND_DIR);
+  // Prefer the rebranded layout, but fall back to the legacy directory when it
+  // is the one that actually exists on disk (older dev checkouts/bundles).
+  const useLegacyDir =
+    currentRuntimeDirPath !== undefined &&
+    !stat(currentRuntimeDirPath) &&
+    legacyRuntimeDirPath !== undefined &&
+    stat(legacyRuntimeDirPath) !== undefined;
+  const bundledDirPath = bundledDirPathFor(useLegacyDir ? LEGACY_BUNDLED_BACKEND_DIR : BUNDLED_BACKEND_DIR);
+  const runtimeDirPath = useLegacyDir ? legacyRuntimeDirPath : currentRuntimeDirPath;
   const binaryPath =
     getString(details?.checkedBundledPath) ??
     (runtimeDirPath && binaryName ? pathApi.join(runtimeDirPath, binaryName) : undefined);

@@ -244,7 +244,7 @@ describe('classifyBackendStartupFailure', () => {
       missingHubDir: true,
       missingPetStatesDir: true,
       missingPwaDir: true,
-      missingResources: ['bundled-aioncore/', 'bundled-aioncore/win32-x64/'],
+      missingResources: ['bundled-arquimedes-core/', 'bundled-arquimedes-core/win32-x64/'],
       missingRuntimeDir: true,
     });
   });

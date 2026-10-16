@@ -1,10 +1,11 @@
 /**
- * Resolve the aioncore binary path.
+ * Resolve the backend binary path (arquimedes-core; the legacy aioncore name
+ * and bundled-aioncore/ directory are still accepted as fallbacks).
  *
  * Search order:
  *  1. AIONUI_BACKEND_BIN env override (path, resolved to absolute)
  *  2. Bundled with app (production: process.resourcesPath)
- *  3. Dev checkout: walk up from this file / cwd to resources/bundled-aioncore
+ *  3. Dev checkout: walk up from this file / cwd to resources/bundled-arquimedes-core
  *     (plus AIONUI_BACKEND_BUNDLED_DIR override, same as scripts/webui.ts)
  *  4. System PATH
  */
@@ -13,7 +14,10 @@ import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 
-const BINARY_NAME = 'aioncore';
+const BINARY_NAME = 'arquimedes-core';
+const LEGACY_BINARY_NAME = 'aioncore';
+const BUNDLED_DIR_NAME = 'bundled-arquimedes-core';
+const LEGACY_BUNDLED_DIR_NAME = 'bundled-aioncore';
 const BIN_ENV_VAR = 'AIONUI_BACKEND_BIN';
 const MAX_DIR_ENTRIES = 20;
 const MAX_LOOKUP_TEXT_LENGTH = 1000;
@@ -44,8 +48,36 @@ class BackendBinaryResolveError extends Error {
   }
 }
 
+function withPlatformExtension(name: string): string {
+  return process.platform === 'win32' ? `${name}.exe` : name;
+}
+
 function getBinaryName(): string {
-  return process.platform === 'win32' ? `${BINARY_NAME}.exe` : BINARY_NAME;
+  return withPlatformExtension(BINARY_NAME);
+}
+
+function getLegacyBinaryName(): string {
+  return withPlatformExtension(LEGACY_BINARY_NAME);
+}
+
+/**
+ * First existing bundled binary for this platform, preferring the rebranded
+ * layout over the legacy one:
+ *   bundled-arquimedes-core/{runtimeKey}/arquimedes-core[.exe]
+ *   bundled-arquimedes-core/{runtimeKey}/aioncore[.exe]
+ *   bundled-aioncore/{runtimeKey}/arquimedes-core[.exe]
+ *   bundled-aioncore/{runtimeKey}/aioncore[.exe]
+ */
+function findBundledBinary(resourcesRoot: string, runtimeKey: string, preferredBinaryName: string): string | null {
+  const binaryNames = Array.from(new Set([preferredBinaryName, getBinaryName(), getLegacyBinaryName()]));
+  const dirNames = Array.from(new Set([BUNDLED_DIR_NAME, LEGACY_BUNDLED_DIR_NAME]));
+  for (const dirName of dirNames) {
+    for (const binaryName of binaryNames) {
+      const candidate = join(resourcesRoot, dirName, runtimeKey, binaryName);
+      if (existsSync(candidate)) return candidate;
+    }
+  }
+  return null;
 }
 
 function getRuntimeKey(): string {
@@ -120,7 +152,8 @@ function envOverridePath(diagnostics: BackendBinaryResolveDiagnostics): string |
 
 /**
  * Check bundled binary in resources directory.
- * Layout: bundled-aioncore/{platform}-{arch}/aioncore[.exe]
+ * Layout: bundled-arquimedes-core/{platform}-{arch}/arquimedes-core[.exe]
+ * (the pre-rebrand bundled-aioncore/ + aioncore[.exe] layout is accepted too)
  */
 function bundledPath(
   runtimeKey: string,
@@ -132,14 +165,14 @@ function bundledPath(
   diagnostics.resourcesPath = resourcesPaths[0];
 
   for (const resourcesPath of resourcesPaths) {
-    const bundledDir = join(resourcesPath, 'bundled-aioncore');
-    const runtimeDir = join(bundledDir, runtimeKey);
-    const candidate = join(runtimeDir, binaryName);
-    if (existsSync(candidate)) return candidate;
+    const found = findBundledBinary(resourcesPath, runtimeKey, binaryName);
+    if (found) return found;
     // Keep diagnostics for the first (packaged-style) candidate so the
     // failure report still points at the location the packaged app uses.
     if (diagnostics.checkedBundledPath === undefined) {
-      diagnostics.checkedBundledPath = candidate;
+      const bundledDir = join(resourcesPath, BUNDLED_DIR_NAME);
+      const runtimeDir = join(bundledDir, runtimeKey);
+      diagnostics.checkedBundledPath = join(runtimeDir, binaryName);
       diagnostics.bundledDirExists = existsSync(bundledDir);
       diagnostics.runtimeDirExists = existsSync(runtimeDir);
       diagnostics.resourcesDirEntries = listDirEntries(resourcesPath);
@@ -150,7 +183,9 @@ function bundledPath(
 }
 
 /**
- * Candidate roots that can hold `bundled-aioncore/{platform}-{arch}/aioncore`.
+ * Candidate roots that can hold
+ * `bundled-arquimedes-core/{platform}-{arch}/arquimedes-core` (the legacy
+ * `bundled-aioncore/.../aioncore` layout is also accepted).
  *
  * 1. Packaged app resources dir (process.resourcesPath — undefined in dev).
  * 2. `AIONUI_BACKEND_BUNDLED_DIR` override (same env var honored by
@@ -165,7 +200,10 @@ function candidateResourcesPaths(runtimeKey: string, binaryName: string): string
   if (resourcesPath) roots.push(resourcesPath);
 
   const envDir = process.env.AIONUI_BACKEND_BUNDLED_DIR?.trim();
-  if (envDir) roots.push(envDir.endsWith('bundled-aioncore') ? dirname(envDir) : envDir);
+  if (envDir) {
+    const isBundledDir = envDir.endsWith(BUNDLED_DIR_NAME) || envDir.endsWith(LEGACY_BUNDLED_DIR_NAME);
+    roots.push(isBundledDir ? dirname(envDir) : envDir);
+  }
 
   const startDirs: string[] = [];
   try {
@@ -198,8 +236,8 @@ function candidateResourcesPaths(runtimeKey: string, binaryName: string): string
 function walkUpToBundledResources(start: string, runtimeKey: string, binaryName: string): string | null {
   let dir = resolve(start);
   for (let level = 0; level < 10; level++) {
-    const candidate = join(dir, 'resources', 'bundled-aioncore', runtimeKey, binaryName);
-    if (existsSync(candidate)) return join(dir, 'resources');
+    const resourcesDir = join(dir, 'resources');
+    if (findBundledBinary(resourcesDir, runtimeKey, binaryName)) return resourcesDir;
     const parent = dirname(dir);
     if (parent === dir) return null;
     dir = parent;

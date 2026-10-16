@@ -7,8 +7,9 @@
  *  3. Complete local bundle from AIONUI_BACKEND_LOCAL_BUNDLE_DIR
  *  4. Local binary fallback from AIONUI_BACKEND_LOCAL_BINARY
  *
- * Output: {projectRoot}/resources/bundled-aioncore/{platform}-{arch}/
- *   - aioncore[.exe]
+ * Output: {projectRoot}/resources/bundled-arquimedes-core/{platform}-{arch}/
+ *   - arquimedes-core[.exe] (packaged name; upstream artifacts and local cargo
+ *     builds still ship the pre-rebrand `aioncore[.exe]` name)
  *   - manifest.json
  *   - managed-resources/...
  *
@@ -86,8 +87,71 @@ function writeJson(filePath, payload) {
   fs.writeFileSync(filePath, JSON.stringify(payload, null, 2) + '\n', 'utf-8');
 }
 
-function getBinaryName(platform) {
+const BUNDLED_DIR_NAME = 'bundled-arquimedes-core';
+const LEGACY_BUNDLED_DIR_NAME = 'bundled-aioncore';
+
+/** Name used by upstream artifacts and local cargo builds (pre-rebrand). */
+function getSourceBinaryName(platform) {
   return platform === 'win32' ? 'aioncore.exe' : 'aioncore';
+}
+
+/** Name the app resolves inside the bundled directory (rebranded). */
+function getPackagedBinaryName(platform) {
+  return platform === 'win32' ? 'arquimedes-core.exe' : 'arquimedes-core';
+}
+
+/**
+ * Ensure the bundle directory exists and exposes the binary under the rebranded
+ * name, adopting a pre-rebrand `aioncore[.exe]` when that is what is on disk.
+ * Returns the packaged binary path.
+ */
+function ensurePackagedLayout(targetDir, platform) {
+  ensureDirectory(targetDir);
+  const packagedPath = path.join(targetDir, getPackagedBinaryName(platform));
+  const sourcePath = path.join(targetDir, getSourceBinaryName(platform));
+  if (!fs.existsSync(packagedPath) && fs.existsSync(sourcePath)) {
+    try {
+      fs.renameSync(sourcePath, packagedPath);
+    } catch {
+      copyFileSafe(sourcePath, packagedPath);
+    }
+  }
+  if (fs.existsSync(packagedPath)) ensureExecutableMode(packagedPath);
+  return packagedPath;
+}
+
+/**
+ * Adopt a pre-rebrand `resources/bundled-aioncore` directory so local/offline
+ * builds keep working after the rename. Prefers moving the whole directory.
+ */
+function adoptLegacyBundledDir(projectRoot, runtimeKey, platform) {
+  const legacyRoot = path.join(projectRoot, 'resources', LEGACY_BUNDLED_DIR_NAME);
+  const currentRoot = path.join(projectRoot, 'resources', BUNDLED_DIR_NAME);
+  const legacyRuntimeDir = path.join(legacyRoot, runtimeKey);
+  const currentRuntimeDir = path.join(currentRoot, runtimeKey);
+  if (!fs.existsSync(legacyRuntimeDir) || fs.existsSync(currentRuntimeDir)) return;
+
+  const hasBundle = [getSourceBinaryName(platform), getPackagedBinaryName(platform)].some((name) =>
+    fs.existsSync(path.join(legacyRuntimeDir, name))
+  );
+  if (!hasBundle) return;
+
+  if (!fs.existsSync(currentRoot)) {
+    try {
+      fs.renameSync(legacyRoot, currentRoot);
+      console.log(`  Adopted pre-rebrand bundle: resources/${LEGACY_BUNDLED_DIR_NAME} -> resources/${BUNDLED_DIR_NAME}`);
+      return;
+    } catch (error) {
+      console.warn(`  Could not rename resources/${LEGACY_BUNDLED_DIR_NAME}: ${error.message}`);
+    }
+  }
+
+  try {
+    copyDirectorySafe(legacyRuntimeDir, currentRuntimeDir);
+    console.log(`  Copied pre-rebrand bundle into resources/${BUNDLED_DIR_NAME}/${runtimeKey}`);
+  } catch (error) {
+    console.warn(`  Could not copy the pre-rebrand bundle: ${error.message}`);
+  }
 }
 
 function getActionsTarget(platform, arch) {
@@ -385,7 +449,7 @@ function downloadAndExtractActionsArtifact(platform, arch, runId) {
 
   extractArchive(archivePath, binaryExtractDir, platform);
 
-  const binaryName = getBinaryName(platform);
+  const binaryName = getSourceBinaryName(platform);
   const binaryPath = findBinaryInDir(binaryExtractDir, binaryName);
   if (!binaryPath) {
     throw new Error(`Binary ${binaryName} not found in AionCore artifact ${expectedArtifactName} from run ${runId}`);
@@ -417,7 +481,7 @@ function downloadAndExtract(platform, arch, tag) {
   downloadFile(url, archivePath);
   extractArchive(archivePath, extractDir, platform);
 
-  const binaryName = getBinaryName(platform);
+  const binaryName = getSourceBinaryName(platform);
   const binaryPath = findBinaryInDir(extractDir, binaryName);
   if (!binaryPath) {
     throw new Error(`Binary ${binaryName} not found in downloaded archive`);
@@ -483,9 +547,11 @@ function prepareAioncore(options) {
     }
   }
 
-  const targetDir = path.join(projectRoot, 'resources', 'bundled-aioncore', runtimeKey);
-  const binaryName = getBinaryName(platform);
-  const targetBinaryPath = path.join(targetDir, binaryName);
+  adoptLegacyBundledDir(projectRoot, runtimeKey, platform);
+  const targetDir = path.join(projectRoot, 'resources', BUNDLED_DIR_NAME, runtimeKey);
+  const binaryName = getSourceBinaryName(platform);
+  const packagedBinaryName = getPackagedBinaryName(platform);
+  const targetBinaryPath = ensurePackagedLayout(targetDir, platform);
 
   console.log(
     `Preparing aioncore for ${runtimeKey} (${actionsRunId ? `actions run: ${actionsRunId}` : `version: ${tag}`})`
@@ -520,7 +586,7 @@ function prepareAioncore(options) {
           reason:
             'Local build preferred over the upstream download: the upstream binary can predate the schema this repo expects.',
         },
-        files: [binaryName, 'managed-resources/'],
+        files: [packagedBinaryName, 'managed-resources/'],
       };
       writeJson(path.join(targetDir, 'manifest.json'), localBuildManifest);
       console.log(`  Using local aioncore build: ${localBuildBinary}`);
@@ -546,6 +612,7 @@ function prepareAioncore(options) {
       fs.existsSync(localManagedResourcesDir)
     ) {
       copyDirectorySafe(resolvedLocalBundleDir, targetDir);
+      ensurePackagedLayout(targetDir, platform);
       ensureExecutableMode(targetBinaryPath);
       const manifest = {
         platform,
@@ -554,7 +621,7 @@ function prepareAioncore(options) {
         generatedAt: new Date().toISOString(),
         sourceType: 'local-bundle',
         source: { path: resolvedLocalBundleDir },
-        files: [binaryName, 'managed-resources/'],
+        files: [packagedBinaryName, 'managed-resources/'],
       };
       writeJson(path.join(targetDir, 'manifest.json'), manifest);
       verifyPreparedAioncoreBundle(projectRoot, platform, arch);
@@ -629,13 +696,13 @@ function prepareAioncore(options) {
       generatedAt: new Date().toISOString(),
       sourceType,
       source: sourceDetail,
-      files: [binaryName, 'managed-resources/'],
+      files: [packagedBinaryName, 'managed-resources/'],
     };
 
     writeJson(path.join(targetDir, 'manifest.json'), manifest);
     verifyPreparedAioncoreBundle(projectRoot, platform, arch);
     console.log(
-      `  Bundled aioncore prepared: resources/bundled-aioncore/${runtimeKey}/${binaryName} [source=${sourceType}]`
+      `  Bundled backend prepared: resources/${BUNDLED_DIR_NAME}/${runtimeKey}/${packagedBinaryName} [source=${sourceType}]`
     );
     console.log(`  Bundled managed resources prepared: ${bundledManagedResourcesDir}`);
 

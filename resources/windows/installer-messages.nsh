@@ -30,8 +30,8 @@
 !define AIONUI_MSG_EXTRACT_FAILED_ACTION_EN "Download a fresh installer and run it again. If it still fails, send the installer report to the Arquimedes team."
 !define AIONUI_MSG_EXTRACT_FAILED_ACTION_ZH "请重新下载安装器后再次运行。如果仍然失败，请将安装失败报告发送给 Arquimedes 团队。"
 
-!define AIONUI_MSG_BUNDLED_AIONCORE_INCOMPLETE_EN "Arquimedes installed, but the bundled AionCore resources are incomplete."
-!define AIONUI_MSG_BUNDLED_AIONCORE_INCOMPLETE_ZH "Arquimedes 已安装部分文件，但内置 AionCore 资源不完整。"
+!define AIONUI_MSG_BUNDLED_AIONCORE_INCOMPLETE_EN "Arquimedes installed, but the bundled arquimedes-core resources are incomplete."
+!define AIONUI_MSG_BUNDLED_AIONCORE_INCOMPLETE_ZH "Arquimedes 已安装部分文件，但内置 arquimedes-core 资源不完整。"
 !define AIONUI_MSG_BUNDLED_AIONCORE_INCOMPLETE_ACTION_EN "Download a fresh installer and run it again. If it still fails, send the installer report to the Arquimedes team."
 !define AIONUI_MSG_BUNDLED_AIONCORE_INCOMPLETE_ACTION_ZH "请重新下载安装器后再次运行。如果仍然失败，请将安装失败报告发送给 Arquimedes 团队。"
 

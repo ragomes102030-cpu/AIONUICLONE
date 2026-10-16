@@ -12,7 +12,7 @@ import { ensureAdminPassword } from './ensureAdminPassword.js';
 //   aionui-web/
 //   ├── aionui-web              ← bun-compiled standalone binary (process.execPath)
 //   ├── package.json             ← for runtime version lookup
-//   ├── bundled-aioncore/<plat-arch>/aioncore[.exe]
+//   ├── bundled-arquimedes-core/<plat-arch>/arquimedes-core[.exe]
 //   └── static/                  ← SPA assets
 //
 // Under `bun build --compile`, import.meta.url resolves to a virtual /$bunfs/
@@ -49,7 +49,10 @@ const isPackaged = (() => {
   return exeName === 'aionui-web' || exeName === 'aionui-web.exe';
 })();
 
-const BACKEND_BINARY = process.platform === 'win32' ? 'aioncore.exe' : 'aioncore';
+const BACKEND_BINARY = process.platform === 'win32' ? 'arquimedes-core.exe' : 'arquimedes-core';
+const LEGACY_BACKEND_BINARY = process.platform === 'win32' ? 'aioncore.exe' : 'aioncore';
+const BUNDLED_CORE_DIR = 'bundled-arquimedes-core';
+const LEGACY_BUNDLED_CORE_DIR = 'bundled-aioncore';
 const DEFAULT_PORT = 25808;
 const RESET_COMMAND = isPackaged ? 'aionui-web resetpass' : 'bun run resetpass';
 
@@ -79,8 +82,12 @@ function resolveBackendBinary(flags: Map<string, string | true>): string {
   const envOverride = process.env.AIONUI_BACKEND_BIN;
   if (envOverride) return path.resolve(envOverride);
   const platArch = `${process.platform}-${process.arch}`;
-  const bundled = path.join(cliRoot, 'bundled-aioncore', platArch, BACKEND_BINARY);
-  return bundled;
+  const candidates = [
+    path.join(cliRoot, BUNDLED_CORE_DIR, platArch, BACKEND_BINARY),
+    path.join(cliRoot, LEGACY_BUNDLED_CORE_DIR, platArch, BACKEND_BINARY),
+    path.join(cliRoot, LEGACY_BUNDLED_CORE_DIR, platArch, LEGACY_BACKEND_BINARY),
+  ];
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? candidates[0];
 }
 
 function resolveStaticDir(flags: Map<string, string | true>): string {
@@ -94,7 +101,12 @@ function resolveDataDir(flags: Map<string, string | true>): string {
   if (typeof override === 'string') return path.resolve(override);
   const envOverride = process.env.AIONUI_DATA_DIR;
   if (envOverride) return path.resolve(envOverride);
-  return path.join(os.homedir(), '.aionui-web');
+  // Keep using the pre-rebrand directory (`.aionui-web`) when it already holds
+  // data and the new one does not exist yet, so an existing install does not
+  // silently start from an empty store.
+  const current = path.join(os.homedir(), '.arquimedes-web');
+  const legacy = path.join(os.homedir(), '.aionui-web');
+  return fs.existsSync(current) || !fs.existsSync(legacy) ? current : legacy;
 }
 
 function resolveLogDir(flags: Map<string, string | true>, dataDir: string): string {

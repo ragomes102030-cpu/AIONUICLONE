@@ -47,16 +47,20 @@ function Resolve-AioncoreBinary {
     return $env:AIONUI_BACKEND_BIN
   }
   $roots = @(
+    (Join-Path $env:USERPROFILE 'Desktop\Arquimedes\resources\bundled-arquimedes-core'),
     (Join-Path $env:USERPROFILE 'Desktop\AionUi\resources\bundled-aioncore'),
+    (Join-Path $RepoRoot 'resources\bundled-arquimedes-core'),
     (Join-Path $RepoRoot 'resources\bundled-aioncore')
   )
-  $exe = if ($IsWindows -or $env:OS -eq 'Windows_NT') { 'aioncore.exe' } else { 'aioncore' }
+  $exeNames = if ($IsWindows -or $env:OS -eq 'Windows_NT') { @('arquimedes-core.exe', 'aioncore.exe') } else { @('arquimedes-core', 'aioncore') }
   foreach ($root in $roots) {
     if (-not (Test-Path -LiteralPath $root)) { continue }
-    $hit = Get-ChildItem -LiteralPath $root -Recurse -File -Filter $exe -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($hit) { return $hit.FullName }
+    foreach ($exe in $exeNames) {
+      $hit = Get-ChildItem -LiteralPath $root -Recurse -File -Filter $exe -ErrorAction SilentlyContinue | Select-Object -First 1
+      if ($hit) { return $hit.FullName }
+    }
   }
-  throw 'aioncore binary not found. Install the desktop app, or pass -BackendBin.'
+  throw 'arquimedes-core binary not found. Install the desktop app, or pass -BackendBin.'
 }
 
 function Get-TailnetIPv4 {
@@ -74,11 +78,11 @@ function Show-Preconditions {
   $freeGB = [math]::Round($os.FreePhysicalMemory / 1MB, 1)
   $totalGB = [math]::Round($os.TotalVisibleMemorySize / 1MB, 1)
 
-  $running = @(Get-Process -Name 'AionUi', 'aioncore' -ErrorAction SilentlyContinue)
+  $running = @(Get-Process -Name 'Arquimedes', 'arquimedes-core', 'AionUi', 'aioncore' -ErrorAction SilentlyContinue)
   Write-Host ("Free memory: {0} GB of {1} GB" -f $freeGB, $totalGB)
 
   if ($running.Count -gt 0) {
-    Write-Warning ("{0} AionUi/aioncore process(es) still running." -f $running.Count)
+    Write-Warning ("{0} Arquimedes/arquimedes-core process(es) still running." -f $running.Count)
     Write-Warning 'Each one holds the machine memory this build needs. This is the usual cause of:'
     Write-Warning '  "Ineffective mark-compacts near heap limit / JavaScript heap out of memory"'
     Write-Warning 'Quit the desktop app completely, then run this again.'

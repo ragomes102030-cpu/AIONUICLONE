@@ -33,6 +33,8 @@ type ErrorWithDetails = Error & {
 const GLIBC_VERSION_RE = /GLIBC_(\d+\.\d+)/g;
 const GLIBC_NOT_FOUND_RE = /GLIBC_\d+\.\d+[\s\S]{0,160}not found|not found[\s\S]{0,160}GLIBC_\d+\.\d+/i;
 const PACKAGED_APP_MARKER_ENTRIES = new Set(['app.asar', 'app.asar.unpacked/']);
+const BUNDLED_BACKEND_DIR = 'bundled-arquimedes-core';
+const LEGACY_BUNDLED_BACKEND_DIR = 'bundled-aioncore';
 const DATA_MIGRATION_BOUNDARY_STAGES = new Set(['database.migration', 'database.schema_repair']);
 // aioncore's downgrade detection: the local database was written by a NEWER
 // AionUi than the one currently running (see AionCore `database.rs`,
@@ -132,11 +134,17 @@ function classifyIncompleteInstallation(details: ErrorWithDetails['details']): B
   const hasPackagedApp = resourcesDirEntries.some((entry) => PACKAGED_APP_MARKER_ENTRIES.has(entry));
   if (!hasPackagedApp) return undefined;
 
-  const missingBundledAioncoreDir = !resourcesDirEntries.includes('bundled-aioncore/');
+  const hasBundledBackendDir = resourcesDirEntries.includes(`${BUNDLED_BACKEND_DIR}/`);
+  const hasLegacyBundledBackendDir = resourcesDirEntries.includes(`${LEGACY_BUNDLED_BACKEND_DIR}/`);
+  const missingBundledBackendDir = !hasBundledBackendDir && !hasLegacyBundledBackendDir;
+  // Report the layout that is actually installed; only fall back to the legacy
+  // directory name when that is the one present on disk.
+  const bundledDirName =
+    !hasBundledBackendDir && hasLegacyBundledBackendDir ? LEGACY_BUNDLED_BACKEND_DIR : BUNDLED_BACKEND_DIR;
   const missingRuntimeDir = details.runtimeDirExists === false && typeof details.runtimeKey === 'string';
-  const missingResources = missingBundledAioncoreDir ? ['bundled-aioncore/'] : [];
+  const missingResources = missingBundledBackendDir ? [`${BUNDLED_BACKEND_DIR}/`] : [];
   if (details.runtimeDirExists === false && typeof details.runtimeKey === 'string') {
-    missingResources.push(`bundled-aioncore/${details.runtimeKey}/`);
+    missingResources.push(`${bundledDirName}/${details.runtimeKey}/`);
   }
   const runtimeDirEntries = getStringArray(details.runtimeDirEntries);
   const missingManagedResourcesDir =
@@ -145,7 +153,7 @@ function classifyIncompleteInstallation(details: ErrorWithDetails['details']): B
     runtimeDirEntries !== undefined &&
     !runtimeDirEntries.includes('managed-resources/');
   if (missingManagedResourcesDir && typeof details.runtimeKey === 'string') {
-    missingResources.push(`bundled-aioncore/${details.runtimeKey}/managed-resources/`);
+    missingResources.push(`${bundledDirName}/${details.runtimeKey}/managed-resources/`);
   }
   const missingRuntimeBinary =
     details.runtimeDirExists === true &&
@@ -154,19 +162,19 @@ function classifyIncompleteInstallation(details: ErrorWithDetails['details']): B
     runtimeDirEntries !== undefined &&
     !runtimeDirEntries.includes(details.binaryName);
   if (missingRuntimeBinary && typeof details.runtimeKey === 'string' && typeof details.binaryName === 'string') {
-    missingResources.push(`bundled-aioncore/${details.runtimeKey}/${details.binaryName}`);
+    missingResources.push(`${bundledDirName}/${details.runtimeKey}/${details.binaryName}`);
   }
 
   if (missingResources.length === 0) return undefined;
 
   return {
     incompleteInstallationKind:
-      missingBundledAioncoreDir || missingRuntimeDir || missingManagedResourcesDir
+      missingBundledBackendDir || missingRuntimeDir || missingManagedResourcesDir
         ? 'missing_directory_resources'
         : 'missing_backend_binary',
     missingBackendBinary:
-      missingBundledAioncoreDir || missingRuntimeDir || missingManagedResourcesDir || missingRuntimeBinary,
-    missingBundledAioncoreDir,
+      missingBundledBackendDir || missingRuntimeDir || missingManagedResourcesDir || missingRuntimeBinary,
+    missingBundledAioncoreDir: missingBundledBackendDir,
     missingHubDir: getMissingDirectoryFlag(resourcesDirEntries, 'hub/'),
     missingPetStatesDir: getMissingDirectoryFlag(resourcesDirEntries, 'pet-states/'),
     missingPwaDir: getMissingDirectoryFlag(resourcesDirEntries, 'pwa/'),

@@ -8,7 +8,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as zlib from 'node:zlib';
 
-const LOG_SUFFIXES = ['.log', '.aioncore.log', '.aionrs.log'];
+const LOG_SUFFIXES = ['.log', '.arquimedes-core.log', '.aioncore.log', '.aionrs.log'];
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}/;
 const YEAR_DIR_PATTERN = /^\d{4}$/;
 const MONTH_OR_DAY_DIR_PATTERN = /^\d{2}$/;

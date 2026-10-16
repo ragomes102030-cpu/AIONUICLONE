@@ -341,13 +341,19 @@ function Test-BundledResourcesOnce {
   $expectedPlatform = $runtimeParts[0]
   $expectedArch = $runtimeParts[1]
   $resourcesDir = Join-Path $InstallDir 'resources'
-  $baseDir = Join-Path $resourcesDir "bundled-aioncore\$RuntimeKey"
+  $baseDir = Join-Path $resourcesDir "bundled-arquimedes-core\$RuntimeKey"
+  $binaryName = 'arquimedes-core.exe'
+  if (-not (Test-Path -LiteralPath $baseDir -PathType Container)) {
+    # Pre-rebrand layout of an installation made before the rename.
+    $baseDir = Join-Path $resourcesDir "bundled-aioncore\$RuntimeKey"
+    $binaryName = 'aioncore.exe'
+  }
 
   if (-not (Test-Directory $failures 'aioncore' '' $baseDir)) {
     return $failures
   }
 
-  Test-NonEmptyFile $failures 'aioncore' '' (Join-Path $baseDir 'aioncore.exe') $true $baseDir | Out-Null
+  Test-NonEmptyFile $failures 'aioncore' '' (Join-Path $baseDir $binaryName) $true $baseDir | Out-Null
 
   $bundleManifestPath = Join-Path $baseDir 'manifest.json'
   if (Test-NonEmptyFile $failures 'aioncore-manifest' '' $bundleManifestPath $false $baseDir) {

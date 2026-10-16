@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { mkdirSync as _mkdirSync, existsSync, readdirSync, readFileSync } from 'fs';
+import { mkdirSync as _mkdirSync, existsSync, readdirSync, readFileSync, renameSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 import { getPlatformServices } from '@/common/platform';
@@ -36,6 +36,21 @@ type ArchitectureType = 'x64' | 'arm64' | 'ia32' | 'arm';
 const nodePath = path;
 
 const STORAGE_PATH = {
+  config: 'arquimedes-config.txt',
+  chatMessage: 'arquimedes-chat-message.txt',
+  chat: 'arquimedes-chat.txt',
+  env: '.arquimedes-env',
+  assistants: 'assistants',
+  skills: 'skills',
+  cronSkills: 'cron-skills',
+};
+
+/**
+ * Pre-rebrand file names. They are renamed in place the first time the new
+ * file is missing, so an existing installation keeps its settings and chat
+ * history instead of starting from an empty store.
+ */
+const LEGACY_STORAGE_PATH: Record<keyof typeof STORAGE_PATH, string> = {
   config: 'aionui-config.txt',
   chatMessage: 'aionui-chat-message.txt',
   chat: 'aionui-chat.txt',
@@ -44,6 +59,10 @@ const STORAGE_PATH = {
   skills: 'skills',
   cronSkills: 'cron-skills',
 };
+
+/** Directory holding per-conversation message dumps (renamed the same way). */
+const CHAT_HISTORY_DIR = 'arquimedes-chat-history';
+const LEGACY_CHAT_HISTORY_DIR = 'aionui-chat-history';
 
 /** Legacy builtin-skills cache directory, cleaned up at startup after the
  * backend took ownership of the corpus. */
@@ -122,17 +141,32 @@ const WriteFile = async (file_path: string, data: string) => {
  *
  * The on-disk format stays base64(encodeURIComponent(JSON)) for backward compat.
  */
-const JsonFileBuilder = <S extends object = Record<string, unknown>>(file_path: string) => {
+const JsonFileBuilder = <S extends object = Record<string, unknown>>(file_path: string, legacy_file_path?: string) => {
   // -- encoding helpers (unchanged, keeps backward compat) --
   const encode = (data: unknown) => btoa(encodeURIComponent(String(data)));
   const decode = (base64: string) => decodeURIComponent(atob(base64));
+
+  /**
+   * Adopt a pre-rebrand file when the new one does not exist yet: rename it in
+   * place and fall back to reading the legacy path when the rename is refused
+   * (e.g. a locked file). Writes always target the new path.
+   */
+  const resolveReadPath = (): string => {
+    if (!legacy_file_path || existsSync(file_path) || !existsSync(legacy_file_path)) return file_path;
+    try {
+      renameSync(legacy_file_path, file_path);
+      return file_path;
+    } catch {
+      return legacy_file_path;
+    }
+  };
 
   // -- in-memory cache --
   let cache: S | null = null;
 
   const loadSync = (): S => {
     try {
-      const raw = readFileSync(file_path).toString();
+      const raw = readFileSync(resolveReadPath()).toString();
       if (!raw || raw.trim() === '') return {} as S;
       const decoded = decode(raw);
       if (!decoded || decoded.trim() === '') return {} as S;
@@ -234,26 +268,55 @@ const JsonFileBuilder = <S extends object = Record<string, unknown>>(file_path: 
   };
 };
 
-const envFile = JsonFileBuilder<IEnvStorageRefer>(path.join(getHomePage(), STORAGE_PATH.env));
+const envFile = JsonFileBuilder<IEnvStorageRefer>(
+  path.join(getHomePage(), STORAGE_PATH.env),
+  path.join(getHomePage(), LEGACY_STORAGE_PATH.env)
+);
 
 const dirConfig = envFile.getSync('aionui.dir');
 
 const cacheDir = dirConfig?.cacheDir || getHomePage();
 
-const configFile = JsonFileBuilder<ILegacyConfigStorageRefer>(path.join(cacheDir, STORAGE_PATH.config));
+const configFile = JsonFileBuilder<ILegacyConfigStorageRefer>(
+  path.join(cacheDir, STORAGE_PATH.config),
+  path.join(cacheDir, LEGACY_STORAGE_PATH.config)
+);
 type ConversationHistoryData = Record<string, TMessage[]>;
 
-const _chatMessageFile = JsonFileBuilder<ConversationHistoryData>(path.join(cacheDir, STORAGE_PATH.chatMessage));
-const _chatFile = JsonFileBuilder<IChatConversationRefer>(path.join(cacheDir, STORAGE_PATH.chat));
+const _chatMessageFile = JsonFileBuilder<ConversationHistoryData>(
+  path.join(cacheDir, STORAGE_PATH.chatMessage),
+  path.join(cacheDir, LEGACY_STORAGE_PATH.chatMessage)
+);
+const _chatFile = JsonFileBuilder<IChatConversationRefer>(
+  path.join(cacheDir, STORAGE_PATH.chat),
+  path.join(cacheDir, LEGACY_STORAGE_PATH.chat)
+);
 
 const chatFile = _chatFile;
 
-const buildMessageListStorage = (conversation_id: string, dir: string) => {
-  const fullName = path.join(dir, 'aionui-chat-history', conversation_id + '.txt');
-  if (!existsSync(fullName)) {
-    mkdirSync(path.join(dir, 'aionui-chat-history'));
+/**
+ * Resolve the per-conversation message directory, renaming the pre-rebrand
+ * `aionui-chat-history` once so existing dumps stay readable.
+ */
+const resolveChatHistoryDir = (dir: string): string => {
+  const currentDir = path.join(dir, CHAT_HISTORY_DIR);
+  const legacyDir = path.join(dir, LEGACY_CHAT_HISTORY_DIR);
+  if (existsSync(currentDir) || !existsSync(legacyDir)) return currentDir;
+  try {
+    renameSync(legacyDir, currentDir);
+  } catch {
+    return legacyDir;
   }
-  return JsonFileBuilder<TMessage[]>(path.join(dir, 'aionui-chat-history', conversation_id + '.txt'));
+  return currentDir;
+};
+
+const buildMessageListStorage = (conversation_id: string, dir: string) => {
+  const historyDir = resolveChatHistoryDir(dir);
+  const fullName = path.join(historyDir, conversation_id + '.txt');
+  if (!existsSync(fullName)) {
+    mkdirSync(historyDir);
+  }
+  return JsonFileBuilder<TMessage[]>(path.join(historyDir, conversation_id + '.txt'));
 };
 
 const conversationHistoryProxy = (options: typeof _chatMessageFile, dir: string) => {

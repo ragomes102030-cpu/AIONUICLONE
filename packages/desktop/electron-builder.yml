@@ -115,9 +115,10 @@ extraResources:
   # the same dir holding this repo's package.json. 'skills' => <repo-root>/skills.
   - from: skills
     to: factory-skills
-  # aioncore binary (pre-compiled per platform/arch, ships its own bun runtime)
-  - from: resources/bundled-aioncore
-    to: bundled-aioncore
+  # arquimedes-core binary (pre-compiled per platform/arch, ships its own bun runtime)
+  # prepare-aioncore.js renames any existing bundled-aioncore/ dir to this name first.
+  - from: resources/bundled-arquimedes-core
+    to: bundled-arquimedes-core
   - from: resources/hub
     to: hub
 win:

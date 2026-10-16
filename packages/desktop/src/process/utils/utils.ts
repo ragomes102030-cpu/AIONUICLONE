@@ -11,6 +11,13 @@ import { existsSync, lstatSync, mkdirSync, readlinkSync, realpathSync, symlinkSy
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
+
+/** Name of the app-owned data directory inside Electron's `userData`. */
+export const DATA_DIR_NAME = 'arquimedes';
+
+/** Pre-rebrand data directory name, kept so existing installs can migrate. */
+export const LEGACY_DATA_DIR_NAME = 'aionui';
+
 export const hasElectronAppPath = (): boolean => {
   return typeof process.versions.electron === 'string';
 };
@@ -29,7 +36,24 @@ const getElectronPathOrFallback = (name: 'temp' | 'home' | 'userData'): string =
 
 export const getTempPath = () => {
   const rootPath = getElectronPathOrFallback('temp');
-  return path.join(rootPath, 'aionui');
+  return path.join(rootPath, 'arquimedes');
+};
+
+/**
+ * Pick the directory that actually holds the app data.
+ *
+ * After the rebrand the canonical name is `arquimedes`; the pre-rebrand
+ * `aionui` directory is renamed on startup (see `migrateLegacyUserData`).
+ * When that rename has not run yet — for example because a previous instance
+ * still holds a database lock — the legacy directory is used as-is so the app
+ * keeps working on its existing data instead of starting from scratch.
+ */
+const resolveDataDir = (rootPath: string): string => {
+  const current = path.join(rootPath, DATA_DIR_NAME);
+  if (existsSync(current)) return current;
+  const legacy = path.join(rootPath, LEGACY_DATA_DIR_NAME);
+  if (existsSync(legacy)) return legacy;
+  return current;
 };
 
 /**
@@ -91,26 +115,25 @@ const ensureCliSafeSymlink = (targetPath: string, symlinkName: string): string =
 
 /**
  * Get data path, using CLI-safe symlink on macOS.
- * Release builds use ~/.aionui; dev builds use ~/.aionui-dev.
+ * Release builds use ~/.arquimedes; dev builds use ~/.arquimedes-dev.
  * 获取数据目录路径，macOS 上使用符号链接。
- * Release 使用 ~/.aionui，Dev 模式使用 ~/.aionui-dev。
+ * Release 使用 ~/.arquimedes，Dev 模式使用 ~/.arquimedes-dev。
  */
 export const getDataPath = (): string => {
   const rootPath = getElectronPathOrFallback('userData');
-  const dataPath = path.join(rootPath, 'aionui');
-  return ensureCliSafeSymlink(dataPath, getEnvAwareName('.aionui'));
+  return ensureCliSafeSymlink(resolveDataDir(rootPath), getEnvAwareName(`.${DATA_DIR_NAME}`));
 };
 
 /**
  * Get config path, using CLI-safe symlink on macOS.
- * Release builds use ~/.aionui-config; dev builds use ~/.aionui-config-dev.
+ * Release builds use ~/.arquimedes-config; dev builds use ~/.arquimedes-config-dev.
  * 获取配置目录路径，macOS 上使用符号链接。
- * Release 使用 ~/.aionui-config，Dev 模式使用 ~/.aionui-config-dev。
+ * Release 使用 ~/.arquimedes-config，Dev 模式使用 ~/.arquimedes-config-dev。
  */
 export const getConfigPath = (): string => {
   const rootPath = getElectronPathOrFallback('userData');
   const configPath = path.join(rootPath, 'config');
-  return ensureCliSafeSymlink(configPath, getEnvAwareName('.aionui-config'));
+  return ensureCliSafeSymlink(configPath, getEnvAwareName('.arquimedes-config'));
 };
 
 /**

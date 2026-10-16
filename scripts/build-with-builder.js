@@ -803,7 +803,7 @@ try {
     return;
   }
 
-  // 5. Prepare aioncore binary (for packaged runtime usage)
+  // 5. Prepare the backend binary (arquimedes-core) for packaged runtime usage
   //
   // prepare-aioncore prefers a locally built AionCore (AIONCORE_BIN_PATH, or a
   // sibling `AionCore/target/release`) over the upstream release download: the

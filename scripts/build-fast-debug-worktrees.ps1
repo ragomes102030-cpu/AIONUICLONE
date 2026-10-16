@@ -240,10 +240,30 @@ Invoke-Git $repoRoot @('diff', '--binary', 'HEAD', "--output=$patchPath") | Out-
 $hasPatch = (Get-Item -LiteralPath $patchPath).Length -gt 0
 $baseRef = (Invoke-Git $repoRoot @('rev-parse', 'HEAD')).Trim()
 $nodeModules = Join-Path $repoRoot 'node_modules'
-$localAioncoreBinary = Join-Path $repoRoot 'resources\bundled-aioncore\win32-x64\aioncore.exe'
-$localAioncoreBundleDir = Join-Path $repoRoot 'out\win-unpacked\resources\bundled-aioncore\win32-x64'
-if (-not (Test-Path -LiteralPath (Join-Path $localAioncoreBundleDir 'managed-resources') -PathType Container)) {
-  $localAioncoreBundleDir = Join-Path $env:LOCALAPPDATA 'Programs\AionUi\resources\bundled-aioncore\win32-x64'
+$coreDirCandidates = @(
+  (Join-Path $repoRoot 'resources\bundled-arquimedes-core\win32-x64'),
+  (Join-Path $repoRoot 'resources\bundled-aioncore\win32-x64')
+)
+$coreNameCandidates = @('arquimedes-core.exe', 'aioncore.exe')
+$localAioncoreBinary = ''
+foreach ($coreDir in $coreDirCandidates) {
+  foreach ($coreName in $coreNameCandidates) {
+    if (-not $localAioncoreBinary -and (Test-Path -LiteralPath (Join-Path $coreDir $coreName) -PathType Leaf)) {
+      $localAioncoreBinary = Join-Path $coreDir $coreName
+    }
+  }
+}
+$localAioncoreBundleDir = ''
+$bundleDirCandidates = @(
+  (Join-Path $repoRoot 'out\win-unpacked\resources\bundled-arquimedes-core\win32-x64'),
+  (Join-Path $repoRoot 'out\win-unpacked\resources\bundled-aioncore\win32-x64'),
+  (Join-Path $env:LOCALAPPDATA 'Programs\Arquimedes\resources\bundled-arquimedes-core\win32-x64'),
+  (Join-Path $env:LOCALAPPDATA 'Programs\AionUi\resources\bundled-aioncore\win32-x64')
+)
+foreach ($bundleDir in $bundleDirCandidates) {
+  if (-not $localAioncoreBundleDir -and (Test-Path -LiteralPath (Join-Path $bundleDir 'managed-resources') -PathType Container)) {
+    $localAioncoreBundleDir = $bundleDir
+  }
 }
 if (Test-Path -LiteralPath (Join-Path $localAioncoreBundleDir 'managed-resources') -PathType Container) {
   $localAioncoreBundleDir = (Resolve-Path -LiteralPath $localAioncoreBundleDir).Path

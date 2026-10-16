@@ -40,9 +40,16 @@ git tag -a "baseline-$d" -m "Antes do upgrade: $Remote/$Branch em $d"
 Ok "branch backup-$d + tag baseline-$d"
 
 # 3. backup do banco do usuario (dados, nao codigo)
-$appDb = Join-Path $env:APPDATA 'AionUi\aionui\aionui-backend.db'
+# Layout atual: %APPDATA%\Arquimedes\arquimedes\aionui-backend.db
+# Fallbacks: layout antigo do rebrand e o pre-rebrand (%APPDATA%\AionUi\...).
+$appDbCandidates = @(
+  (Join-Path $env:APPDATA 'Arquimedes\arquimedes\aionui-backend.db'),
+  (Join-Path $env:APPDATA 'Arquimedes\aionui\aionui-backend.db'),
+  (Join-Path $env:APPDATA 'AionUi\aionui\aionui-backend.db')
+)
+$appDb = $appDbCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
 $logDir = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'auditoria\_logs'
-if (Test-Path $appDb) {
+if ($appDb) {
   if (-not (Test-Path $logDir)) { New-Item -ItemType Directory $logDir | Out-Null }
   Copy-Item $appDb (Join-Path $logDir "backup-pre-upgrade-$d.db") -Force
   Copy-Item "$appDb-wal" (Join-Path $logDir "backup-pre-upgrade-$d.db-wal") -Force -ErrorAction SilentlyContinue
