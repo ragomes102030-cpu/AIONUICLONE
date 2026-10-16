@@ -149,6 +149,9 @@
   "browser": {
     "newTab": "New tab",
     "addressPlaceholder": "Enter a URL or search",
+    "openInNewTab": "Open in new tab",
+    "desktopOnlyHint": "Browser preview on the phone. Some sites may not open here.",
+    "loadFailedHint": "This page could not be loaded here. Use “Open in new tab”.",
     "agentActiveTooltip": "The agent is operating this tab",
     "tabLimitReached": "Browser tab limit reached ({{count}}). The oldest tab was reused.",
     "agentFirstUseTitle": "The agent is using the in-app browser",

@@ -149,6 +149,9 @@
   "browser": {
     "newTab": "Nova aba",
     "addressPlaceholder": "Digite uma URL ou pesquise",
+    "openInNewTab": "Abrir em nova aba",
+    "desktopOnlyHint": "Prévia do navegador no celular. Alguns sites não abrem aqui.",
+    "loadFailedHint": "Não foi possível carregar esta página aqui. Use o botão “Abrir em nova aba”.",
     "agentActiveTooltip": "O agente está operando esta aba",
     "tabLimitReached": "Limite de abas atingido ({{count}}). A aba mais antiga foi reutilizada.",
     "agentFirstUseTitle": "O agente está usando o navegador interno",

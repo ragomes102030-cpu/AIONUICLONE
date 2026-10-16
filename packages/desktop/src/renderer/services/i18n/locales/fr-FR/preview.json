@@ -149,6 +149,9 @@
   "browser": {
     "newTab": "Nouvel onglet",
     "addressPlaceholder": "Saisissez une URL ou recherchez",
+    "openInNewTab": "Ouvrir dans un nouvel onglet",
+    "desktopOnlyHint": "Aperçu du navigateur sur mobile. Certains sites ne s'ouvrent pas ici.",
+    "loadFailedHint": "Impossible de charger cette page ici. Utilisez « Ouvrir dans un nouvel onglet ».",
     "agentActiveTooltip": "L'agent utilise cet onglet",
     "tabLimitReached": "Limite d'onglets atteinte ({{count}}). L'onglet le plus ancien a été réutilisé.",
     "agentFirstUseTitle": "L'agent utilise le navigateur intégré",

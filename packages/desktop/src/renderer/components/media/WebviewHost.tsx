@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Left, Right, Refresh, Loading } from '@icon-park/react';
 import { ipcBridge } from '@/common';
 import { InternalNavTracker, shouldResetHistoryForUrlProp } from './webviewHistory';
+import { isElectronDesktop, openExternalUrl } from '@/renderer/utils/platform';
 
 export interface WebviewHostProps {
   /** URL to display */
@@ -57,7 +58,161 @@ const MAX_ZOOM_FACTOR = 1.5;
  * - Partition support for cache isolation
  * - Optional navigation bar (hidden by default for embedded use)
  */
-const WebviewHost: React.FC<WebviewHostProps> = ({
+/**
+ * Sandbox policy for the fallback iframe.
+ *
+ * A frame served from the app's own origin must NOT get `allow-same-origin`:
+ * combined with `allow-scripts` that would let the embedded document reach into
+ * the parent app. Third-party pages keep `allow-same-origin` because most sites
+ * need their own scripts and storage to render at all.
+ */
+const computeWebviewFallbackSandbox = (target: string): string => {
+  try {
+    if (new URL(target, window.location.href).origin === window.location.origin) {
+      return 'allow-scripts allow-forms allow-popups allow-downloads';
+    }
+  } catch {
+    // Unparseable URL (about:blank, custom schemes) — fall back to the content policy.
+  }
+  return 'allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads';
+};
+
+/**
+ * Non-Electron fallback for the integrated browser.
+ *
+ * The desktop panel uses Electron's <webview>, which a normal browser does not
+ * implement. In the WebUI (phone/tablet) the unknown element never fires
+ * did-stop-loading / did-finish-load, so the loading state never resolves and the
+ * panel spins forever. Here we render the page in an iframe instead and always
+ * show a notice with an "open in a new tab" escape hatch, because many sites
+ * refuse framing (X-Frame-Options / CSP frame-ancestors). A refused frame never
+ * fires `load`, so a timeout switches the notice to its explicit failure copy.
+ */
+const WebviewHostFallback: React.FC<WebviewHostProps> = ({
+  url,
+  showNavBar = false,
+  className,
+  style,
+  onUrlChange,
+  onTitleChange,
+  resolveUrlInput,
+}) => {
+  const { t } = useTranslation();
+  const onUrlChangeRef = useRef(onUrlChange);
+  onUrlChangeRef.current = onUrlChange;
+  const onTitleChangeRef = useRef(onTitleChange);
+  onTitleChangeRef.current = onTitleChange;
+
+  const [target, setTarget] = useState(url);
+  const [inputUrl, setInputUrl] = useState(url);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    setTarget(url);
+    setInputUrl(url);
+  }, [url]);
+
+  useEffect(() => {
+    if (!target) return;
+    onUrlChangeRef.current?.(target);
+    try {
+      onTitleChangeRef.current?.(new URL(target).hostname);
+    } catch {
+      // Not an absolute URL (about:blank, custom scheme) — keep the current title.
+    }
+  }, [target]);
+
+  // An iframe blocked by X-Frame-Options / CSP frame-ancestors never fires
+  // `load`, and a cross-origin frame's failure is not observable from here.
+  useEffect(() => {
+    if (iframeLoaded) return;
+    const timer = window.setTimeout(() => setTimedOut(true), 8000);
+    return () => window.clearTimeout(timer);
+  }, [target, iframeLoaded]);
+
+  const normalize = useCallback(
+    (raw: string): string | null => {
+      const trimmed = raw.trim();
+      if (!trimmed) return null;
+      if (resolveUrlInput) return resolveUrlInput(trimmed);
+      return /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    },
+    [resolveUrlInput]
+  );
+
+  const handleSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const next = normalize(inputUrl);
+      if (!next) return;
+      setIframeLoaded(false);
+      setTimedOut(false);
+      setTarget(next);
+    },
+    [inputUrl, normalize]
+  );
+
+  const handleOpenExternal = useCallback(() => {
+    if (!target) return;
+    void openExternalUrl(target);
+  }, [target]);
+
+  return (
+    <div className={`flex flex-col min-h-0 ${className ?? ''}`} style={style}>
+      {showNavBar && (
+        <div className='flex items-center gap-6px h-40px px-10px bg-bg-2 border-b border-border-1 flex-shrink-0'>
+          <form onSubmit={handleSubmit} className='flex-1 min-w-0'>
+            <input
+              type='text'
+              value={inputUrl}
+              onChange={(e) => setInputUrl(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              className='w-full h-30px px-10px rounded-6px border border-border-1 bg-bg-1 text-t-primary text-13px'
+              placeholder={t('preview.browser.addressPlaceholder')}
+            />
+          </form>
+        </div>
+      )}
+
+      {/* The integrated browser is desktop-only; say so once and offer the way out. */}
+      <div className='flex items-center gap-8px h-36px px-10px bg-bg-3 border-b border-border-1 text-12px text-t-secondary flex-shrink-0'>
+        <span className='flex-1 min-w-0 truncate'>
+          {timedOut && !iframeLoaded ? t('preview.browser.loadFailedHint') : t('preview.browser.desktopOnlyHint')}
+        </span>
+        <button
+          type='button'
+          onClick={handleOpenExternal}
+          className='flex-shrink-0 px-8px h-24px rounded-6px border border-border-1 bg-bg-1 text-t-primary cursor-pointer'
+        >
+          {t('preview.browser.openInNewTab')}
+        </button>
+      </div>
+
+      <div className='flex-1 overflow-hidden relative' style={{ minHeight: 0 }}>
+        {!iframeLoaded && (
+          <div className='absolute inset-0 flex items-center justify-center text-t-secondary text-14px z-10 pointer-events-none'>
+            <span className='animate-pulse'>{t('preview.loading')}</span>
+          </div>
+        )}
+        <iframe
+          key={target}
+          src={target}
+          title={target}
+          sandbox={computeWebviewFallbackSandbox(target)}
+          referrerPolicy='no-referrer'
+          onLoad={() => {
+            setIframeLoaded(true);
+            setTimedOut(false);
+          }}
+          className='border-0 absolute start-0 top-0 w-full h-full bg-white'
+        />
+      </div>
+    </div>
+  );
+};
+
+const ElectronWebviewHost: React.FC<WebviewHostProps> = ({
   url,
   id: _id,
   showNavBar = false,
@@ -795,6 +950,18 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
       </div>
     </div>
   );
+};
+
+/**
+ * Environment switch for the shared host.
+ *
+ * Every consumer (browser tabs, URL previews, extension settings panels) keeps
+ * importing `WebviewHost`; only the desktop app gets the real <webview>, while
+ * the WebUI falls back to the iframe renderer that actually resolves.
+ */
+const WebviewHost: React.FC<WebviewHostProps> = (props) => {
+  if (isElectronDesktop()) return <ElectronWebviewHost {...props} />;
+  return <WebviewHostFallback {...props} />;
 };
 
 export default WebviewHost;

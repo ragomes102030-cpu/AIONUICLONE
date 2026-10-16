@@ -149,6 +149,9 @@
   "browser": {
     "newTab": "新しいタブ",
     "addressPlaceholder": "URL を入力または検索",
+    "openInNewTab": "新しいタブで開く",
+    "desktopOnlyHint": "スマートフォンのブラウザプレビューです。ここで開けないサイトもあります。",
+    "loadFailedHint": "このページはここで読み込めませんでした。“新しいタブで開く”をお使いください。",
     "agentActiveTooltip": "エージェントがこのタブを操作しています",
     "tabLimitReached": "タブ数の上限（{{count}}）に達したため、最も古いタブを再利用しました。",
     "agentFirstUseTitle": "エージェントがアプリ内ブラウザーを使用しています",

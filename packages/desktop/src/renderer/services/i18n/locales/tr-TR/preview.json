@@ -149,6 +149,9 @@
   "browser": {
     "newTab": "Yeni sekme",
     "addressPlaceholder": "Bir URL girin veya arama yapın",
+    "openInNewTab": "Yeni sekmede aç",
+    "desktopOnlyHint": "Telefon tarayıcısında önizleme. Bazı siteler burada açılmaz.",
+    "loadFailedHint": "Bu sayfa burada yüklenemedi. “Yeni sekmede aç” seçeneğini kullanın.",
     "agentActiveTooltip": "Aracı bu sekmeyi kullanıyor",
     "tabLimitReached": "Sekme sınırına ulaşıldı ({{count}}). En eski sekme yeniden kullanıldı.",
     "agentFirstUseTitle": "Aracı uygulama içi tarayıcıyı kullanıyor",

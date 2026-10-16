@@ -149,6 +149,9 @@
   "browser": {
     "newTab": "새 탭",
     "addressPlaceholder": "URL 입력 또는 검색",
+    "openInNewTab": "새 탭에서 열기",
+    "desktopOnlyHint": "휴대폰 브라우저 미리보기입니다. 여기서 열리지 않는 사이트도 있습니다.",
+    "loadFailedHint": "이 페이지를 여기서 불러오지 못했습니다. ‘새 탭에서 열기’를 사용하세요.",
     "agentActiveTooltip": "에이전트가 이 탭을 조작하고 있습니다",
     "tabLimitReached": "탭 수 한도({{count}})에 도달하여 가장 오래된 탭을 재사용했습니다.",
     "agentFirstUseTitle": "에이전트가 앱 내 브라우저를 사용하고 있습니다",

@@ -149,6 +149,9 @@
   "browser": {
     "newTab": "新建标签页",
     "addressPlaceholder": "输入网址或搜索内容",
+    "openInNewTab": "在新标签页中打开",
+    "desktopOnlyHint": "手机浏览器预览。部分网站在此无法打开。",
+    "loadFailedHint": "此页面在这里无法加载，请使用“在新标签页中打开”。",
     "agentActiveTooltip": "Agent 正在操作此标签页",
     "tabLimitReached": "标签页数量已达上限（{{count}} 个），已复用最早打开的标签页。",
     "agentFirstUseTitle": "Agent 正在使用应用内浏览器",

@@ -149,6 +149,9 @@
   "browser": {
     "newTab": "Nueva pestaña",
     "addressPlaceholder": "Escribe una URL o busca",
+    "openInNewTab": "Abrir en una pestaña nueva",
+    "desktopOnlyHint": "Vista previa del navegador en el móvil. Algunos sitios no se abren aquí.",
+    "loadFailedHint": "No se pudo cargar esta página aquí. Usa «Abrir en una pestaña nueva».",
     "agentActiveTooltip": "El agente está operando esta pestaña",
     "tabLimitReached": "Se alcanzó el límite de pestañas ({{count}}). Se reutilizó la pestaña más antigua.",
     "agentFirstUseTitle": "El agente está usando el navegador integrado",

@@ -149,6 +149,9 @@
   "browser": {
     "newTab": "Neuer Tab",
     "addressPlaceholder": "URL eingeben oder suchen",
+    "openInNewTab": "In neuem Tab öffnen",
+    "desktopOnlyHint": "Browser-Vorschau auf dem Handy. Manche Seiten lassen sich hier nicht öffnen.",
+    "loadFailedHint": "Diese Seite konnte hier nicht geladen werden. Bitte „In neuem Tab öffnen“ verwenden.",
     "agentActiveTooltip": "Der Agent bedient diesen Tab",
     "tabLimitReached": "Tab-Limit erreicht ({{count}}). Der älteste Tab wurde wiederverwendet.",
     "agentFirstUseTitle": "Der Agent nutzt den integrierten Browser",
