@@ -68,11 +68,13 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
   return (
     <div className='shrink-0 sider-footer mt-auto pt-8px pb-8px border-t border-solid border-[var(--color-border-2)] border-s-0 border-e-0 border-b-0'>
       <div className='flex flex-col items-stretch gap-2px'>
+        {/* The seeded `system_default_user` account is an implementation detail of
+            the local backend, not a real identity — never surface it in the UI. */}
         {currentUser &&
+          currentUser.username !== SYSTEM_DEFAULT_USER &&
           (() => {
-            const isSystemDefault = currentUser.username === SYSTEM_DEFAULT_USER;
-            const displayName = isSystemDefault ? t('common.defaultUser') : currentUser.username;
-            const initial = isSystemDefault ? displayName.slice(0, 1) : currentUser.username.slice(0, 1);
+            const displayName = currentUser.username;
+            const initial = displayName.slice(0, 1);
             return (
               <div
                 className={classNames(

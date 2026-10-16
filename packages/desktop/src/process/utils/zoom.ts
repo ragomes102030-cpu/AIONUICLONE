@@ -40,6 +40,9 @@ export const initializeZoomFactor = (factor: number | undefined): number => {
 
 // 在新建窗口时应用最近一次缩放值 / Apply stored zoom to a newly created window
 export const applyZoomToWindow = (win: BrowserWindow): void => {
+  if (win.isDestroyed() || win.webContents.isDestroyed()) {
+    return;
+  }
   win.webContents.setZoomFactor(currentZoomFactor);
 };
 
@@ -88,6 +91,20 @@ export const attachZoomShortcutsToWindow = (
 
 export const setupZoomForWindow = (win: BrowserWindow): void => {
   applyZoomToWindow(win);
+
+  // Chromium can drop the per-webContents zoom factor and fall back to 100% in
+  // two situations that happen all the time: (a) the window is minimized and
+  // restored on Windows, and (b) the renderer is reloaded/recreated (crash
+  // recovery, tray close→reopen, auto-update). The chosen zoom used to snap
+  // back to the default after minimize/restore. currentZoomFactor is the single
+  // source of truth, so re-asserting it on every relevant lifecycle event is
+  // idempotent and cannot fight the user's most recent choice.
+  const reapply = () => applyZoomToWindow(win);
+  win.on('restore', reapply);
+  win.on('show', reapply);
+  win.on('focus', reapply);
+  win.webContents.on('did-finish-load', reapply);
+
   attachZoomShortcutsToWindow(win, (factor) => {
     // Track the write so a ⌘± immediately followed by ⌘Q still flushes.
     const op = (async () => {
@@ -95,7 +112,7 @@ export const setupZoomForWindow = (win: BrowserWindow): void => {
         const { ProcessConfig } = await import('./initStorage');
         await ProcessConfig.set('ui.zoomFactor', factor);
       } catch (error) {
-        console.error('[AionUi] Failed to persist zoom factor from keyboard shortcut:', error);
+        console.error('[Arquimedes] Failed to persist zoom factor from keyboard shortcut:', error);
       }
     })();
     trackPersistedWrite(op);

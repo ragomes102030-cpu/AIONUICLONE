@@ -1,6 +1,12 @@
 ---
-name: 'budget-variance-analyzer'
-description: 'Analyze budget vs actual cost variances. Identify overruns, forecast final costs, and generate variance reports.'
+name: budget-variance-analyzer
+description: >-
+  Analyzes budget vs actual cost variance for construction: identifies overruns,
+  attributes cause, forecasts final cost and produces a variance report. Use when
+  the user mentions desvio de custo, estouro de orçamento, orçado x realizado,
+  Real x Orçado, custo comprometido, saldo de verba, or asks "quanto já estourou?"
+  or "vai estourar?". Do NOT use for EVM/SPI/CPI forecasting (use
+  `baseline-scurve-evm`) or for composing prices (use `budget-composition-service`).
 homepage: 'https://datadrivenconstruction.io'
 metadata:
   {
@@ -16,29 +22,31 @@ metadata:
 
 # Budget Variance Analyzer
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Names desvio de custo, estouro, orçado x realizado, Real x Orçado, custo comprometido
+- Asks "quanto já estourou?", "vai estourar?", "qual pacote está pior?"
+- Wants variance attributed to a cause
+- Needs a final-cost forecast based on actual spend
 
-Cost overruns surprise project teams:
+Do NOT use for: EVM/curva S/SPI/CPI (`baseline-scurve-evm`); montar preço
+(`budget-composition-service`).
 
-- Late detection of budget issues
-- No systematic variance analysis
-- Difficult to forecast final costs
-- Unclear root causes
+## Workflow
 
-### Solution
+1. **Separe os quatro números:** orçado · comprometido · realizado · saldo.
+   Somar comprometido com realizado é dupla contagem.
+2. **Calcule o desvio** por pacote da EAP: `Desvio = Realizado − Orçado`.
+3. **Ordene por impacto absoluto**, não por percentual. 10% de um pacote grande
+   pesa mais que 50% de um pequeno.
+4. **Atribua causa:** quantidade · preço · produtividade · escopo novo · retrabalho.
+5. **Projete o custo final** com o método declarado (linear, CPI, bottom-up).
+6. **Reporte com o denominador visível** — desvio sem base é número solto.
 
-Systematic budget variance analysis that tracks costs against budget, identifies trends, and forecasts final project costs.
+## Implementation
 
-### Business Value
-
-- **Early warning** - Detect overruns early
-- **Forecasting** - Predict final costs
-- **Accountability** - Track variance causes
-- **Decision support** - Informed cost decisions
-
-## Technical Implementation
+### Technical Implementation
 
 ```python
 import pandas as pd
@@ -405,8 +413,6 @@ class BudgetVarianceAnalyzer:
         return output_path
 ```
 
-## Quick Start
-
 ```python
 # Initialize analyzer
 analyzer = BudgetVarianceAnalyzer(
@@ -427,8 +433,6 @@ analyzer.update_costs("03-CONC", committed=8500000, actual=4000000, percent_comp
 summary = analyzer.calculate_summary()
 print(f"Variance: ${summary['variance']:,.0f} ({summary['variance_percent']}%)")
 ```
-
-## Common Use Cases
 
 ### 1. Monthly Cost Review
 
@@ -457,7 +461,45 @@ for name, scenario in scenarios.items():
     print(f"{scenario.name}: ${scenario.total_forecast:,.0f}")
 ```
 
-## Resources
+## Pitfalls
 
-- **DDC Book**: Chapter 3.1 - Cost Management
-- **Reference**: PMI Cost Management
+- **Comprometido + realizado = dupla contagem.** Comprometido é o que foi contratado
+  e ainda não pago. Somar os dois dobra o custo.
+- **Desvio percentual sem base engana.** "Desvio de 200%" pode ser R$ 200 num pacote
+  de R$ 100. Ordene por valor absoluto.
+- **Realizado ausente não é zero.** `SEM DADO` ≠ 0. Zero cria desvio negativo falso.
+- **Projeção linear ignora a causa.** Se o estouro foi pontual (um serviço), a
+  projeção linear superestima o total. Declare o método e a premissa.
+- **Escopo novo não é estouro.** Serviço adicionado sem aditivo contratual infla o
+  desvio. Separe escopo original de aditivo.
+- **Saldo negativo é alerta, não erro.** Pacote com saldo < 0 já foi ultrapassado.
+  Sinalize, não esconda.
+- **Câmbio e reajuste distorcem.** Desvio de preço por reajuste contratual não é
+  ineficiência. Separe.
+
+## Examples
+
+**Input:** "Orçado 1.000.000, comprometido 420.000, realizado 380.000.
+Pacote 1.3 (estrutura): orçado 200.000, realizado 260.000."
+
+**Output:**
+
+| Pacote | Orçado | Comprometido | Realizado | Saldo | Desvio | % |
+|---|---|---|---|---|---|---|
+| 1.3 Estrutura | 200.000 | 0 | 260.000 | −60.000 | **+60.000** | +30% |
+| ... | | | | | | |
+| **Total** | 1.000.000 | 420.000 | 380.000 | 620.000 | −20.000 | −2% |
+
+**Maior desvio absoluto:** 1.3 Estrutura (+R$ 60.000, 30%).
+**Causa provável:** consumo de aço acima do previsto — verificar norma física.
+**Projeção (linear, declarada):** R$ 1.020.000 → estouro de R$ 20.000 (2%).
+Premissa: desempenho dos pacotes restantes igual ao histórico.
+
+## Verification
+
+- [ ] Comprometido e realizado em colunas separadas (sem dupla contagem)
+- [ ] `Saldo = Orçado − Comprometido − Realizado` confere
+- [ ] Ordenação por desvio **absoluto**, não percentual
+- [ ] `SEM DADO` tratado como ausente
+- [ ] Causa atribuída por pacote divergente
+- [ ] Método de projeção declarado + premissa

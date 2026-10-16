@@ -2,8 +2,8 @@
  * Electron Cold Startup Benchmark
  *
  * Launches the Electron app N times and measures per-phase startup timings by
- * parsing the electron-log file for [AionUi:ready] / [AionUi:init] /
- * [AionUi:process] marks, plus `ready-to-show` / `did-finish-load` /
+ * parsing the electron-log file for [Arquimedes:ready] / [Arquimedes:init] /
+ * [Arquimedes:process] marks, plus `ready-to-show` / `did-finish-load` /
  * time-to-interactive (chat input visible).
  *
  * Optional `--with-memory` mode samples RSS / heap in the main and renderer
@@ -111,14 +111,14 @@ type StartupTiming = {
   wallDomContentLoadedMs: number;
   wallTimeToInteractiveMs: number;
   wallTotalMs: number;
-  // Parsed from [AionUi:ready] marks
+  // Parsed from [Arquimedes:ready] marks
   readyInitializeProcessMs: number;
   readyInitializeZoomFactorMs: number;
   readyCreateWindowMs: number;
   readyInitializeAcpDetectorMs: number;
-  // Parsed from [AionUi:init] marks
+  // Parsed from [Arquimedes:init] marks
   initTotalMs: number;
-  // Parsed from [AionUi:process] marks
+  // Parsed from [Arquimedes:process] marks
   processInitStorageMs: number;
   processExtensionRegistryMs: number;
   processChannelManagerMs: number;
@@ -178,10 +178,10 @@ function readNewLogLines(logPath: string, offset: number): string[] {
 
 // ── Log parsing ─────────────────────────────────────────────────────────────
 
-// Matches: [AionUi:ready] <label> +<ms>ms
-// Matches: [AionUi:init]  <label> +<ms>ms
-// Matches: [AionUi:process] <label> +<ms>ms
-const MARK_REGEX = /\[AionUi:(ready|init|process)\]\s+([^+]+?)\s+\+(\d+)ms/;
+// Matches: [Arquimedes:ready] <label> +<ms>ms
+// Matches: [Arquimedes:init]  <label> +<ms>ms
+// Matches: [Arquimedes:process] <label> +<ms>ms
+const MARK_REGEX = /\[Arquimedes:(ready|init|process)\]\s+([^+]+?)\s+\+(\d+)ms/;
 
 type ParsedMarks = {
   ready: Map<string, number>;
@@ -210,9 +210,9 @@ function parseStartupLog(lines: string[]): ParsedMarks {
       continue;
     }
 
-    if (line.includes('[AionUi] Renderer did-finish-load')) marks.logs.rendererDidFinishLoad = true;
-    else if (line.includes('[AionUi] Window ready-to-show')) marks.logs.windowReadyToShow = true;
-    else if (line.includes('[AionUi] Showing main window')) marks.logs.showingMainWindow = true;
+    if (line.includes('[Arquimedes] Renderer did-finish-load')) marks.logs.rendererDidFinishLoad = true;
+    else if (line.includes('[Arquimedes] Window ready-to-show')) marks.logs.windowReadyToShow = true;
+    else if (line.includes('[Arquimedes] Showing main window')) marks.logs.showingMainWindow = true;
   }
 
   return marks;

@@ -1,6 +1,13 @@
 ---
-name: 'cost-estimation-resource'
-description: 'Calculate construction costs using resource-based method. Estimate project costs from work items, physical resource norms, and current prices.'
+name: cost-estimation-resource
+description: >-
+  Estimates construction cost by the resource method: work items, physical
+  resource norms, current prices, labor/material/equipment split and regional
+  adjustment. Use when the user asks to estimate a cost from quantities, wants a
+  resource breakdown (insumos por serviço), needs labor-only or material-only
+  adjustment, or asks "quanto de material e quanto de mão de obra?". Do NOT use for
+  composing a single service price (use `budget-composition-service`) or for looking
+  up official prices (use `sinapi-SEINFRA`).
 homepage: 'https://datadrivenconstruction.io'
 metadata:
   {
@@ -16,22 +23,30 @@ metadata:
 
 # Cost Estimation - Resource Method
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Asks "quanto de material e quanto de mão de obra?"
+- Needs a resource breakdown per service
+- Wants regional or labor-only price adjustment
+- Estimates cost from quantities without a full budget
 
-Traditional costing challenges:
+Do NOT use for: montar uma composição (`budget-composition-service`); consultar
+preço oficial (`sinapi-SEINFRA`).
 
-- Fixed unit prices become outdated
-- No visibility into cost components
-- Difficult to adjust for conditions
-- Limited cost analysis capability
+## Workflow
 
-### Solution
+1. **Liste os itens de serviço** com quantidade e unidade.
+2. **Aplique a norma física** (consumo por unidade) de cada recurso.
+3. **Classifique o recurso:** mão de obra · material · equipamento.
+4. **Aplique o preço vigente** com data-base e UF.
+5. **Separe os totais por categoria** — é o que o cliente pede.
+6. **Ajuste regionalmente** se a UF mudar, sem tocar no coeficiente.
+7. **Reporte a participação** de cada categoria (%).
 
-Resource-based costing separates physical resource consumption (norms) from prices, enabling accurate, adjustable, and transparent cost estimation.
+## Implementation
 
-## Technical Implementation
+### Technical Implementation
 
 ```python
 import pandas as pd
@@ -309,8 +324,6 @@ class ResourceBasedEstimator:
         return output_path
 ```
 
-## Quick Start
-
 ```python
 # Initialize estimator
 estimator = ResourceBasedEstimator()
@@ -345,8 +358,6 @@ print(f"Direct Cost: ${estimate['totals']['direct_cost']:,.2f}")
 print(f"Grand Total: ${estimate['totals']['grand_total']:,.2f}")
 ```
 
-## Common Use Cases
-
 ### 1. Resource Breakdown
 
 ```python
@@ -368,7 +379,46 @@ estimator.apply_regional_factor(1.15)
 estimator.adjust_prices(1.10, ResourceType.LABOR)
 ```
 
-## Resources
+## Pitfalls
 
-- **DDC Book**: Chapter 3.1 - Resource-Based Costing
-- **Website**: https://datadrivenconstruction.io
+- **Preço fixo envelhece.** Custo por preço fixo fica obsoleto. Use norma × preço.
+- **Sem visão de componente, não há ajuste.** Se mão de obra e material estão
+  somados, você não consegue reajustar só um.
+- **Reajuste de mão de obra não muda coeficiente.** Muda o preço da hora. Confundir
+  os dois corrompe a composição.
+- **Encargos sociais não são opcionais.** Hora de pedreiro sem encargo é custo
+  irreal. Declare se está incluso.
+- **Equipamento ocioso é custo real.** Máquina parada no canteiro conta. Não
+  despreze na estimativa.
+- **Desoneração muda o custo.** Declare se a estimativa é desonerada ou não —
+  a diferença é grande em serviço intensivo em mão de obra.
+
+## Examples
+
+**Input:** "Estimativa para 260 m² de alvenaria. Quero a divisão material x mão de obra."
+
+**Output:**
+
+| Categoria | Custo | Participação |
+|---|---|---|
+| Material | R$ 5.894 | 61% |
+| Mão de obra (desonerada) | R$ 3.702 | 39% |
+| **Total** | **R$ 9.596** | 100% |
+
+| Recurso | Un | Consumo | Preço | Custo |
+|---|---|---|---|---|
+| Bloco cerâmico | un | 3.510 | 1,42 | 4.984 |
+| Argamassa | m³ | 2,21 | 412,00 | 911 |
+| Pedreiro | h | 109,2 | 24,80 | 2.708 |
+| Servente | h | 54,6 | 18,20 | 994 |
+
+SINAPI SP 09/2026, desonerado. Serviço intensivo em material (61%).
+
+## Verification
+
+- [ ] Norma física separada do preço
+- [ ] Classificação recurso → categoria aplicada em 100% dos itens
+- [ ] Data-base e UF declarados
+- [ ] Desoneração declarada explicitamente
+- [ ] Soma das categorias = total (confira)
+- [ ] Encargos sociais incluídos ou declarados como ausentes

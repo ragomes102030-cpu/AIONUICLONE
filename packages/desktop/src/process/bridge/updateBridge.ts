@@ -61,7 +61,7 @@ interface AutoUpdateCheckParams {
 }
 
 const DEFAULT_REPO = 'ragomes102030-cpu/AIONUICLONE';
-const DEFAULT_USER_AGENT = 'AionUi';
+const DEFAULT_USER_AGENT = 'Arquimedes';
 const ALLOWED_ASSET_EXTS = new Set(['.exe', '.msi', '.dmg', '.zip', '.deb', '.rpm']);
 const CDN_HOST = process.env.AIONUI_UPDATE_HOST || 'raw.githubusercontent.com';
 const CDN_BASE_URL =
@@ -432,7 +432,7 @@ const sanitizeFileName = (name: string): string => {
   // Keep only base name and trim weird whitespace.
   const base = path.basename(name).trim();
   // Avoid empty names.
-  return base || `AionUi-update-${Date.now()}`;
+  return base || `Arquimedes-update-${Date.now()}`;
 };
 
 const ensureUniquePath = (target: string): string => {

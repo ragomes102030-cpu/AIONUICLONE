@@ -8,7 +8,7 @@
   "library": "Biblioteca",
   "scheduled": "Agendado",
   "headerTitle": "Tarefas do Agente",
-  "headerDescription": "Cada tarefa cria uma conversa real no AionCore e dispara o agente habilitado. O plano vem do agente via eventos ACP — o AionUi apenas exibe.",
+  "headerDescription": "Cada tarefa cria uma conversa real no AionCore e dispara o agente habilitado. O plano vem do agente via eventos ACP — o Arquimedes apenas exibe.",
   "createNewTask": "Criar nova tarefa",
   "agentLabel": "Agente",
   "assistantGroupLabel": "Assistentes",

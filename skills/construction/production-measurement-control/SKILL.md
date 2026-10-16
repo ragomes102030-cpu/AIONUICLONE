@@ -1,6 +1,12 @@
 ---
-name: 'production-measurement-control'
-description: 'Daily production tracking and contractual measurement: field entries, crew productivity, approval workflow (rascunho-conferencia-aprovado), bulletins with calculation memory, physical progress roll-up. Use for producao diaria, diario de obra, produtividade, medicao, boletim, memoria de calculo, avanço fisico.'
+name: production-measurement-control
+description: >-
+  Tracks daily construction production and contractual measurement: field entries,
+  crew productivity, approval workflow (rascunho → conferência → aprovado), bulletins
+  with calculation memory, and physical progress roll-up. Use when the user mentions
+  produção diária, diário de obra, produtividade, medição, boletim, memória de cálculo,
+  avanço físico, or asks to close a measurement period. Do NOT use for RDO narrative
+  (use `daily-progress-report`) or cost variance (use `budget-variance-analyzer`).
 homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
 metadata:
   {
@@ -16,21 +22,31 @@ metadata:
 
 # Production & Measurement Control
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Names produção diária, medição, boletim, produtividade, avanço físico
+- Wants to close a measurement period with calculation memory
+- Needs the approval trail (rascunho → conferência → aprovado)
+- Asks "quanto já foi executado desse serviço?"
 
-- Production entries end as drafts: no confirm/edit/close-day flow
-- Productivity (qty / crew / hour) not computed, only raw quantities
-- Measurement mixed with field entries: no rascunho-conferencia-aprovado trail
-- No calc memory tying bulletin lines back to service/front/activity
+Do NOT use for: narrativa do dia (`daily-progress-report`); desvio de custo
+(`budget-variance-analyzer`).
 
-### Solution
+## Workflow
 
-Two-layer model: field production (fast daily entry) + measurement
-(contractual, versioned, approved). Productivity derived, never typed.
+1. **Separe as duas camadas:** produção de campo (lançamento rápido diário) e
+   medição (contratual, versionada, aprovada).
+2. **Calcule produtividade** como derivada: `qty / (equipes × horas)`. Nunca digitada.
+3. **Rode o fluxo de aprovação:** rascunho → conferência → aprovado.
+4. **Gere o boletim** com memória de cálculo ligando cada linha a serviço/frente/atividade.
+5. **Versione** boletins aprovados — nunca delete; reverta com motivo.
+6. **Faça roll-up** do avanço físico para a EAP.
+7. **Mantenha separados:** Planejado · Realizado · Saldo · Desvio.
 
-## Technical Implementation
+## Implementation
+
+### Technical Implementation
 
 ```python
 from typing import Dict, List, Optional
@@ -110,8 +126,6 @@ class Bulletin:
         self.approvals.append(f"ESTORNO: {reason}")
 ```
 
-## Quick Start
-
 ```python
 e = ProductionEntry("P-001", "2026-09-25", "Frente A", "Eq-01",
                     "AT-001", "1.1", 100.0, "m2")
@@ -122,14 +136,46 @@ b = Bulletin("BM-03", "2026-09-01", "2026-09-30",
 print(f"Total BM: R$ {b.total:,.2f}")
 ```
 
-## Rules
+## Pitfalls
 
-1. Planned vs Actual vs Balance vs Deviation kept separate.
-2. Absent production = SEM DADO, never zero.
-3. Approved bulletins are versioned, never deleted (reverse with reason).
-4. Duration = Quantity / Productivity / Crews (or label manual input).
+- **Produção ausente não é zero.** `SEM DADO` ≠ 0. Zero derruba a produtividade
+  média e cria alarme falso.
+- **Produtividade digitada é chute.** Derive de `qty / (equipes × horas)`. Digitada
+  não reage a mudança de equipe.
+- **Boletim aprovado não se deleta.** Reverta com motivo e mantenha o histórico.
+  Deletar apaga a rastreabilidade contratual.
+- **Produção e medição no mesmo lugar.** Campo é diário e bruto; medição é contratual
+  e versionada. Misturar impede auditar o que foi aprovado.
+- **Duração por divisão simples ignora a frente.** `Duração = Qtd / Produtividade / Equipes`
+  só vale se a frente comporta todas as equipes. Comente a limitação.
+- **Sem memória de cálculo, o boletim não se defende.** Cada linha precisa rastrear
+  até serviço, frente e atividade. Sem isso, contestação ganha.
+- **Avanço físico ≠ avanço financeiro.** São curvas diferentes. Não misture no mesmo
+  indicador.
 
-## Resources
+## Examples
 
-- plataforma-obras `ProductionView.tsx` + `MedicaoView.tsx`
-- Mattos - productivity and measurement chapters
+**Input:** "Alvenaria pav 3: 1.200 m² lançados, 2 equipes, 8h/dia, 3 dias.
+Boletim do mês: planejado 4.000 m², executado 3.600 m²."
+
+**Output:**
+
+| Serviço | Planejado | Executado | Saldo | Avanço |
+|---|---|---|---|---|
+| Alvenaria | 4.000 m² | 3.600 m² | 400 m² | 90% |
+
+**Produtividade derivada:** 1.200 / (2 × 8 × 3) = **25 m²/equipe·h**
+(planejado: 22 m²/equipe·h → desempenho **+13,6%**)
+
+**Boletim:** rascunho → conferência → **aprovado** (v1).
+Memória de cálculo: cada linha rastreia serviço → frente → atividade da EAP.
+
+## Verification
+
+- [ ] Produção ausente tratada como `SEM DADO`, não zero
+- [ ] Produtividade derivada, não digitada
+- [ ] Fluxo de aprovação registrado (rascunho/conferência/aprovado)
+- [ ] Boletim aprovado versionado, não deletado
+- [ ] Memória de cálculo liga linha → serviço → frente → atividade
+- [ ] `Saldo = Planejado − Executado` confere
+- [ ] Avanço físico separado do financeiro

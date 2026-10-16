@@ -1,6 +1,13 @@
 ---
-name: 'cpm-network-validator'
-description: 'Validate construction schedule networks: detect cycles, compute CPM forward/backward pass with FS/SS/FF/SF relations and lags, calculate total/free float, identify critical path and orphan activities. Use when validating cronogramas, dependency networks, caminho critico, folgas, or checking schedule integrity before baseline approval.'
+name: cpm-network-validator
+description: >-
+  Validates construction schedule networks and computes CPM: detects dependency
+  cycles, runs forward/backward pass with FS/SS/FF/SF relations and lags, calculates
+  total and free float, identifies the critical path and orphan activities. Use when
+  the user mentions caminho crítico, folga, rede de precedência, datas cedo/tarde,
+  "quais atividades não têm folga", or asks whether a schedule can be shortened —
+  even without naming CPM. Do NOT use for visual Gantt rendering (use `gantt-chart`)
+  or cost impact (use `budget-variance-analyzer`).
 homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
 metadata:
   {
@@ -16,24 +23,32 @@ metadata:
 
 # CPM Network Validator
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Names CPM, caminho crítico, critical path, rede de precedência, folga, teia
+- Asks "quais atividades não têm folga?" / "dá pra encurtar o prazo?"
+- Wants to validate a schedule before approving the baseline
+- Needs ES/EF/LS/LF or float per activity
 
-Schedule network defects that silently corrupt planning decisions:
+Do NOT use for: desenho visual do Gantt (`gantt-chart`); custo (`budget-variance-analyzer`).
 
-- Cycles in dependencies (A→B→A) freeze or corrupt CPM calculation
-- Orphan activities (no predecessors AND no successors) get ES=0 and inflate float
-- Wrong relation types or lags shift the whole critical path
-- Same-or-older plan versions reported as "updates"
+## Workflow
 
-### Solution
+1. **Colete** atividades (id, duração) e dependências (predecessor, sucessor,
+   tipo FS/SS/FF/SF, lag).
+2. **Ordene topologicamente primeiro.** Um **ciclo bloqueia qualquer resultado** —
+   não existe CPM com dependência circular.
+3. **Liste órfãos** (sem predecessor E sem sucessor). Exigem justificativa antes
+   do baseline: órfão recebe ES=0 e infla a folga.
+4. **Rode o forward pass** (ES/EF) e o **backward pass** (LS/LF).
+5. **Calcule folga total e livre** por atividade.
+6. **Identifique o caminho crítico** (folga total = 0).
+7. **Após qualquer mudança** de duração ou vínculo, recalcule e mostre o que se moveu.
 
-Deterministic network validation + CPM recomputation. Same canonical
-activity/dependency list always produces the same output. Pure calculation,
-mirroring `shared/cpm.ts` of plataforma-obras.
+## Implementation
 
-## Technical Implementation
+### Technical Implementation
 
 ```python
 from typing import Dict, List
@@ -128,96 +143,6 @@ class CpmNetworkValidator:
 ```
 
 ```python
-    def _pred_constraint(self, dep, pred_ef, pred_es, succ_duration) -> float:
-        lag = dep.lag or 0.0
-        if dep.rel_type == RelationType.FS:
-            return pred_ef + lag
-        if dep.rel_type == RelationType.SS:
-            return pred_es + lag
-        if dep.rel_type == RelationType.FF:
-            return pred_ef + lag - succ_duration
-        return pred_es + lag - succ_duration  # SF
-
-    def _succ_constraint(self, dep, succ_ls, succ_lf, pred_duration) -> float:
-        lag = dep.lag or 0.0
-        if dep.rel_type == RelationType.FS:
-            return succ_ls - lag
-        if dep.rel_type == RelationType.SS:
-            return succ_ls - lag + pred_duration
-        if dep.rel_type == RelationType.FF:
-            return succ_lf - lag
-        return succ_lf - lag + pred_duration  # SF
-
-    def compute(self) -> Dict:
-        order = self.topological_order()
-        preds: Dict[str, List[Dependency]] = {a: [] for a in self.activities}
-        succs: Dict[str, List[Dependency]] = {a: [] for a in self.activities}
-        for d in self.dependencies:
-            preds[d.successor_id].append(d)
-            succs[d.predecessor_id].append(d)
-        es: Dict[str, float] = {}
-        ef: Dict[str, float] = {}
-        for aid in order:
-            dur = self.activities[aid].duration
-            start = 0.0
-            for d in preds[aid]:
-                cand = self._pred_constraint(d, ef[d.predecessor_id],
-                                             es[d.predecessor_id], dur)
-                start = max(start, cand)
-            es[aid] = start
-            ef[aid] = start + dur
-        project_duration = max(ef.values()) if ef else 0.0
-        ls: Dict[str, float] = {}
-        lf: Dict[str, float] = {}
-        for aid in reversed(order):
-            dur = self.activities[aid].duration
-            finish = project_duration
-            for d in succs[aid]:
-                cand = self._succ_constraint(d, ls[d.successor_id],
-                                             lf[d.successor_id], dur)
-                finish = min(finish, cand)
-            lf[aid] = finish
-            ls[aid] = finish - dur
-        results: List[CpmResult] = []
-        for aid in order:
-            tf = ls[aid] - es[aid]
-            succ_starts = [es[d.successor_id] for d in succs[aid]]
-            ff = (min(succ_starts) - ef[aid]) if succ_starts else tf
-            results.append(CpmResult(
-                id=aid, early_start=es[aid], early_finish=ef[aid],
-                late_start=ls[aid], late_finish=lf[aid],
-                total_float=tf, free_float=ff, critical=(tf <= 0)))
-        critical_path = [r.id for r in sorted(
-            [r for r in results if r.critical],
-            key=lambda r: (r.early_start, r.id))]
-        return {"project_duration": project_duration,
-                "activities": [r.__dict__ for r in results],
-                "critical_path": critical_path,
-                "orphans": self.find_orphans()}
-
-    def audit_report(self) -> str:
-        lines = [f"Activities: {len(self.activities)}, "
-                 f"Dependencies: {len(self.dependencies)}"]
-        orphans = self.find_orphans()
-        if orphans:
-            lines.append(f"WARNING orphans (no relations): {orphans}")
-        try:
-            res = self.compute()
-        except ValueError as err:
-            return "\\n".join(lines + [f"BLOCKED: {err}"])
-        lines.append(f"Project duration: {res['project_duration']} days")
-        lines.append(f"Critical path: {' -> '.join(res['critical_path'])}")
-        for a in res["activities"]:
-            flag = "CRITICAL" if a["critical"] else f"float={a['total_float']}"
-            lines.append(f"  {a['id']}: ES={a['early_start']} "
-                         f"EF={a['early_finish']} LS={a['late_start']} "
-                         f"LF={a['late_finish']} [{flag}]")
-        return "\\n".join(lines)
-```
-
-## Quick Start
-
-```python
 net = CpmNetworkValidator()
 net.add_activity(Activity("A", 5, "Fundacao"))
 net.add_activity(Activity("B", 3, "Estrutura"))
@@ -227,8 +152,6 @@ net.add_dependency(Dependency("B", "C", RelationType.FS))
 print(net.audit_report())
 print(net.compute()["critical_path"])  # ['A', 'B', 'C']
 ```
-
-## Common Use Cases
 
 ### 1. Cycle detection before approval
 
@@ -253,7 +176,46 @@ net.activities["B"].duration = 8
 new_path = net.compute()["critical_path"]
 ```
 
-## Resources
+## Pitfalls
 
-- plataforma-obras `shared/cpm.ts` - canonical TS implementation (same math)
-- Mattos, Planejamento e Controle de Obras - CPM theory
+- **Ciclo bloqueia tudo.** Nunca reporte resultado de CPM quando a rede tem ciclo —
+  o número é matematicamente inválido. Pare e reporte o ciclo.
+- **Órfão infla a folga.** Atividade sem predecessor E sem sucessor recebe ES=0 e
+  aparece como não-crítica. Não é: é dado faltando. Exija justificativa.
+- **Tipo de vínculo errado desloca o caminho crítico inteiro.** FS é o padrão; SS,
+  FF e SF precisam de lag explícito. Vínculo sem lag declarado é ambíguo.
+- **Duração 0 não é marco.** Duração zero vira marco só se declarada explicitamente;
+  senão é erro de cadastro. Pergunte antes de assumir.
+- **Versão antiga reportada como atualização.** Compare o carimbo de versão antes de
+  aceitar um plano como novo.
+- **Mesma entrada, saída diferente.** A computação é pura. Se duas execuções divergem,
+  a entrada mudou — ou há estado escondido. Investigue.
+- **Folga negativa é sinal de dado, não de atraso.** Folga < 0 quase sempre significa
+  vínculo inconsistente, não prazo impossível.
+
+## Examples
+
+**Input:** "Valide a rede: A(5d)→B(3d)→C(2d), A→D(4d)"
+
+**Output:**
+
+| Ativ | Dur | ES | EF | LS | LF | Folga Total | Folga Livre | Crítica |
+|------|-----|----|----|----|----|-------------|-------------|---------|
+| A    | 5   | 0  | 5  | 0  | 5  | 0           | 0           | SIM     |
+| B    | 3   | 5  | 8  | 5  | 8  | 0           | 0           | SIM     |
+| C    | 2   | 8  | 10 | 8  | 10 | 0           | 0           | SIM     |
+| D    | 4   | 5  | 9  | 6  | 10 | 1           | 1           | não     |
+
+Caminho crítico: **A → B → C (10 dias)**. Ciclos: 0. Órfãos: 0.
+
+## Verification
+
+Antes de entregar, confirme:
+- [ ] Nenhum ciclo (se houver, você **não** entrega CPM — reporta o ciclo)
+- [ ] Órfãos listados e justificados
+- [ ] ES/EF/LS/LF coerentes: `EF = ES + dur` e `LF = LS + dur` em toda linha
+- [ ] `Folga Total = LS - ES = LF - EF` em toda linha
+- [ ] Caminho crítico é contíguo do início ao fim
+- [ ] Nenhuma folga negativa sem explicação de dado
+
+Se duas execuções com a mesma entrada divergirem, há estado escondido — pare.

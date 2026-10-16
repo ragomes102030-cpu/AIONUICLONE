@@ -112,7 +112,7 @@ const AboutModalContent: React.FC = () => {
   const linkItems: LinkItem[] = [
     {
       title: t('settings.helpDocumentation'),
-      url: 'https://github.com/ragomes102030-cpu/AIONUICLONE/wiki',
+      url: 'https://ragomes102030-cpu.github.io/arquimedes/',
       icon: <Right theme='outline' size='16' className='rtl-mirror' />,
     },
     {
@@ -132,7 +132,7 @@ const AboutModalContent: React.FC = () => {
     },
     {
       title: t('settings.officialWebsite'),
-      url: 'https://www.aionui.com',
+      url: 'https://ragomes102030-cpu.github.io/arquimedes/',
       icon: <Right theme='outline' size='16' className='rtl-mirror' />,
     },
   ];
@@ -150,7 +150,7 @@ const AboutModalContent: React.FC = () => {
           {/* App Info Section */}
           <div className='flex flex-col items-center pb-24px'>
             <Typography.Title heading={3} className='text-24px font-bold text-t-primary mb-8px'>
-              AionUi
+              Arquimedes
             </Typography.Title>
             <Typography.Text className='text-14px text-t-secondary mb-12px text-center'>
               {t('settings.appDescription')}

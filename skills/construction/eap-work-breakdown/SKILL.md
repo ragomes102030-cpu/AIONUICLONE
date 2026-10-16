@@ -1,6 +1,13 @@
 ---
-name: 'eap-work-breakdown'
-description: 'Build and validate construction Work Breakdown Structures (EAP/WBS): hierarchical packages, WBS coding, scope-activity linkage, structural validation (orphans, duplicates, depth), quantity roll-up. Use when creating, editing, auditing or validating EAP, WBS, pacotes de trabalho, estrutura analitica.'
+name: eap-work-breakdown
+description: >-
+  Builds, edits and audits a construction Work Breakdown Structure (EAP/WBS):
+  hierarchical packages, dotted WBS coding, scope-to-activity linkage, quantity and
+  cost roll-up, structural validation (orphans, duplicates, depth, numbering gaps).
+  Use when the user mentions EAP, WBS, estrutura analítica, pacotes de trabalho,
+  árvore de escopo, or asks to "organize", "dividir" or "estruturar" the obra —
+  even without naming EAP. Do NOT use for schedule dates (use `cpm-scheduling`)
+  or pricing (use `budget-composition-service`).
 homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
 metadata:
   {
@@ -16,21 +23,34 @@ metadata:
 
 # EAP Work Breakdown Structure
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Names EAP, WBS, estrutura analítica, pacotes de trabalho, árvore de escopo
+- Says "organiza essa obra", "divide em partes", "estrutura o escopo" (sem citar EAP)
+- Wants to audit a breakdown for órfãos, duplicados, profundidade, lacuna de numeração
+- Needs quantity or cost roll-up from the leaves
 
-- EAP nodes created without hierarchy rules: duplicate codes, gaps, orphans
-- Activities not linked to any package (scope leak)
-- Quantity/cost roll-up done by hand, diverging from leaves
-- Structural errors only found at measurement time
+Do NOT use for: datas/duração/caminho crítico (`cpm-scheduling`); preço/BDI
+(`budget-composition-service`).
 
-### Solution
+## Workflow
 
-Code-driven EAP builder: dotted WBS codes, parent/child integrity,
-activity linkage check, bottom-up roll-up, structural audit report.
+1. **Colete o escopo.** Tipo de obra, pavimentos, disciplinas, nível de detalhe.
+   Sem isso a EAP sai genérica e inútil.
+2. **Escolha UM critério de decomposição** e declare: por disciplina · por etapa ·
+   por local (torre/pavimento) · por sistema. **Misturar critérios no mesmo nível
+   é o erro mais comum.**
+3. **Codifique** com código pontilhado: `1` → `1.2` → `1.2.3`. Um dígito por nível.
+4. **Limite a profundidade a 6 níveis.** Acima disso é cronograma, não EAP.
+5. **Vincule atividades.** Toda folha precisa de ≥ 1 atividade.
+6. **Faça roll-up.** Quantidade do pai = soma dos filhos (ou declare nó de agregação).
+7. **Valide** com o `EapBuilder.validate()` abaixo.
+8. **Entregue** em Excel com formatação brasileira (skill `formato-br`).
 
-## Technical Implementation
+## Implementation
+
+### Technical Implementation
 
 ```python
 from typing import Dict, List, Optional
@@ -98,8 +118,6 @@ class EapBuilder:
         return issues
 ```
 
-## Quick Start
-
 ```python
 eap = EapBuilder()
 eap.add_node("1", "Edificio A")
@@ -110,7 +128,52 @@ print(eap.validate())
 print("Total 1:", eap.rollup_quantity("1"))
 ```
 
-## Resources
+## Pitfalls
 
-- plataforma-obras `EapView.tsx` + `server/routers.ts` (EAP CRUD)
-- Mattos, Planejamento e Controle de Obras - WBS chapter
+- **Misturar critérios de decomposição.** "Fundação" (etapa) ao lado de "Hidráulica"
+  (disciplina) no mesmo nível quebra o roll-up. Um critério por nível.
+- **Folha órfã.** Pacote sem atividade vinculada é escopo que ninguém executa nem
+  mede. Bloqueie a aprovação até vincular.
+- **Profundidade excessiva.** 8 níveis para uma casa = cronograma disfarçado de EAP.
+- **Código não sequencial.** Buracos (`1.1`, `1.3`, sem `1.2`) indicam remoção sem
+  renumeração. Rejeite na validação.
+- **Duplicidade semântica.** "Estrutura de concreto" e "Concreto estrutural" são a
+  mesma coisa. Audite contra sinônimos.
+- **Roll-up divergente é DADO, não fórmula.** Se pai ≠ soma dos filhos, reporte a
+  divergência. Nunca "conserte" o pai em silêncio.
+- **EAP copiada de outro projeto.** Escopo é específico; EAP genérica gera medição
+  errada depois.
+
+## Examples
+
+**Input:** "Monta a EAP de uma casa térrea de 120 m²"
+
+**Output:**
+
+| Código | Pacote | Qtde | Un | Atividades |
+|---|---|---|---|---|
+| 1 | Casa térrea 120 m² | 120 | m² | — (nó de agregação) |
+| 1.1 | Serviços preliminares | 1 | vb | 3 |
+| 1.2 | Fundação | 24 | m³ | 4 |
+| 1.3 | Estrutura | 120 | m² | 5 |
+| 1.4 | Alvenaria e vedação | 260 | m² | 4 |
+| 1.5 | Instalações | 1 | vb | 8 |
+| 1.6 | Acabamento | 340 | m² | 7 |
+
+Critério: **por etapa**. Profundidade: 2. Folhas: 6. Órfãs: 0.
+O nó 1 é agregação (área construída), não soma dos filhos — declare isso.
+
+## Verification
+
+Rode `EapBuilder.validate()` e interprete:
+
+```
+CRITICAL  código X: pai Y inexistente     -> corrija a hierarquia
+CRITICAL  código X: duplicado             -> renumerar
+WARNING   folha X sem atividade vinculada -> justificar ou vincular
+WARNING   profundidade N excede 6         -> mover detalhe para atividades
+WARNING   lacuna de numeração em X        -> renumerar
+```
+
+**Só entregue com zero CRITICAL.** WARNING deve ser justificado no relatório, não
+ignorado. Se o roll-up divergir da soma dos filhos, reporte e pare.

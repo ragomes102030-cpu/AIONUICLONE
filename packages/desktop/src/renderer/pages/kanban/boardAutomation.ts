@@ -51,9 +51,9 @@ export function buildManagerPrompt(
 ): string {
   const snapshot = buildBoardSnapshot(board);
   return [
-    'You are the manager agent for an AionUi Kanban board.',
+    'You are the manager agent for an Arquimedes Kanban board.',
     'Do not call tools, edit files, or claim that you changed anything.',
-    'Analyze the user command and return a plan only. The AionUi user must approve the plan before any mutation.',
+    'Analyze the user command and return a plan only. The Arquimedes user must approve the plan before any mutation.',
     '',
     `Board manager role: ${managerRole.name}`,
     `Manager instructions: ${managerInstructions || 'None'}`,

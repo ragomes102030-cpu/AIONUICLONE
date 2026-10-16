@@ -1,6 +1,12 @@
 ---
-name: 'gantt-chart'
-description: 'Generate Gantt charts for construction scheduling. Create visual project timelines with dependencies and progress tracking.'
+name: gantt-chart
+description: >-
+  Builds Gantt chart workbooks and visuals for construction schedules: time
+  scale, start, end, duration, status, baseline vs actual, dependencies and dynamic
+  updates. Use when the user mentions gantt, gráfico de gantt, cronograma visual,
+  timeline de obra, baseline x realizado, barras de progresso, or asks to "ver o
+  cronograma". Do NOT use for CPM float calculation (use `cpm-network-validator`) or
+  repetitive-work LOB (use `lob-line-of-balance`).
 homepage: 'https://datadrivenconstruction.io'
 metadata:
   {
@@ -16,22 +22,32 @@ metadata:
 
 # Gantt Chart Generator
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Names gantt, gráfico de gantt, cronograma visual, timeline, barras
+- Wants baseline vs actual comparison in bars
+- Needs a formula-driven chart that updates when dates change
+- Asks to "ver o cronograma" / "mostrar o andamento"
 
-Schedule visualization challenges:
+Do NOT use for: cálculo de folga/caminho crítico (`cpm-network-validator`); obra
+repetitiva (`lob-line-of-balance`).
 
-- Complex task dependencies
-- Progress tracking
-- Critical path visibility
-- Multi-level WBS display
+## Workflow
 
-### Solution
+1. **Valide a rede antes de desenhar.** Gantt de rede com ciclo é enganoso.
+   Rode `cpm-network-validator` primeiro.
+2. **Monte a escala temporal** (dia/semana/mês) adequada à duração da obra.
+3. **Uma linha por atividade**, com início, fim, duração e status.
+4. **Desenhe as barras por fórmula** (formatação condicional) — não por desenho
+   manual. Assim elas se movem quando a data muda.
+5. **Sobrepõe baseline e realizado** em barras distintas.
+6. **Marque o caminho crítico** visualmente.
+7. **Mostre os marcos** com símbolo próprio.
 
-Generate interactive Gantt charts from schedule data with dependency visualization, progress tracking, and export capabilities.
+## Implementation
 
-## Technical Implementation
+### Technical Implementation
 
 ```python
 import pandas as pd
@@ -310,8 +326,6 @@ class GanttChartGenerator:
         return output_path
 ```
 
-## Quick Start
-
 ```python
 from datetime import date, timedelta
 
@@ -331,8 +345,6 @@ gantt.add_dependency("T2", "T3")
 # Generate text Gantt
 print(gantt.generate_text_gantt())
 ```
-
-## Common Use Cases
 
 ### 1. Mermaid Diagram
 
@@ -356,7 +368,49 @@ critical = gantt.get_critical_path()
 print(f"Critical tasks: {critical}")
 ```
 
-## Resources
+## Pitfalls
 
-- **DDC Book**: Chapter 3.3 - 4D Scheduling and BIM
-- **Website**: https://datadrivenconstruction.io
+- **Gantt não substitui a rede.** O desenho mostra; não calcula folga. Sem CPM
+  validado, o Gantt pode exibir um plano impossível com aparência correta.
+- **Barra desenhada à mão não reage.** Use formatação condicional ligada às células
+  de data. Barra manual quebra na primeira alteração.
+- **Baseline e realizado no mesmo tom.** Use cores distintas e legenda. Sem isso,
+  a comparação é ilegível.
+- **Escala errada esconde o detalhe.** Escala mensal para obra de 20 dias esconde
+  tudo; diária para 3 anos gera 1.000 colunas.
+- **Dependência só no desenho.** A seta precisa vir de dado, não de traço. Setas
+  manuais ficam desatualizadas.
+- **Marco como barra de 1 dia.** Marco tem duração zero e símbolo próprio. Barra de
+  1 dia é confundida com atividade curta.
+
+## Examples
+
+**Input:** "Cronograma de 5 atividades com dependências FS, baseline e realizado."
+
+**Output:**
+
+```
+Atividade         | Sem 1 | Sem 2 | Sem 3 | Sem 4 | Status
+------------------+-------+-------+-------+-------+--------
+A Fundação        | █████ |       |       |       | 100% ✓
+B Estrutura       |  ·····| █████ | █████ |       |  85% ▓
+C Alvenaria       |       |  ·····| █████ | █████ |  60% ▓
+D Instalações     |       |       |  ·····| █████ |   0%
+E Acabamento      |       |       |       |  ·····|   0%
+------------------+-------+-------+-------+-------+--------
+Legenda: ███ baseline  ▓▓▓ realizado  ··· folga  ✓ concluído
+Caminho crítico: A → B → C → D → E
+```
+
+Barras geradas por formatação condicional sobre as colunas de data — mudam
+automaticamente quando início/fim são editados.
+
+## Verification
+
+- [ ] Rede validada (sem ciclo) **antes** de desenhar
+- [ ] Barras por formatação condicional, não desenho manual
+- [ ] Baseline e realizado em cores distintas com legenda
+- [ ] Caminho crítico destacado
+- [ ] Marcos com símbolo próprio (duração zero)
+- [ ] Escala temporal coerente com a duração da obra
+- [ ] Editar uma data move a barra (teste)

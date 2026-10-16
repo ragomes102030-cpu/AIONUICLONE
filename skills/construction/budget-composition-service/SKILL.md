@@ -1,6 +1,12 @@
 ---
-name: 'budget-composition-service'
-description: 'Construction budgeting with service compositions: inputs (labor/material/equipment), coefficients, productivity, unit cost, BDI, price versions with approval. Use for orcamento, composicao, insumos, SINAPI, SEINFRA, BDI, preco unitario, custo direto.'
+name: budget-composition-service
+description: >-
+  Builds construction budgets from service compositions: inputs (labor, material,
+  equipment), coefficients, productivity, unit cost, BDI, and price versions with
+  approval. Use when the user mentions orçamento, composição, insumos, coeficiente,
+  SINAPI, SEINFRA, BDI, preço unitário, custo direto, or asks "quanto custa esse
+  serviço?". Do NOT use for looking up a single price (use `sinapi-SEINFRA`) or for
+  tracking actual cost (use `construction-cost-control`).
 homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
 metadata:
   {
@@ -16,21 +22,34 @@ metadata:
 
 # Budget & Service Compositions
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Names orçamento, composição, insumos, coeficiente, produtividade, BDI, custo direto
+- Asks "quanto custa esse serviço?" / "monta a composição da alvenaria"
+- Wants SINAPI/SEINFRA prices applied with BDI
+- Needs a versioned budget with approval trail
 
-Per the PLANO-MESTRE: "Nao ha modulo de orcamento persistido."
-Costs live in spreadsheets with fixed unit prices that go stale,
-no split between physical norms and prices, no BDI, no versions.
+Do NOT use for: consultar um preço isolado (`sinapi-SEINFRA`); custo realizado
+(`construction-cost-control`).
 
-### Solution
+## Workflow
 
-Resource-based compositions: physical coefficients x current prices =
-unit cost; BDI applied at budget level; price updates create new
-versions, never rewrite approved budgets.
+1. **Separe norma física de preço.** O coeficiente (h/m², kg/m³) muda raramente;
+   o preço muda todo mês. Guarde os dois em tabelas distintas.
+2. **Monte a composição:** insumo × coeficiente = consumo; consumo × preço = custo
+   do insumo; soma = custo unitário direto.
+3. **Aplique BDI por componente** (administração, risco, lucro, tributo) — não como
+   percentual único somado.
+4. **Regionalize** por UF + mês de referência.
+5. **Versione.** Atualizar preço **nunca** reescreve orçamento aprovado: cria versão
+   nova + diff.
+6. **Use tabela de equivalência** quando o mesmo serviço tem código diferente por
+   fonte (SINAPI vs SEINFRA).
 
-## Technical Implementation
+## Implementation
+
+### Technical Implementation
 
 ```python
 from typing import Dict, List, Optional
@@ -111,8 +130,6 @@ class Budget:
         return child
 ```
 
-## Quick Start
-
 ```python
 comp = ServiceComposition("S-001", "Concreto fck25", "m3", [
     CompositionInput("C-001", "Cimento", InputType.MATERIAL,
@@ -126,14 +143,46 @@ b.lines.append(BudgetLine("S-001", 120.0, comp.unit_cost))
 print(f"Total com BDI: R$ {b.total_with_bdi:,.2f}")
 ```
 
-## Rules
+## Pitfalls
 
-1. Physical norms and prices stored separately (norms change rarely).
-2. Imported price tables never rewrite an approved budget: new version + diff.
-3. One currency per project; regionalize SINAPI/SEINFRA by UF + month.
-4. Equivalence table when the same service has different codes per source.
+- **BDI não é percentual único.** Somar componentes (adm + risco + lucro + tributo)
+  é errado — BDI tem fórmula com incidência em cascata. Use a composição correta.
+- **Preço sem data-base não é preço.** SINAPI/SEINFRA são tabelas mensais por UF.
+  Sempre cite a referência.
+- **Atualizar preço não pode reescrever orçamento aprovado.** Gere versão nova e
+  mostre o diff. Reescrever apaga a rastreabilidade da proposta.
+- **Norma física e preço no mesmo campo.** Se estão juntos, a mudança de preço
+  corrompe o coeficiente. Separe.
+- **Misturar moeda.** Um projeto, uma moeda. Conversão escondida gera erro de 5 dígitos.
+- **Mesmo serviço, códigos diferentes.** SINAPI e SEINFRA têm códigos distintos para
+  o mesmo serviço. Sem tabela de equivalência, você conta duas vezes.
+- **Composição sem produtividade declarada.** Coeficiente sem origem é chute
+  disfarçado de engenharia.
 
-## Resources
+## Examples
 
-- plataforma-obras `BudgetView.tsx` + `CatalogView.tsx` + `shared/price-sources`
-- SINAPI / SEINFRA official tables (CSV/XLSX import, keep source + month + UF)
+**Input:** "Composição de alvenaria de vedação, SINAPI, BDI 28%, desonerado, SP, mês 09."
+
+**Output:**
+
+| Insumo | Un | Coef. | Preço unit. | Custo |
+|---|---|---|---|---|
+| Bloco cerâmico | un | 13,50 | R$ 1,42 | R$ 19,17 |
+| Argamassa | m³ | 0,0085 | R$ 412,00 | R$ 3,50 |
+| Pedreiro | h | 0,4200 | R$ 24,80 | R$ 10,42 |
+| Servente | h | 0,2100 | R$ 18,20 | R$ 3,82 |
+| **Custo direto** | m² | | | **R$ 36,91** |
+| BDI 28% | | | | R$ 10,33 |
+| **Preço unitário** | m² | | | **R$ 47,24** |
+
+Referência: SINAPI SP, 09/2026, desonerado. Norma física e preço em tabelas separadas.
+
+## Verification
+
+Antes de entregar:
+- [ ] Norma física e preço em tabelas separadas
+- [ ] Data-base e UF declarados
+- [ ] BDI aplicado por fórmula, não por soma de percentuais
+- [ ] Orçamento aprovado preservado (nova versão + diff, não sobrescrita)
+- [ ] Equivalência de códigos verificada entre fontes
+- [ ] Custo direto conferido à mão em 1 composição

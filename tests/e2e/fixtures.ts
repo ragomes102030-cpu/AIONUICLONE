@@ -166,7 +166,7 @@ function resolvePackagedApp(): { executablePath: string; cwd: string } | null {
       if (!fs.existsSync(macDir)) continue;
       const appBundle = fs.readdirSync(macDir).find((f) => f.endsWith('.app'));
       if (appBundle) {
-        const exe = path.join(macDir, appBundle, 'Contents', 'MacOS', 'AionUi');
+        const exe = path.join(macDir, appBundle, 'Contents', 'MacOS', 'Arquimedes');
         if (fs.existsSync(exe)) return { executablePath: exe, cwd: macDir };
       }
     }
@@ -176,7 +176,7 @@ function resolvePackagedApp(): { executablePath: string; cwd: string } | null {
       const dirPath = path.join(outDir, dir);
       if (!fs.existsSync(dirPath)) continue;
       // Try common executable names
-      for (const name of ['aionui', 'AionUi']) {
+      for (const name of ['arquimedes', 'Arquimedes', 'aionui', 'AionUi']) {
         const exe = path.join(dirPath, name);
         if (fs.existsSync(exe)) return { executablePath: exe, cwd: dirPath };
       }

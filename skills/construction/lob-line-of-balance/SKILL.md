@@ -1,6 +1,12 @@
 ---
-name: 'lob-line-of-balance'
-description: 'Line of Balance for repetitive construction (pavimentos, units, stretches): pace, crews, rhythm, interference detection, rebalancing. Use for linha de balanco, LOB, ritmo, pavimento tipo, repetitivo, balanceamento de equipes.'
+name: lob-line-of-balance
+description: >-
+  Plans and validates Line of Balance (LOB / linha de balanço) for repetitive
+  construction: pace (ritmo), crews, work fronts, continuity, interference detection
+  and rebalancing. Use when the user mentions linha de balanço, LOB, ritmo de produção,
+  pavimento tipo, obra repetitiva, frentes de trabalho simultâneas, or asks how to keep
+  crews busy across floors/units. Do NOT use for one-off linear schedules (use
+  `gantt-chart`) or CPM float analysis (use `cpm-network-validator`).
 homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
 metadata:
   {
@@ -16,20 +22,33 @@ metadata:
 
 # Line of Balance (LOB)
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Names linha de balanço, LOB, ritmo, pace, pavimento tipo, unidade repetitiva
+- Asks "como manter as equipes ocupadas?", "tem conflito de frente?"
+- Works on a building with typical floors, a housing complex, or repeated stretches
+- Needs to balance crews across locations
 
-Repetitive work (typical floors, housing units) scheduled as
-independent bars hides rhythm conflicts: crews arrive before the
-front is free, or idle waiting. Classic Gantt misses interference.
+Do NOT use for: obra linear não repetitiva (`gantt-chart`); folga/CPM (`cpm-network-validator`).
 
-### Solution
+## Workflow
 
-Pace-based planning: each activity has rhythm (units/day) and crew
-count; plot location x time; detect crossings; rebalance by crews.
+1. **Confirme a repetição.** LOB exige locais repetidos (pavimentos, unidades,
+   trechos). Sem repetição, use Gantt.
+2. **Parametrize cada atividade:** local inicial, local final, ritmo (unidades/dia),
+   nº de equipes, calendário.
+3. **Desenhe local × tempo.** Cada atividade é uma linha; a inclinação é o ritmo.
+4. **Detecte cruzamento.** Linhas que se cruzam = interferência: a equipe chega
+   antes da frente estar livre.
+5. **Verifique continuidade.** Linha horizontal = equipe ociosa; linha vertical =
+   ritmo impossível.
+6. **Rebalanceie por equipes primeiro.** Só depois mexa no ritmo.
+7. **Reporte o caminho crítico da LOB** (a sequência que determina o prazo total).
 
-## Technical Implementation
+## Implementation
+
+### Technical Implementation
 
 ```python
 from typing import Dict, List, Optional
@@ -85,8 +104,6 @@ def crews_to_match_rhythm(reference_rhythm: float,
     return max(1, math.ceil(reference_rhythm * duration_per_unit))
 ```
 
-## Quick Start
-
 ```python
 est = LobActivity("EST", "Estrutura", 1, 12, 5.0, crews=2)
 alv = LobActivity("ALV", "Alvenaria", 1, 12, 4.0, crews=1, start_day=6)
@@ -96,13 +113,48 @@ print(f"Interferencias: {hits[:3]}")
 print("Equipes ALV p/ acompanhar:", crews_to_match_rhythm(est.rhythm, 4.0))
 ```
 
-## Rules
+## Pitfalls
 
-1. LOB is parameterized: activity, first/last location, pace, crews, calendar.
-2. Never hardcode `IF(1<=N)`-style always-true guards or literal rhythms.
-3. Rebalance by crews first; changing pace without crews hides the real cost.
+- **LOB não é Gantt.** Gantt mostra barras por data; LOB mostra ritmo por local.
+  Se não há repetição, LOB não se aplica.
+- **Nunca hardcode `IF(1<=N)`-style always-true guards.** É planilha morta que
+  aparenta funcionar. Parametrize tudo.
+- **Ritmo literal é ritmo errado.** Ritmo vem de produtividade × equipes, não de
+  número digitado. Se está digitado, não reage a mudança de equipe.
+- **Rebalanceie por equipes primeiro.** Mudar o ritmo sem mexer nas equipes esconde
+  o custo real da solução.
+- **Cruzamento não é erro, é conflito.** Aponte onde e entre quais atividades, e
+  proponha o rebalanceamento — não "conserte" sozinho.
+- **Continuidade ≠ ocupação total.** Equipe 100% ocupada com ritmo errado gera
+  estoque. Meça a frente, não só a ocupação.
 
-## Resources
+## Examples
 
-- plataforma-obras `GanttView.tsx` (LOB view) + lean-planning-mcp
-- Mattos - repetitive scheduling chapter
+**Input:** "Linha de balanço, edifício de 12 pavimentos tipo, 2 frentes.
+Alvenaria ritmo 0,5 pav/dia, 2 equipes. Reboco ritmo 0,4 pav/dia, 2 equipes."
+
+**Output:**
+
+| Atividade | Ritmo (pav/dia) | Equipes | Duração (12 pav) | Início | Fim |
+|---|---|---|---|---|---|
+| Alvenaria | 0,50 | 2 | 12 dias | Pav 1 | Pav 12 |
+| Reboco | 0,40 | 2 | 15 dias | Pav 1 (+3) | Pav 12 (+3) |
+
+**Interferência detectada:** reboco inicia no pav 1 quando alvenaria ainda está no
+pav 3 → **cruzamento na frente 2-3**. A equipe de reboco chega antes da frente livre.
+
+**Rebalanceamento proposto:** manter 2 equipes de alvenaria e reduzir reboco para
+1 equipe no início (ritmo efetivo 0,20 → aguarda), ou adicionar 1 equipe de reboco
+(ritmo 0,60 > alvenaria → elimina o cruzamento).
+
+Caminho crítico LOB: alvenaria (12 dias) determina o prazo.
+
+## Verification
+
+Antes de entregar:
+- [ ] Toda atividade tem ritmo derivado (produtividade × equipes), não digitado
+- [ ] Nenhuma linha vertical (ritmo impossível) sem justificativa
+- [ ] Cruzamentos listados com par de atividades e local exato
+- [ ] Rebalanceamento propõe mudança de equipe, não só de ritmo
+- [ ] Caminho crítico da LOB identificado
+- [ ] Calendário aplicado (dias úteis, feriados)

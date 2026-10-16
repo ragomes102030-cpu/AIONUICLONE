@@ -1,6 +1,12 @@
 ---
-name: 'daily-progress-report'
-description: 'Generate automated daily progress reports from site data. Track work completed, labor hours, equipment usage, and weather conditions.'
+name: daily-progress-report
+description: >-
+  Generates daily construction progress reports (RDO) from structured site data:
+  work completed, labor hours, equipment usage, weather and delays. Use when the user
+  mentions RDO, diário de obra, relatório diário, parte diária, or asks to write up
+  what happened on site today — even without naming RDO. Do NOT use for contractual
+  measurement (use `production-measurement-control`) or cost tracking (use
+  `construction-cost-control`).
 homepage: 'https://datadrivenconstruction.io'
 metadata:
   {
@@ -16,22 +22,31 @@ metadata:
 
 # Daily Progress Report Generator
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Names RDO, diário de obra, relatório diário, parte diária, boletim de campo
+- Says "escreve o que aconteceu hoje na obra" (sem citar RDO)
+- Wants labor hours, equipment and weather recorded
+- Needs delay justification for the day
 
-Site managers spend hours creating daily reports:
+Do NOT use for: medição contratual (`production-measurement-control`); custo
+(`construction-cost-control`).
 
-- Manual data collection
-- Inconsistent formats
-- Delayed submissions
-- Missing information
+## Workflow
 
-### Solution
+1. **Colete os fatos do dia:** serviços executados, mão de obra presente, equipamento,
+   clima, ocorrências.
+2. **Registre quantidade executada** por serviço e frente.
+3. **Registre horas de mão de obra** por função (não só o total).
+4. **Registre equipamento** por horas de operação e de ociosidade.
+5. **Registre o clima** com impacto: choveu? quanto? atrasou o quê?
+6. **Registre ocorrências** com responsável e ação.
+7. **Assine e date.** RDO sem data e responsável não tem valor contratual.
 
-Automated daily progress report generation from structured site data inputs.
+## Implementation
 
-## Technical Implementation
+### Technical Implementation
 
 ```python
 import pandas as pd
@@ -338,8 +353,6 @@ class DailyProgressReporter:
         return "\n".join(lines)
 ```
 
-## Quick Start
-
 ```python
 from datetime import date
 
@@ -375,8 +388,6 @@ reporter.add_labor(report, "Concrete", "ABC Concrete Co", 8, 10, 2)
 reporter.export_to_excel(report, "daily_report.xlsx")
 ```
 
-## Common Use Cases
-
 ### 1. Generate Text Summary
 
 ```python
@@ -398,6 +409,59 @@ summary = reporter.calculate_summary(report)
 print(f"Productivity: {summary['total_manhours']} man-hours")
 ```
 
-## Resources
+## Pitfalls
 
-- **DDC Book**: Chapter 4.1 - Site Data Collection
+- **RDO sem clima não serve para pleito.** Chuva é a justificativa mais comum de
+  prorrogação. Registre hora de início e fim, não só "choveu".
+- **Horas de mão de obra agrupadas escondem a produtividade.** Registre por função
+  (pedreiro, servente, armador) para poder calcular produtividade depois.
+- **Equipamento ocioso é custo real.** Registre as horas paradas e o motivo. Só a
+  hora operada esconde o prejuízo.
+- **Ocorrência sem responsável não se resolve.** Toda ocorrência precisa de
+  responsável e prazo de ação.
+- **RDO reescrito depois perde valor probatório.** Corrija com aditamento datado,
+  não sobrescrevendo.
+- **Dia sem produção não é dia vazio.** Registre o motivo (chuva, falta de material,
+  greve). "Nada feito" sem justificativa prejudica o pleito.
+- **Quantidade sem frente é inauditável.** Sempre serviço + frente + quantidade.
+
+## Examples
+
+**Input:** "Hoje: 180 m² de alvenaria pav 4, 6 pedreiros, 6 serventes, 8h.
+Betoneira 6h operando, 2h parada (falta de material). Chuva 14h-16h."
+
+**Output:**
+
+```
+RELATÓRIO DIÁRIO DE OBRA — 15/10/2026
+Obra: Edifício Residencial | Responsável: [nome] | Assinatura: ____
+
+SERVIÇOS EXECUTADOS
+  Alvenaria de vedação — Pav 4 — 180 m²
+
+MÃO DE OBRA                    EQUIPAMENTO
+  Pedreiro ........ 6 × 8h = 48h    Betoneira: 6h oper. / 2h parada
+  Servente ........ 6 × 8h = 48h    Motivo da parada: falta de argamassa
+
+CONDIÇÕES CLIMÁTICAS
+  Manhã: bom. 14h-16h: chuva forte (2h). Impacto: alvenaria externa parada 2h.
+
+OCORRÊNCIAS
+  1. Falta de argamassa (14h) — Resp.: Almoxarife — Ação: reforçar pedido
+  2. Chuva 14h-16h — Impacto: 2h perdidas na frente externa
+
+Produtividade: 180 / (6 × 8) = 3,75 m²/pedreiro·h (ref.: 4,00 → 94%)
+```
+
+Dia com 2h perdidas (chuva) + 2h de equipamento ocioso — registrado para pleito.
+
+## Verification
+
+- [ ] Data e responsável presentes
+- [ ] Quantidade por serviço **e** frente
+- [ ] Horas de mão de obra **por função**
+- [ ] Equipamento com hora operada **e** parada + motivo
+- [ ] Clima com hora de início/fim e impacto no serviço
+- [ ] Toda ocorrência com responsável e ação
+- [ ] Produtividade calculada a partir das horas
+- [ ] Sem reescrita retroativa (correção via aditamento)

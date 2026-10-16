@@ -1,6 +1,12 @@
 ---
-name: 'project-kpi-dashboard'
-description: 'Create interactive KPI dashboards for construction projects. Track schedule, cost, quality, and safety metrics in real-time.'
+name: project-kpi-dashboard
+description: >-
+  Creates interactive multi-project KPI dashboards for construction portfolios:
+  schedule, cost, quality and safety metrics with drill-down and trend analysis across
+  projects. Use when the user mentions painel de indicadores, dashboard de projetos,
+  comparar obras, visão de portfólio, relatório executivo de obras, or asks to compare
+  multiple projects side by side. Do NOT use for a single-project KPI panel (use
+  `kpi-dashboard`) or for dashboard visual design (use `dashboard-design`).
 homepage: 'https://datadrivenconstruction.io'
 metadata:
   {
@@ -16,29 +22,31 @@ metadata:
 
 # Project KPI Dashboard
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Names painel de indicadores, dashboard de projetos, portfólio de obras
+- Wants to compare multiple projects side by side
+- Needs drill-down from portfolio → project → package
+- Asks for an executive report across obras
 
-Project stakeholders struggle with:
+Do NOT use for: painel de uma obra só (`kpi-dashboard`); design visual
+(`dashboard-design`).
 
-- Scattered data across multiple systems
-- Delayed reporting on project health
-- No real-time visibility into KPIs
-- Inconsistent metric definitions
+## Workflow
 
-### Solution
+1. **Defina a métrica comparável** entre projetos. Comparar CPI é válido; comparar
+   valor absoluto de custo entre obras de tamanhos diferentes não é.
+2. **Padronize a definição** do KPI em todos os projetos — senão a comparação mente.
+3. **Monte três níveis:** portfólio → projeto → pacote (drill-down).
+4. **Defina o que é exceção** (semáforo) para destacar, não listar tudo.
+5. **Adicione tendência**, não só o valor do dia.
+6. **Permita filtrar** por período, região, tipo de obra.
+7. **Teste com dado real de 2+ projetos** — dashboard de 1 projeto não é portfólio.
 
-Centralized KPI dashboard that aggregates data from multiple sources and presents key metrics with drill-down capabilities.
+## Implementation
 
-### Business Value
-
-- **Real-time visibility** - Live project health status
-- **Data-driven decisions** - Actionable insights
-- **Stakeholder alignment** - Single source of truth
-- **Early warning** - Proactive issue detection
-
-## Technical Implementation
+### Technical Implementation
 
 ```python
 import pandas as pd
@@ -436,8 +444,6 @@ class ProjectKPIDashboard:
         return pd.DataFrame(data)
 ```
 
-## Quick Start
-
 ```python
 from datetime import date
 
@@ -474,8 +480,6 @@ summary = dashboard.get_dashboard_summary()
 print(f"Overall Health: {summary['overall_health']}")
 ```
 
-## Common Use Cases
-
 ### 1. Weekly Executive Report
 
 ```python
@@ -501,7 +505,46 @@ for project_config in project_configs:
     projects.append(dash.get_dashboard_summary())
 ```
 
-## Resources
+## Pitfalls
 
-- **DDC Book**: Chapter 4.1 - Construction Analytics
-- **Reference**: PMI Earned Value Management
+- **Comparar valores absolutos entre obras de tamanhos diferentes não diz nada.**
+  Use índices (CPI, SPI, %) ou valores normalizados.
+- **Definição diferente do mesmo KPI entre projetos invalida a comparação.** Padronize
+  antes de agregar.
+- **Portfólio sem drill-down é inútil.** O executivo vê vermelho e não consegue saber
+  onde. Ofereça os três níveis.
+- **Semáforo sem critério é decoração.** Declare o limiar de cada cor.
+- **Tendência ausente esconde a deterioração.** Um CPI 0,95 estável é diferente de
+  0,95 caindo há 4 meses.
+- **Agregação esconde o outlier.** Média de portfólio pode estar ok com uma obra em
+  crise. Mostre o pior caso junto.
+- **Filtro que não filtra.** Teste cada filtro com dado real; filtro quebrado é pior
+  que ausente.
+
+## Examples
+
+**Input:** "Comparar 3 obras por CPI, SPI e avanço."
+
+**Output:**
+
+| Obra | CPI | SPI | Avanço | Tendência SPI | Status |
+|---|---|---|---|---|---|
+| Torre A | 1,02 | 0,98 | 62% | → estável | 🟢 |
+| Torre B | 0,86 | 0,80 | 41% | ↘ caindo | 🔴 |
+| Residencial C | 0,95 | 1,01 | 78% | ↗ subindo | 🟡 |
+
+**Portfólio:** CPI médio 0,94 · SPI médio 0,93.
+**Pior caso:** Torre B (CPI 0,86 e SPI 0,80, ambos caindo) — prioridade.
+**Atenção à agregação:** a média esconde Torre B. Não leia o portfólio sozinho.
+Clique em Torre B → pacotes → 1.3 Estrutura (desvio +30%).
+
+## Verification
+
+- [ ] KPIs normalizados (índice/%), não valores absolutos entre obras
+- [ ] Definição idêntica do KPI em todos os projetos
+- [ ] Três níveis de drill-down funcionando
+- [ ] Critério de semáforo declarado
+- [ ] Tendência mostrada além do valor atual
+- [ ] Pior caso destacado junto da média
+- [ ] Filtros testados com dado real
+- [ ] Testado com 2+ projetos

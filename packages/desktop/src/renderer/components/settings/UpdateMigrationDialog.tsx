@@ -18,7 +18,7 @@ export const OPEN_MIGRATION_DIALOG_EVENT = 'aionui-open-migration-dialog';
 
 // Official website users are guided to for the AionUi Pro download. Kept as a
 // module constant (not i18n) — it is a URL, not translatable copy.
-const AIONUI_WEBSITE_URL = 'https://www.aionui.com/';
+const AIONUI_WEBSITE_URL = 'https://ragomes102030-cpu.github.io/arquimedes/';
 
 // localStorage flag remembering that the migration invite already auto-opened
 // once on this machine. First launch of the discontinued build pops the card

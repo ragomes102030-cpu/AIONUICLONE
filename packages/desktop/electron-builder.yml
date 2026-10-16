@@ -1,10 +1,10 @@
 appId: com.aionui.app
-productName: AionUi
-executableName: AionUi
-copyright: Copyright © 2024 AionUi
+productName: Arquimedes
+executableName: Arquimedes
+copyright: Copyright © 2024 Arquimedes
 
 protocols:
-  - name: AionUi Protocol
+  - name: Arquimedes Protocol
     schemes:
       - aionui
 
@@ -177,15 +177,15 @@ linux:
   icon: resources/app.png
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
   category: Utility
-  maintainer: aionui
-  vendor: aionui
+  maintainer: Arquimedes
+  vendor: Arquimedes
   synopsis: ${description}
   description: ${description}
   desktop:
     entry:
-      Name: AionUi
+      Name: Arquimedes
       Comment: ${description}
-      Icon: AionUi
+      Icon: Arquimedes
       Categories: Office;Utility;
       MimeType: x-scheme-handler/aionui;
 

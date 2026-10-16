@@ -1,39 +1,79 @@
 ---
 name: oce-scheduling-4d5d
-description: '4D scheduling and 5D cost modelling in OpenConstructionERP: build task schedules, link tasks to BIM elements and BOQ lines, roll up the cost model over time, and export Gantt/sequence views. Use for schedule-cost integration workflows.'
+description: >-
+  Builds 4D schedules and 5D cost models in OpenConstructionERP: task graphs,
+  BIM element linkage, BOQ line linkage, cost roll-up over time, and Gantt/sequence
+  export. Use when the user mentions 4D, 5D, BIM scheduling, modelo de custo por
+  tarefa, cronograma com BIM, sequência construtiva visual, or integrating schedule
+  with BIM/cost in OpenConstructionERP. Do NOT use for a plain Excel schedule (use
+  `construction-planning`) or standalone CPM validation (use `cpm-network-validator`).
 ---
 
 # 4D Scheduling & 5D Cost Model in OpenConstructionERP
 
-## Concepts
+## When to Use
 
-- **4D** = schedule + BIM: every task can reference BIM elements so the sequence is visual.
-- **5D** = schedule + cost: cost roll-ups per task/phase from linked BOQ lines.
-- Both live on the same task graph — one source of truth for time and money.
+Use when the user:
+- Names 4D, 5D, BIM, cronograma com BIM, sequência construtiva visual
+- Works inside OpenConstructionERP
+- Needs to link tasks to BIM elements or BOQ lines
+- Wants cost rolled up over time per task/phase
+
+Do NOT use for: cronograma em Excel puro (`construction-planning`); validar rede
+isolada (`cpm-network-validator`).
 
 ## Workflow
 
-1. **Build the task graph** — tasks, durations, dependencies (FS/SS/FF), milestones, critical path.
-2. **Link BIM elements** to tasks (from `oce-bim-takeoff`) — visual sequencing and progress colouring.
-3. **Link BOQ lines** to tasks (from `oce-estimate-boq`) — each task carries its direct cost.
-4. **Roll up** — phase/project totals, cash-flow curves (cost over time), SPI/CPI views.
-5. **Track** — daily diary entries and punch items update actuals; variance reports compare plan vs actual.
+1. **Construa o grafo de tarefas** — tarefas, durações, dependências (FS/SS/FF),
+   marcos, caminho crítico. É a base: sem ele, 4D e 5D não existem.
+2. **Vincule elementos BIM** às tarefas (de `oce-bim-takeoff`) → sequência visual
+   e coloração por progresso.
+3. **Vincule linhas do BOQ** às tarefas (de `oce-estimate-boq`) → cada tarefa carrega
+   seu custo direto.
+4. **Faça o roll-up** — totais por fase/projeto, curvas de caixa (custo no tempo),
+   visões SPI/CPI.
+5. **Acompanhe** — diário de obra e punch list atualizam o realizado; relatório de
+   variância compara plano × realizado.
 
-## Key endpoints
+## Pitfalls
 
-- tasks: create/update, dependencies, assignees, status board
-- scheduling: timeline data for the Gantt, milestone markers
-- cost model: `GET`-side roll-ups per task/phase; export to XLSX/PDF reports
+- **Sem grafo de tarefas não há 4D/5D.** Vínculo BIM ou BOQ sem dependência
+  produz animação bonita e cronograma inválido.
+- **Tarefa sem elemento BIM quebra a visualização.** A sequência fica com buracos.
+  Vincule 100% ou declare a cobertura (ex.: 85% dos elementos).
+- **BOQ sem correspondência de unidade gera custo errado.** m² de parede ≠ m² de
+  piso. Valide a unidade antes de vincular.
+- **5D não é orçamento.** É o orçamento distribuído no tempo. Sem cronograma correto,
+  a curva de custo é ficção.
+- **Custo direto não é custo total.** O roll-up de tarefa traz custo direto; BDI e
+  indiretos ficam no nível do orçamento. Não misture.
+- **Progresso visual ≠ progresso físico.** Coloração do modelo mostra o declarado.
+  Valide contra a medição antes de apresentar.
+- **Reprocessar apaga o histórico.** Mudar o vínculo BIM reescreve o passado. Versione.
 
-## Integration rules
+## Examples
 
-- One region/currency per project — the cost model never blends currencies.
-- Quantity changes from BIM re-link update BOQ line quantities, which update the cost model in turn.
-- Re-validate the BOQ after bulk changes; schedule conflicts surface in the timeline.
+**Input:** "Vincular o cronograma da Torre A ao modelo BIM e ao orçamento."
 
-## Best practices
+**Output:**
 
-1. Keep dependencies explicit — the critical path is only as good as the logic.
-2. Use milestones for payments/tender gates, not for activity progress.
-3. Compare plan vs actual weekly; adjust the forecast, not history.
-4. For multi-project portfolios, roll up by project and by currency group (never blended).
+| Tarefa | Dur | Depend. | Elem. BIM | Linha BOQ | Custo direto |
+|---|---|---|---|---|---|
+| T-01 Fundação | 20d | — | 12 (sapatas) | 1.2.1 | R$ 84.000 |
+| T-02 Estrutura | 45d | T-01 FS | 48 (pilares/vigas) | 1.3.1 | R$ 312.000 |
+| T-03 Alvenaria | 30d | T-02 FS | 96 (paredes) | 1.4.1 | R$ 96.000 |
+
+**Cobertura BIM:** 156/156 elementos (100%).
+**Curva 5D (custo no tempo):** R$ 492.000 distribuído em 95 dias.
+**SPI/CPI:** disponíveis por fase após lançamento do realizado.
+Premissa: unidade do BOQ confere com a do elemento (m² com m²).
+
+## Verification
+
+- [ ] Grafo de tarefas válido (sem ciclo) antes de vincular
+- [ ] Cobertura BIM declarada (%; ideal 100%)
+- [ ] Unidade BOQ × unidade do elemento conferida
+- [ ] Roll-up traz custo **direto**; BDI declarado como fora do escopo
+- [ ] Progresso visual validado contra a medição
+- [ ] Versão do vínculo registrada (reprocessar não apaga histórico)
+- [ ] SPI/CPI só exibidos após existir realizado

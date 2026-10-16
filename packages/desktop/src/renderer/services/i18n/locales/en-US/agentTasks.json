@@ -8,7 +8,7 @@
   "library": "Library",
   "scheduled": "Scheduled",
   "headerTitle": "Agent Tasks",
-  "headerDescription": "Each task creates a real AionCore conversation and dispatches the enabled agent. The plan comes from the agent via ACP events — AionUi only displays it.",
+  "headerDescription": "Each task creates a real AionCore conversation and dispatches the enabled agent. The plan comes from the agent via ACP events — Arquimedes only displays it.",
   "createNewTask": "Create new task",
   "agentLabel": "Agent",
   "assistantGroupLabel": "Assistants",

@@ -1,42 +1,41 @@
 ---
 name: production-control
-description: "Use this skill to build production-control workbooks in Excel — planned quantity (quantidade planejada), executed quantity (quantidade executada), balance (saldo), physical progress (avanço físico), productivity, performance, service, work front (frente), location, period, and planned-vs-actual (planejado x realizado) analysis. Trigger on: 'controle de produção', 'production control', 'quantidade planejada', 'quantidade executada', 'avanço físico', 'produtividade', 'desempenho', 'frente de serviço', 'serviço executado', 'planejado x realizado', 'produção de obra', 'measured quantities', 'physical progress', 'productivity analysis', 'production report', 'medição'. Output is a formula-driven .xlsx that computes progress and performance from user-provided quantities — NEVER invented productivity indices. Scene-layer on officecli-xlsx / construction-planning / construction-cost-control: inherits every xlsx hard rule; links to EAP/services and cost structures when provided. DO NOT invoke for: full scheduling/CPM (use cpm-scheduling / construction-planning), cost control (use construction-cost-control), or a visual Gantt (use gantt)."
+description: >-
+  Builds production-control workbooks for construction: planned vs executed
+  quantity, balance, physical progress, productivity, performance, service, work front,
+  location, period and planned-vs-actual analysis. Use when the user mentions controle
+  de produção, quantidade planejada x executada, avanço físico, produtividade, frente
+  de serviço, or asks "como está o avanço?" / "estamos no ritmo?". Do NOT use for
+  contractual measurement bulletins (use `production-measurement-control`) or cost
+  (use `construction-cost-control`).
 ---
 
-> **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — the underlying tool/CLI commands are usually cross-platform, but the surrounding shell syntax is not. Translate it to PowerShell before running:
->
-> | bash (macOS / Linux)              | PowerShell (Windows)                                                                |
-> | --------------------------------- | ----------------------------------------------------------------------------------- |
-> | `a && b`                          | run as two steps, or `a; if ($?) { b }`                                             |
-> | `cat <<'EOF' \| tool …` (heredoc) | write the text to a temp file, then pipe/pass that file to the tool                 |
-> | `VAR=$(cmd)` … `$VAR`             | `$VAR = cmd` … `$VAR`                                                               |
-> | `cmd > /dev/null`                 | `cmd > $null`                                                                       |
-> | `… \| grep PAT`                   | `… \| Select-String PAT`                                                            |
-> | `… \| jq …`                       | `… \| ConvertFrom-Json`, then read the fields                                       |
-> | `python3 x.py`                    | `python x.py` (or `py x.py`)                                                        |
-> | `~/dir`, `/tmp`                   | `$env:USERPROFILE\dir`, `$env:TEMP`                                                 |
-> | `cp` / `mkdir -p` / `rm -rf`      | `Copy-Item` / `New-Item -ItemType Directory -Force` / `Remove-Item -Recurse -Force` |
->
-> If a command has no obvious Windows equivalent, prefer the built-in file/HTTP tools over raw shell.
+# > **⚠️ Platform note — read before running any command.** The shell snippets in this skill are written for **macOS / Linux** (bash/zsh). Always check which OS you are on first. On **Windows** do **not** run them verbatim — the underlying tool/CLI commands are usually cross-platform, but the surrounding shell syntax is not. Translate it to PowerShell before running:
 
-# Production Control (scene-layer on officecli-xlsx)
+## When to Use
 
-Production control tracks **what was planned to be done, what was actually done, and the resulting progress and productivity** — per service, per work front, per location, per period. The special danger of this domain is **invented productivity indices**: a productivity figure is either computed from real, user-provided quantities and effort, or it is NOT VERIFIED. This skill makes that rule structural.
+Use when the user:
+- Names controle de produção, avanço físico, quantidade executada, frente de serviço
+- Asks "como está o avanço?", "estamos no ritmo?", "qual frente está atrasada?"
+- Needs planned vs executed by service, front and period
+- Wants productivity and performance indicators
 
-Everything about the engine comes from `officecli-xlsx`; EAP linkage and progress-weighting patterns come from `construction-planning`; deviations/rollup patterns from `construction-cost-control`. Not re-taught here.
+Do NOT use for: boletim de medição contratual (`production-measurement-control`);
+custo (`construction-cost-control`).
 
-## Setup
+## Workflow
 
-If `officecli` is missing:
+1. **Estruture por frente e período** — produção sem local não permite ação.
+2. **Separe** Planejado · Executado · Saldo.
+3. **Derive a produtividade:** `qty / (equipes × horas)`.
+4. **Compare com a produtividade de referência** → desempenho (%).
+5. **Calcule o avanço físico** por serviço e acumulado.
+6. **Identifique a frente crítica** (menor avanço ou maior desvio).
+7. **Projete a data de término** com a produtividade real, não a planejada.
 
-- **macOS / Linux**: `curl -fsSL https://d.officecli.ai/install.sh | bash`
-- **Windows (PowerShell)**: `irm https://d.officecli.ai/install.ps1 | iex`
+## Implementation
 
-Verify with `officecli --version` (open a new terminal if PATH hasn't picked up). If install fails, download a binary from https://github.com/iOfficeAI/OfficeCLI/releases.
-
-## ⚠️ Help-First Rule
-
-**When a prop name, enum value, or alias is uncertain, consult help before guessing.**
+### ⚠️ Help-First Rule
 
 ```bash
 officecli help xlsx                          # element list
@@ -44,47 +43,6 @@ officecli help xlsx cell                     # cell props + formula patterns
 officecli help xlsx conditionalformatting    # CF for progress/saldo signals
 officecli help xlsx validation               # dropdowns for frente/localizacao
 ```
-
-Help reflects the installed CLI version. When this skill and help disagree, **help wins**.
-
-## Mental Model & Inheritance
-
-**Inherits xlsx.** Read `officecli-xlsx` first (engine rules, shell, batch JSON, validate, cache-drift). Reuse the EAP structure from `construction-planning` when provided (services hang off EAP nodes) and the deviation/rollup formulas from `construction-cost-control`.
-
-**Core rules (verbatim, non-negotiable):**
-
-- **Nunca inventar índices de produtividade.** Productivity = executed quantity / effort (or the inverse, per convention). The inputs (quantity, effort/hours/crew-days) must come from the user or from a sourced register. If no effort data exists, the productivity cell is `"n/a"` (or blank) with a NOT VERIFIED note — NEVER a guessed index.
-- **Não inventar dados.** Planned quantities, executed quantities, and effort are inputs. Nothing fabricated.
-- **Não hardcodar valores calculados.** Saldo (= planejada − executada), avanço % (= executada/planejada), productivity, and performance are formulas, always.
-- **Não acoplar nenhuma Skill ao ARES ou a uma obra específica.** Obra-agnostic: service, front, and location values live in data/Config cells, never in formulas.
-- **Separar dados de entrada, cálculos e apresentação.** Registers (inputs) separate from the comparison/rollup sheets.
-
-## Core Principles
-
-1. **The three input registers.** Production data arrives as three input sheets (or one register with an `Origem` column):
-   - **Planejado** — planned quantities per service/front/location/period (input from the schedule or production plan).
-   - **Executado** — measured executed quantities per service/front/location/period (input from site measurement / medição).
-   - **Esforço** (optional) — effort spent (hours / crew-days / equipment hours) per service/front/period (input). WITHOUT this, productivity cannot be computed — and must not be.
-2. **Computed layer (formulas only):**
-   - **Saldo** = Planejado − Executado.
-   - **Avanço físico** = Executado / Planejado (guarded) — per line, rolled up by weight (cost or quantity weight from construction-planning conventions when an EAP exists).
-   - **Produtividade** = Executado / Esforço (or Esforço / Executado, per the user's stated convention — usually m²/h, m³/h, h/m²).
-   - **Desempenho** = Productividade realizada / Produtividade de referência (the reference is an explicit Config input with source — benchmark from the user's historical data or contract; never invented).
-3. **Dimensions are data-driven.** `Serviço`, `Frente`, `Localização`, `Período` are columns (with dropdowns where stable lists exist), and rollups are `SUMIFS` over those dimensions. No hardcoded dimension names in formulas.
-4. **Progress without productivity data is still valid** — as quantity-based progress; the productivity columns show `"n/a"` and are reported NOT VERIFIED. Never leave a fake index.
-
-## Workflow
-
-### Phase 1 — Intake
-
-Get from the user/leader:
-
-- List of services (or EAP reference from construction-planning).
-- Work fronts and locations (dimensions).
-- Period structure (daily/weekly/monthly; period labels).
-- Which registers exist: planned, executed, effort (and their sources).
-- Productivity convention: quantity-per-effort (e.g. m²/h) or effort-per-quantity (h/m²)? What unit?
-- Reference productivity source (historical/contract) — if none, mark as PENDING; do not invent.
 
 ### Phase 2 — Workbook skeleton
 
@@ -98,14 +56,6 @@ done
 officecli close "$FILE"
 ```
 
-Sheet roles:
-
-- **Config** — productivity convention, units, reference values, status date.
-- **Planejado / Executado / Esforco** — input registers (blue).
-- **Controle de Producao** — the comparison view: one row per service×front×location (or per line item), saldo/avanço/produtividade formulas.
-- **Rollup** — by service, by front, by period.
-- **Summary** — headline KPIs: overall progress, saldo total, worst/best fronts, productivity trend.
-
 ### Phase 3 — Config
 
 ```bash
@@ -117,8 +67,6 @@ officecli set "$FILE" /Config/C4 --prop value="Fonte: historico do usuario (PEND
 
 ### Phase 4 — Input registers
 
-Each register: `Serviço` | `Frente` | `Localização` | `Período` | `Quantidade` | (`Esforço` where applicable) | `Documento/Medição` (traceability). Header formatted, blue values, no formulas.
-
 ```bash
 officecli set "$FILE" '/Planejado/A1:G1' --prop fill=1F3864 --prop font.color=FFFFFF --prop font.bold=true
 officecli set "$FILE" /Planejado/A2 --prop value="Servico" --prop font.bold=true
@@ -126,8 +74,6 @@ officecli set "$FILE" /Planejado/B2 --prop value="Frente"  --prop font.bold=true
 ```
 
 ### Phase 5 — Comparison view (Controle de Producao)
-
-One row per service×front×location (composite key built from the registers). Formula columns:
 
 ```bash
 # P = Planejado qty (SUMIFS by service+frente+localizacao), E = Executado qty, F = Esforco
@@ -141,8 +87,6 @@ officecli set "$FILE" '/Controle de Producao/I2' --prop 'formula==IF(OR($F2=0,$F
 officecli set "$FILE" '/Controle de Producao/J2' --prop 'formula==IF(OR($I2="n/a",Config!$B$4=0),"n/a",$I2/Config!$B$4)' --prop numFmt='0.0%'
 ```
 
-**Productivity guard is double:** the formula returns `"n/a"` when effort is missing AND the cell should be reported NOT VERIFIED in the QA note. If a user later supplies effort, the cells compute — nothing guessed.
-
 ### Phase 6 — Rollups & Summary
 
 ```bash
@@ -152,13 +96,7 @@ officecli set "$FILE" /Rollup/D5 --prop 'formula==SUMIFS("Controle de Producao"!
 officecli set "$FILE" /Rollup/E5 --prop 'formula==IF($D5=0,"n/a",$C5/$D5)' --prop numFmt='0.0%'
 ```
 
-Summary: overall progress (Σ executada / Σ planejada, guarded), saldo total, worst-performing front (formula with `MIN`/`INDEX(MATCH)` — or a simple sorted rollup), productivity trend over periods (line chart from Rollup when ≥ 6 periods). All formulas.
-
-## QA (REQUIRED — Delivery Gate)
-
-**Assume there are problems. Your job is to find them.** Run the inherited cycle (error sweep, validate, HTML preview) AND the production-specific gates:
-
-**Gate PC-1 — Zero invented productivity.** Every productivity/desempenho cell is either a formula over inputs or `"n/a"`. No cell contains a typed number that looks like a productivity index:
+### QA (REQUIRED — Delivery Gate)
 
 ```bash
 Bad=$(officecli query "$FILE" 'cell[type=Number]' --json \
@@ -166,26 +104,43 @@ Bad=$(officecli query "$FILE" 'cell[type=Number]' --json \
 [ "$Bad" -eq 0 ] && echo "Gate PC-1 OK (no hardcoded computed cells)" || { echo "REJECT Gate PC-1: $Bad hardcoded"; exit 1; }
 ```
 
-**Gate PC-2 — No reference index without a source.** If Config holds a reference productivity, it carries a source note (history/contract). No source → mark PENDING and DO NOT use it in desempenho formulas (reference cell is blank until sourced). Verify the note cell is non-empty.
+## Pitfalls
 
-**Gate PC-3 — Progress guard.** No `#DIV/0!` anywhere (every division guarded). `query 'cell:contains("#DIV/0!")'` == 0. If any `#DIV/0!` exists, the unguarded formula must be fixed.
+- **Avanço sem frente esconde o problema.** 80% no total pode ser 100% numa frente
+  e 40% em outra. Sempre abra por frente.
+- **Produção ausente não é zero.** `SEM DADO` ≠ 0.
+- **Produtividade real ≠ planejada.** Projetar o término com a planejada ignora o
+  desempenho medido. Use a real e diga que usou.
+- **Saldo acumulado esconde o ritmo.** Saldo pode estar ok e o ritmo atual, ruim.
+  Mostre a produção do período, não só o acumulado.
+- **Frente sobrecarregada não acelera.** Adicionar equipe onde a frente não comporta
+  não aumenta produção — gera interferência. Verifique antes de sugerir.
+- **Avanço físico ≠ financeiro.** Serviço caro e pouco avançado distorce a leitura
+  financeira. Mantenha as duas curvas.
 
-**Gate PC-4 — Traceability.** Every line in the comparison view traces to a register row (spot-check 3 via `get --json` formula inspection — each formula references Planejado/Executado/Esforco). Registers contain zero formulas (they are inputs).
+## Examples
 
-**Gate PC-5 — Totals reconcile.** Σ register quantities = Σ comparison-view quantities per dimension (three-way spot-check of cachedValues). Drift = reject.
+**Input:** "Alvenaria: pav 1-3 a 100%, pav 4 a 60%, pav 5-12 a 0%.
+Planejado acumulado 4.000 m², executado 3.600 m²."
 
-**Gate PC-6 — Visual floor (mandatory).** `officecli view "$FILE" html` — no `###`, no truncated service/front labels, progress/colors render, headers formatted, summary readable. REJECT on any defect.
+**Output:**
 
-If anything fails, fix at source and re-run the full cycle.
+| Frente | Planejado | Executado | Saldo | Avanço | Desempenho |
+|---|---|---|---|---|---|
+| Pav 1-3 | 1.200 | 1.200 | 0 | 100% | 100% |
+| Pav 4 | 400 | 240 | 160 | 60% | 88% |
+| Pav 5-12 | 2.400 | 0 | 2.400 | 0% | — |
+| **Total** | 4.000 | 3.600 | 400 | **90%** | **94%** |
 
-## Honest limits
+**Frente crítica:** pav 5-12 (0% executado, prazo começando).
+**Projeção:** com produtividade real (94% da planejada), término em ~12,8 períodos
+em vez de 12. Premissa: ritmo atual mantido.
 
-- Productivity without effort data is structurally impossible to compute — the workbook says `"n/a"` and the QA note says NOT VERIFIED. That is a capability limit, not a shortcut to fill.
-- Quantity rollups trust the measurement registers; measurement quality is a site-data problem, not a workbook problem (spreadsheet-audit can verify register integrity).
-- Reference productivity benchmarks are business data — the skill cannot know them; it only ever asks for them explicitly.
-- Cache-drift: after feeding new measurement data, re-issue downstream formulas or close+reopen so rollups carry fresh cachedValues (→ officecli-xlsx cache-drift).
+## Verification
 
-## Reference
-
-- Engine: `officecli-xlsx`; EAP/progress weighting: `construction-planning`; deviations/rollups: `construction-cost-control`.
-- Schedule link: `cpm-scheduling` / `gantt`; output boards: `dashboard-design`; final status: `delivery-gate`.
+- [ ] Produção aberta por frente **e** período
+- [ ] `Saldo = Planejado − Executado` confere
+- [ ] Produtividade derivada de horas × equipes
+- [ ] Desempenho comparado a uma referência declarada
+- [ ] Projeção usa produtividade **real** e diz isso
+- [ ] Avanço físico separado do financeiro

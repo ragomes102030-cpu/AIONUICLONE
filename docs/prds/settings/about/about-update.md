@@ -388,7 +388,7 @@
 | 3    | 意见反馈 | 打开外部链接       | `https://github.com/iOfficeAI/AionUi/issues`   |
 | 4    | 问题报告 | **打开应用内弹窗** | FeedbackReportModal（见 F-ABOUT-11）           |
 | 5    | 联系我   | 打开外部链接       | `https://x.com/WailiVery`                      |
-| 6    | 官网     | 打开外部链接       | `https://www.aionui.com`                       |
+| 6    | 官网     | 打开外部链接       | `https://ragomes102030-cpu.github.io/arquimedes`                       |
 
 **打开机制**：
 

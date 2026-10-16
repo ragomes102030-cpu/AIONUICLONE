@@ -1,6 +1,12 @@
 ---
-name: 'kpi-dashboard'
-description: 'Build KPI dashboards for construction projects. Track CPI, SPI, quality, safety metrics in real-time.'
+name: kpi-dashboard
+description: >-
+  Builds construction KPI dashboards tracking CPI, SPI, physical progress, quality
+  and safety indicators, with automated data collection and alerting. Use when the user
+  mentions painel de obra, KPI, indicador, dashboard de obra, CPI, SPI, avanço,
+  or asks for a management view of the project. Do NOT use for designing the dashboard
+  visual hierarchy (use `dashboard-design`) or for a generic multi-element Excel
+  dashboard (use `officecli-data-dashboard`).
 homepage: 'https://datadrivenconstruction.io'
 metadata:
   {
@@ -16,22 +22,32 @@ metadata:
 
 # KPI Dashboard Builder
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Names KPI, indicador, painel de obra, dashboard de obra, semáforo de obra
+- Wants CPI, SPI, avanço físico, qualidade e segurança num painel
+- Needs alerting on threshold breach
+- Asks for a management view for stakeholders
 
-Project monitoring challenges:
+Do NOT use for: desenho/hierarquia visual (`dashboard-design`); dashboard Excel
+genérico (`officecli-data-dashboard`).
 
-- Multiple metrics to track
-- Data from various sources
-- Real-time visibility needed
-- Executive reporting
+## Workflow
 
-### Solution
+1. **Defina cada KPI com fórmula explícita.** Indicador sem fórmula é opinião.
+2. **Defina a meta e o limiar de alerta** por indicador.
+3. **Escolha a fonte** de cada dado e a frequência de atualização.
+4. **Organize em hierarquia:** resultado (CPI/SPI) → causa (produtividade, consumo)
+   → ação (restrições abertas).
+5. **Escolha o gráfico pelo dado:** tendência → linha; comparação → barra;
+   composição → barra empilhada; dispersão → scatter.
+6. **Configure o alerta** para limiar violado.
+7. **Teste com dado real** — dashboard com dado falso esconde o bug.
 
-Unified KPI dashboard system for construction projects with automated data collection, visualization, and alerting.
+## Implementation
 
-## Technical Implementation
+### Technical Implementation
 
 ```python
 import pandas as pd
@@ -358,8 +374,6 @@ class KPIDashboard:
         return output_path
 ```
 
-## Quick Start
-
 ```python
 # Create dashboard
 dashboard = KPIDashboard("Office Building A")
@@ -376,8 +390,6 @@ summary = dashboard.get_dashboard_summary()
 print(f"On Target: {summary['by_status']['on_target']}")
 print(f"Critical: {summary['by_status']['critical']}")
 ```
-
-## Common Use Cases
 
 ### 1. HTML Dashboard
 
@@ -403,7 +415,48 @@ dashboard.add_custom_kpi(KPIDefinition(
 ))
 ```
 
-## Resources
+## Pitfalls
 
-- **DDC Book**: Chapter 4.1 - Data Analytics and Decision Making
-- **Website**: https://datadrivenconstruction.io
+- **KPI sem fórmula é opinião.** Declare o cálculo. "Índice de qualidade 7/10" sem
+  fórmula não é auditável.
+- **Misturar físico e financeiro no mesmo indicador.** São curvas distintas. Juntar
+  produz número sem significado.
+- **Dashboard sem meta não orienta ação.** Um CPI de 0,85 só significa algo com a
+  meta declarada (≥ 1,0).
+- **Dado desatualizado é pior que ausente.** Mostre o carimbo de atualização. Painel
+  verde com dado de 2 meses atrás engana.
+- **Muitos KPIs = nenhum KPI.** Acima de ~8 indicadores no nível executivo, ninguém
+  olha. Hierarquize.
+- **Gráfico errado para o dado.** Pizza para tendência temporal é ilegível. Escolha
+  pelo tipo de dado.
+- **Alerta que sempre dispara é ignorado.** Calibre o limiar ou remova.
+
+## Examples
+
+**Input:** "Painel de obra: CPI, SPI, avanço físico, produtividade, restrições abertas."
+
+**Output:**
+
+| KPI | Fórmula | Valor | Meta | Status |
+|---|---|---|---|---|
+| CPI | EV/AC | 0,857 | ≥ 1,00 | 🔴 |
+| SPI | EV/PV | 0,800 | ≥ 1,00 | 🔴 |
+| Avanço físico | Executado/Planejado | 90% | ≥ 95% | 🟡 |
+| Produtividade | qty/(equipes×h) | 25 m²/eq·h | ≥ 22 | 🟢 |
+| Restrições abertas | contagem | 14 | ≤ 5 | 🔴 |
+
+**Leitura:** custo e prazo acima do previsto; produtividade boa → o problema é
+volume de trabalho, não desempenho de equipe. **14 restrições abertas** é a causa
+provável. Ação: atacar as restrições, não a produtividade.
+Dados de 15/10/2026 18:00.
+
+## Verification
+
+- [ ] Todo KPI tem fórmula escrita
+- [ ] Todo KPI tem meta e limiar declarados
+- [ ] Físico e financeiro em indicadores separados
+- [ ] Carimbo de atualização visível
+- [ ] Máx. ~8 KPIs no nível executivo
+- [ ] Tipo de gráfico adequado ao dado
+- [ ] Alertas calibrados (não disparam sempre)
+- [ ] Testado com dado real

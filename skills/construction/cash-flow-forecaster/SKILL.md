@@ -1,6 +1,12 @@
 ---
-name: 'cash-flow-forecaster'
-description: 'Forecast project cash flow based on schedule and cost data. Generate S-curves and payment projections.'
+name: cash-flow-forecaster
+description: >-
+  Forecasts construction project cash flow from schedule and cost data: S-curve,
+  monthly disbursement, funding requirement, payment timing and loan draw schedule.
+  Use when the user mentions fluxo de caixa, desembolso, necessidade de caixa,
+  curva S financeira, aporte, or asks "quanto preciso por mês?" / "quando o caixa
+  apertar?". Do NOT use for cost variance (use `budget-variance-analyzer`) or EVM
+  schedule performance (use `baseline-scurve-evm`).
 homepage: 'https://datadrivenconstruction.io'
 metadata:
   {
@@ -16,29 +22,31 @@ metadata:
 
 # Cash Flow Forecaster
 
-## Business Case
+## When to Use
 
-### Problem Statement
+Use when the user:
+- Names fluxo de caixa, desembolso, aporte, necessidade de caixa, curva S financeira
+- Asks "quanto preciso por mês?", "quando o caixa aperta?"
+- Needs a funding schedule or loan draw plan
+- Wants payment timing by supplier/contract
 
-Poor cash flow management causes issues:
+Do NOT use for: desvio de custo (`budget-variance-analyzer`); SPI/CPI
+(`baseline-scurve-evm`).
 
-- Insufficient funds for payments
-- Missed early payment discounts
-- Inaccurate financial projections
-- Difficulty in financing negotiations
+## Workflow
 
-### Solution
+1. **Pegue o cronograma físico-financeiro** (quantidade × preço por período).
+2. **Aplique a defasagem de pagamento** — o desembolso não é no dia da medição.
+   Separe: medição → aprovação → fatura → pagamento.
+3. **Some retenção contratual** (5% típico) e a liberação no final.
+4. **Monte a curva acumulada** de desembolso.
+5. **Compare com a entrada de receita** (se houver) → necessidade de capital de giro.
+6. **Identifique o pico de caixa** e o mês crítico.
+7. **Reporte com a premissa de prazo** declarada.
 
-Generate cash flow forecasts from schedule and cost data, including S-curve projections and payment timing analysis.
+## Implementation
 
-### Business Value
-
-- **Financial planning** - Accurate funding requirements
-- **Vendor relations** - Timely payments
-- **Financing** - Support loan draw schedules
-- **Decision support** - Cash position awareness
-
-## Technical Implementation
+### Technical Implementation
 
 ```python
 import pandas as pd
@@ -407,8 +415,6 @@ class CashFlowForecaster:
         return output_path
 ```
 
-## Quick Start
-
 ```python
 from datetime import date
 
@@ -435,8 +441,6 @@ forecast = forecaster.generate_cash_flow_forecast()
 print(f"Peak cash requirement: ${min(p.closing_balance for p in forecast):,.0f}")
 ```
 
-## Common Use Cases
-
 ### 1. S-Curve Analysis
 
 ```python
@@ -457,7 +461,48 @@ print(f"Required funding: ${funding['peak_funding_required']:,.0f}")
 forecaster.export_forecast("cash_flow_forecast.xlsx")
 ```
 
-## Resources
+## Pitfalls
 
-- **DDC Book**: Chapter 3.1 - Cost Management
-- **Reference**: Project Financial Management
+- **Medição ≠ pagamento.** Confundir os dois erra o pico de caixa por 30-60 dias.
+  Declare a defasagem usada.
+- **Retenção esquecida distorce o fim.** 5% retido é dinheiro que só volta no
+  final. Ignorar infla o caixa disponível.
+- **Fluxo bruto ≠ fluxo líquido.** Se não há receita modelada, o resultado é
+  necessidade de aporte, não caixa. Rotule corretamente.
+- **Curva S acumulada esconde o pico mensal.** O pico está na derivada (desembolso
+  mensal), não na acumulada. Mostre as duas.
+- **Custo comprometido ainda não é caixa.** Contrato assinado não é dinheiro pago.
+  Modele pelo cronograma de desembolso.
+- **Prazo do cronograma é premissa, não fato.** Se o cronograma atrasar, o fluxo
+  atrasa. Diga isso explicitamente.
+- **Reajuste contratual muda o fluxo.** Modelo sem reajuste subestima o fim da obra.
+
+## Examples
+
+**Input:** "Obra de 10 meses, R$ 1.200.000, pagamento 30 dias após medição,
+retenção 5%, sem receita modelada."
+
+**Output:**
+
+| Mês | Medido | Desembolsado | Acumulado | Caixa acumulado |
+|---|---|---|---|---|
+| 1 | 60.000 | 0 | 0 | 0 |
+| 2 | 120.000 | 57.000 | 57.000 | −57.000 |
+| 3 | 180.000 | 114.000 | 171.000 | −171.000 |
+| ... | | | | |
+| 11 | 0 | 114.000 | 1.140.000 | −1.140.000 |
+| 12 | 0 | 60.000 | 1.200.000 | −1.200.000 |
+
+**Pico mensal:** mês 4 (R$ 180.000). **Necessidade total:** R$ 1.200.000.
+Retenção de 5% (R$ 60.000) liberada no mês 12.
+Premissa: cronograma no prazo; defasagem de 30 dias.
+
+## Verification
+
+- [ ] Defasagem medição→pagamento declarada
+- [ ] Retenção modelada com liberação no fim
+- [ ] Curva acumulada **e** desembolso mensal mostrados
+- [ ] Pico de caixa identificado
+- [ ] Bruto vs líquido rotulado corretamente
+- [ ] Premissa de prazo do cronograma declarada
+- [ ] Soma do desembolsado = valor total do contrato
