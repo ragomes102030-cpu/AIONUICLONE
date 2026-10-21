@@ -79,6 +79,52 @@ nome do chat e avisa se for outro.
 | `resumo.js` | CLI: salva o resumo gerado pelo agente em markdown. |
 | `enviar.js` | CLI de envio (opt-in, exige `--confirmar`). |
 | `index.js` | Fachada em Node: `coletarEPreparar()` e `salvarResumo()`, para uso por código. |
+| `station-core.js` | Núcleo compartilhado (sem dependências): descobre o data-dir, abre o banco (`node:sqlite`), inspeciona skills/cron, fala com a API do app e inspeciona o Chrome. |
+| `doctor.js` | Diagnóstico da estação: Chrome, sessão do WhatsApp, data-dir, API, skill instalada e registrada, skills com caminho quebrado, tarefas agendadas e resumos. |
+| `station.js` | **Instalador de 1 comando**: prepara tudo o que a estação precisa (abaixo). |
+
+## Instalação da estação (1 comando)
+
+A estação é a máquina que fica ligada: Chrome em depuração + WhatsApp Web logado +
+o Arquimedes em modo servidor. O **app nunca instala nada sozinho** — ele só mostra o
+estado e liga/desliga. A preparação é feita na estação:
+
+```bash
+node "<pasta-da-skill>\station.js" --chat "PIAZZA" --obra "piazza"
+```
+
+No repositório, o atalho é `npm run station:whatsapp`.
+
+O que o instalador faz, em ordem:
+
+1. Localiza o `data-dir` do Arquimedes (`%APPDATA%\Arquimedes\arquimedes`).
+2. Descobre a API do backend (WebUI `http://127.0.0.1:25808` ou a porta do core).
+3. Copia esta skill para `{data-dir}\skills\users\<usuario>\whatsapp-automation\`.
+4. **Repara skills com caminho quebrado** — após uma migração de pasta, o catálogo
+   pode apontar para o diretório antigo; o `path` é repontado para o novo.
+5. **Registra a skill no catálogo** (`POST /api/skills/import`) — só copiar a pasta
+   em disco não basta, o app precisa catalogá-la.
+6. **Cria as tarefas agendadas** (diário 7:00 e semanal sexta 7:00), pulando as que
+   já existirem pelo nome.
+7. Sobe o Chrome em modo de depuração, se não estiver de pé.
+8. Roda o `doctor.js` no final e imprime o resultado.
+
+Opções: `--sem-cron`, `--sem-chrome`, `--data-dir`, `--cdp <porta>`.
+
+## Diagnóstico
+
+```bash
+node "<pasta-da-skill>\doctor.js"           # relatório legível
+node "<pasta-da-skill>\doctor.js" --json    # saída para máquina
+```
+
+No repositório: `npm run doctor:whatsapp`.
+
+O relatório vem em blocos (CHROME, ARQUIMEDES, SKILL, CATÁLOGO DE SKILLS, TAREFAS
+AGENDADAS, RESUMOS) e termina com a lista de **pendências**. Ele explica a causa da
+falha em vez de só dizer que falhou: Chrome fechado, sessão do WhatsApp expirada,
+skill não registrada, tarefa ausente, caminho de skill quebrado.
+
 
 ## Uso
 
@@ -127,7 +173,8 @@ antes de escrever (sai com código 2 se não bater).
 ## Tarefas agendadas (cron)
 
 A skill **não** cria tarefas sozinha — elas são criadas pelo agente via o CLI de
-configuração do app. Contrato:
+configuração do app (ou pelo `station.js`, que já deixa as duas criadas).
+Contrato:
 
 ```bash
 "$AIONUI_HELPER_BIN" config cron current list      # consulta antes de criar
