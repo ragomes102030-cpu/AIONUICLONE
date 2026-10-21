@@ -26,8 +26,8 @@ vi.mock('@/common/platform/bridge', () => ({
   },
 }));
 const FORK_REPO = 'ragomes102030-cpu/AIONUICLONE';
-const FORK_CDN_BASE = 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases';
-const FORK_CHANNEL_PREFIX = `https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/latest`;
+const FORK_CDN_BASE = 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download';
+const FORK_CHANNEL_PREFIX = `${FORK_CDN_BASE}/latest`;
 
 let _originalFetch = undefined;
 
@@ -157,7 +157,7 @@ releaseDate: '2026-04-29T00:00:00Z'
 const stubCdnAndGitHubFetch = () => {
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
-    if (url.startsWith('https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/latest')) {
+    if (url.startsWith(FORK_CHANNEL_PREFIX)) {
       return new Response(CDN_CHANNEL_YML, { status: 200 });
     }
     if (url.startsWith('https://api.github.com/')) {
@@ -201,7 +201,7 @@ describe('updateBridge CDN URL rewriting', () => {
       const macAsset = assets.find((a: { name: string }) => a.name === 'AionUi-1.9.22-mac-arm64.dmg');
       expect(macAsset).toBeDefined();
       expect(macAsset?.url).toBe(
-        'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/1.9.22/AionUi-1.9.22-mac-arm64.dmg'
+        'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/AionUi-1.9.22-mac-arm64.dmg'
       );
       expect(macAsset?.fallbackUrl).toBe(
         'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-mac-arm64.dmg'
@@ -209,7 +209,7 @@ describe('updateBridge CDN URL rewriting', () => {
 
       const linuxAsset = assets.find((a: { name: string }) => a.name === 'AionUi-1.9.22-linux-amd64.deb');
       expect(linuxAsset?.url).toBe(
-        'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/1.9.22/AionUi-1.9.22-linux-amd64.deb'
+        'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/AionUi-1.9.22-linux-amd64.deb'
       );
       expect(fetchMock).toHaveBeenCalled();
     } finally {
@@ -217,17 +217,18 @@ describe('updateBridge CDN URL rewriting', () => {
     }
   });
 
-  it('uses the normalized version (no v prefix) in the CDN path', async () => {
+  it('keeps the flat layout: the asset URL has no version folder', async () => {
     stubCdnAndGitHubFetch();
 
     try {
       const handler = await getCheckHandler();
       const result = await handler({ repo: FORK_REPO });
       const asset = result.data?.latest?.assets?.[0];
-      expect(asset?.url).toMatch(
-        /^https:\/\/raw\.githubusercontent\.com\/ragomes102030-cpu\/AIONUICLONE\/main\/releases\/1\.9\.22\//
+      expect(asset?.url).toBe(
+        'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/AionUi-1.9.22-mac-arm64.dmg'
       );
       expect(asset?.url).not.toMatch(/\/v1\.9\.22\//);
+      expect(asset?.url).not.toMatch(/\/1\.9\.22\//);
     } finally {
       restoreFetch();
     }
@@ -266,7 +267,7 @@ describe('updateBridge allowlist includes CDN host', () => {
 
       const result = await handler({
         downloadId: 'manual-download-1',
-        url: 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/1.9.22/AionUi-1.9.22-mac-arm64.dmg',
+        url: 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/AionUi-1.9.22-mac-arm64.dmg',
         file_name: 'AionUi-1.9.22-mac-arm64.dmg',
       });
 

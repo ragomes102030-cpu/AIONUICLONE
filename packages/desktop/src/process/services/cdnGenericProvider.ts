@@ -14,9 +14,21 @@ type GenericProviderConfiguration = ConstructorParameters<typeof GenericProvider
 type GenericProviderUpdater = ConstructorParameters<typeof GenericProvider>[1];
 type GenericProviderRuntimeOptions = ConstructorParameters<typeof GenericProvider>[2];
 
+/**
+ * Where the published artifacts live relative to the feed base URL.
+ *
+ * - `flat`:     `<base>/latest.yml` and `<base>/Arquimedes-<version>-win-x64.exe`
+ *               (layout used by GitHub Releases "latest/download" endpoint)
+ * - `versioned`: `<base>/latest.yml` and `<base>/<version>/<file>`
+ *               (classic CDN layout with one folder per version)
+ */
+export type UpdateArtifactLayout = 'flat' | 'versioned';
+
 export type CdnGenericProviderConfiguration = Omit<GenericProviderConfiguration, 'provider'> & {
   provider: 'custom';
   updateProvider?: unknown;
+  /** Defaults to `versioned` (legacy behaviour) when not informed. */
+  layout?: UpdateArtifactLayout;
 };
 
 const withTrailingSlash = (url: string): string => (url.endsWith('/') ? url : `${url}/`);
@@ -26,6 +38,7 @@ export class CdnGenericProvider extends GenericProvider {
   // Parent stores `updater` privately; keep our own reference to rebuild the
   // channel-file URL for logging (the base `channel` getter is also private).
   private readonly _updater: GenericProviderUpdater;
+  private readonly _layout: UpdateArtifactLayout;
 
   constructor(
     configuration: CdnGenericProviderConfiguration,
@@ -39,8 +52,10 @@ export class CdnGenericProvider extends GenericProvider {
     super(genericConfiguration, updater, runtimeOptions);
     this._updater = updater;
     this._cdnBaseUrl = new URL(withTrailingSlash(configuration.url));
+    this._layout = configuration.layout ?? 'versioned';
     log.debug('[auto-update] CDN provider initialized', {
       baseUrl: this._cdnBaseUrl.href,
+      layout: this._layout,
       platform: runtimeOptions.platform,
       isUseMultipleRangeRequest: runtimeOptions.isUseMultipleRangeRequest,
     });
@@ -65,13 +80,15 @@ export class CdnGenericProvider extends GenericProvider {
   }
 
   override resolveFiles(updateInfo: UpdateInfo): ReturnType<GenericProvider['resolveFiles']> {
-    const resolved = resolveProviderFiles(
-      updateInfo,
-      this._cdnBaseUrl,
-      (filePath) => `${updateInfo.version}/${filePath}`
-    );
+    // `flat` layout: the artifact sits directly under the base URL (GitHub Releases
+    // serves `<base>/<asset>` for the release flagged as "Latest").
+    // `versioned` layout: the artifact sits under `<base>/<version>/`.
+    const pathTransformer =
+      this._layout === 'versioned' ? (filePath: string) => `${updateInfo.version}/${filePath}` : (filePath: string) => filePath;
+    const resolved = resolveProviderFiles(updateInfo, this._cdnBaseUrl, pathTransformer);
     log.info('[auto-update] Update download URL(s) resolved:', {
       version: updateInfo.version,
+      layout: this._layout,
       files: resolved.map((file) => file.url.href),
       packages: resolved.map((file) => file.packageInfo?.path).filter(Boolean),
     });

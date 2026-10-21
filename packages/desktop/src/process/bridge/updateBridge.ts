@@ -63,12 +63,22 @@ interface AutoUpdateCheckParams {
 const DEFAULT_REPO = 'ragomes102030-cpu/AIONUICLONE';
 const DEFAULT_USER_AGENT = 'Arquimedes';
 const ALLOWED_ASSET_EXTS = new Set(['.exe', '.msi', '.dmg', '.zip', '.deb', '.rpm']);
-const CDN_HOST = process.env.AIONUI_UPDATE_HOST || 'raw.githubusercontent.com';
+// Default feed: the "latest release assets" endpoint of the repository that
+// publishes the installers. GitHub resolves `<base>/<asset>` to the asset of the
+// release flagged as *Latest*, so no binary has to be hosted in the repository.
+const CDN_HOST = process.env.AIONUI_UPDATE_HOST || 'github.com';
 const CDN_BASE_URL =
-  process.env.AIONUI_UPDATE_BASE_URL || 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases';
+  process.env.AIONUI_UPDATE_BASE_URL || 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download';
+/**
+ * Artifact layout relative to the feed base URL:
+ * - `flat` (default): `<base>/latest.yml` + `<base>/<file>`
+ * - `versioned`:      `<base>/latest.yml` + `<base>/<version>/<file>` (classic CDN)
+ */
+const CDN_LAYOUT: 'flat' | 'versioned' = process.env.AIONUI_UPDATE_LAYOUT === 'versioned' ? 'versioned' : 'flat';
 const ALLOWED_DOWNLOAD_HOSTS = new Set<string>([
   CDN_HOST,
   'github.com',
+  'raw.githubusercontent.com',
   'objects.githubusercontent.com',
   'github-releases.githubusercontent.com',
   'release-assets.githubusercontent.com',
@@ -90,11 +100,15 @@ const normalizeTagToSemver = (tag: string): string | null => {
 
 /**
  * Rewrite a GitHub release asset URL to the CDN URL for faster download.
- * The CDN path follows the fixed convention `{base}/{version}/{original-filename}`,
- * matching electron-builder's artifactName output, so no name conversion is needed.
+ *
+ * `flat` layout: the artifact sits directly under the base URL
+ * (`<base>/<original-filename>`), matching the GitHub Releases
+ * "latest/download" endpoint. `versioned` layout keeps the classic CDN
+ * convention `{base}/{version}/{original-filename}`, so no name conversion is
+ * needed in either case.
  */
 const rewriteAssetUrlToCDN = (assetName: string, version: string): string => {
-  return `${CDN_BASE_URL}/${version}/${assetName}`;
+  return CDN_LAYOUT === 'versioned' ? `${CDN_BASE_URL}/${version}/${assetName}` : `${CDN_BASE_URL}/${assetName}`;
 };
 
 type RuntimePlatformInfo = {

@@ -98,8 +98,8 @@ releaseDate: '2026-07-31T14:45:19.381Z'
 `;
 
 const FORK_REPO = 'ragomes102030-cpu/AIONUICLONE';
-const FORK_CDN = 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases';
-const FORK_CHANNEL_PREFIX = 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases/latest';
+const FORK_CDN = 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download';
+const FORK_CHANNEL_PREFIX = `${FORK_CDN}/latest`;
 
 const GITHUB_RELEASES = [
   {
@@ -179,7 +179,7 @@ describe('update.check CDN-first', () => {
     expect(res.data?.latest?.version).toBe('2.1.45');
     expect(res.data?.latest?.body).toBe('changelog body');
     expect(res.data?.latest?.htmlUrl).toBe(`https://github.com/${FORK_REPO}/releases/tag/v2.1.45`);
-    expect(res.data?.latest?.recommendedAsset?.url).toBe(`${FORK_CDN}/2.1.45/AionUi-2.1.45-mac-arm64.dmg`);
+    expect(res.data?.latest?.recommendedAsset?.url).toBe(`${FORK_CDN}/AionUi-2.1.45-mac-arm64.dmg`);
   });
 
   it('succeeds without notes when GitHub is unreachable', async () => {
