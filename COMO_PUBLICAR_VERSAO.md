@@ -7,13 +7,47 @@ Passo a passo para publicar sem depender de mim. Testado no ciclo real de 06/10/
 
 ---
 
+## Jeito mais rápido: um comando só (v2.3.2+)
+
+O repositório tem um script que faz o trabalho inteiro por você: sobe a versão, compila,
+confere os arquivos, publica a release marcada como "Latest" e valida o feed de atualização.
+
+```bash
+npm run release                 # 2.3.2 -> 2.3.3 (bump de patch), compila e publica
+npm run release -- --version 2.4.0   # escolhe a próxima versão
+npm run release:dry             # só mostra o plano, não compila nem publica
+npm run release:verify          # só confere se o feed está no ar e correto
+```
+
+O que ele faz, na ordem:
+
+1. **Confere os pré-requisitos** — branch `main`, árvore de trabalho limpa, `gh` autenticada,
+   e se a release/tag ainda não existe.
+2. **Sobe a versão** no `package.json` da raiz (é de lá que sai o nome do instalador).
+3. **Compila** o instalador do Windows (`npm run dist:win`, ~13 min).
+4. **Verifica os artefatos** — o `.exe` existe, o `latest.yml` aponta para a versão certa,
+   o `sha512` do `.yml` bate com o hash do `.exe`, e o pacote **não** contém mais o
+   endereço de atualização antigo (guarda contra regressão).
+5. **Commita e sobe** a alteração da versão.
+6. **Publica a release** com `--latest` e notas montadas automaticamente.
+7. **Confere o feed** — baixa o `latest.yml` do endereço que está gravado no app e testa
+   o download do instalador.
+
+Opções extras: `--skip-build` (usa o build que já está em `out/`), `--notes <arquivo>`
+(usa as suas próprias notas), `--repo <owner/nome>`.
+
+> **Sobre o nome do repositório:** ele foi renomeado para `ArquimedesPlanejamento`.
+> O endereço antigo (`AIONUICLONE`) continua funcionando por redirecionamento do GitHub,
+> e é por isso que o app instalado ainda consegue se atualizar. O script usa o nome novo.
+
+---
+
 ## Resumo em 4 linhas
 
 ```bash
-git push origin main                                    # sobe o código
-# espera ~10 min: GitHub compila sozinho
-gh run download <run-id> -R ragomes102030-cpu/AIONUICLONE -n AionUi-Windows-Installer
-gh release create vX.Y.Z <instalador> <latest.yml> --repo ragomes102030-cpu/AIONUICLONE --target main --latest
+npm run release                                      # bump de patch + build + publica + confere
+# ou, na mão:
+gh release create vX.Y.Z <instalador> <latest.yml> --repo ragomes102030-cpu/ArquimedesPlanejamento --target main --latest
 ```
 
 Se algum passo falhar, leia "Quando algo dá errado" no fim.
@@ -32,8 +66,8 @@ A partir da **v2.3.2** o app se atualiza sozinho, sem o usuário baixar nada:
 **Como isso funciona por baixo:** o app lê o arquivo de metadados `latest.yml` e o instalador direto da **release marcada como "Latest"** do GitHub:
 
 ```
-https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/latest.yml
-https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/Arquimedes-X.Y.Z-win-x64.exe
+https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download/latest.yml
+https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download/Arquimedes-X.Y.Z-win-x64.exe
 ```
 
 Consequências práticas:
@@ -46,7 +80,7 @@ Consequências práticas:
 Teste do feed a qualquer momento (sem instalar):
 
 ```bash
-curl -sL https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/latest.yml
+curl -sL https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download/latest.yml
 ```
 
 Se aparecer `version: 2.3.2` (ou superior), o botão do app vai encontrar.
@@ -88,19 +122,19 @@ git push origin main
 O GitHub passa a compilar sozinho (~10 min). Acompanhe:
 
 ```bash
-gh run list -R ragomes102030-cpu/AIONUICLONE --limit 3
+gh run list -R ragomes102030-cpu/ArquimedesPlanejamento --limit 3
 ```
 
 ### 3. Só siga se a build deu certo
 
 ```bash
-gh run list -R ragomes102030-cpu/AIONUICLONE --limit 1
+gh run list -R ragomes102030-cpu/ArquimedesPlanejamento --limit 1
 ```
 
 Precisa aparecer `completed/success`. Se aparecer `failure`, **pare** — não publique. Abra o run e veja o log:
 
 ```bash
-gh run view <run-id> -R ragomes102030-cpu/AIONUICLONE --log-failed
+gh run view <run-id> -R ragomes102030-cpu/ArquimedesPlanejamento --log-failed
 ```
 
 ### 4. Baixe o instalador
@@ -108,13 +142,13 @@ gh run view <run-id> -R ragomes102030-cpu/AIONUICLONE --log-failed
 Primeiro descubra o número do run:
 
 ```bash
-gh run list -R ragomes102030-cpu/AIONUICLONE --limit 1 --json databaseId -q '.[0].databaseId'
+gh run list -R ragomes102030-cpu/ArquimedesPlanejamento --limit 1 --json databaseId -q '.[0].databaseId'
 ```
 
 Depois baixe (use caminho **nativo** com `cygpath -m`, senão o `gh` não acha o arquivo):
 
 ```bash
-gh run download <run-id> -R ragomes102030-cpu/AIONUICLONE -n AionUi-Windows-Installer -D "C:/temp/aionui-rel"
+gh run download <run-id> -R ragomes102030-cpu/ArquimedesPlanejamento -n AionUi-Windows-Installer -D "C:/temp/aionui-rel"
 ```
 
 ### 5. Verifique o instalador antes de publicar
@@ -136,7 +170,7 @@ Confira se o `sha512` do `latest.yml` bate com o arquivo:
 
 ```bash
 gh release create vX.Y.Z "C:/temp/aionui-rel/Arquimedes-X.Y.Z-win-x64.exe" "C:/temp/aionui-rel/latest.yml" \
-  --repo ragomes102030-cpu/AIONUICLONE \
+  --repo ragomes102030-cpu/ArquimedesPlanejamento \
   --target main \
   --latest \
   --title "Arquimedes X.Y.Z" \
@@ -149,7 +183,7 @@ gh release create vX.Y.Z "C:/temp/aionui-rel/Arquimedes-X.Y.Z-win-x64.exe" "C:/t
 ### 7. Confirme que está no ar
 
 ```bash
-gh api repos/ragomes102030-cpu/AIONUICLONE/releases --jq '.[0] | "tag=\(.tag_name) assets=\([.assets[]|"\(.name) \(.size)B"]|join(" | "))"'
+gh api repos/ragomes102030-cpu/ArquimedesPlanejamento/releases --jq '.[0] | "tag=\(.tag_name) assets=\([.assets[]|"\(.name) \(.size)B"]|join(" | "))"'
 ```
 
 Os dois assets devem aparecer com `state=uploaded`: o `.exe` e o `latest.yml`.
@@ -157,8 +191,8 @@ Os dois assets devem aparecer com `state=uploaded`: o `.exe` e o `latest.yml`.
 Teste o download **sem** token, que é como o cliente faz:
 
 ```bash
-curl -sL -o /dev/null -w "exe: HTTP %{http_code}\n" https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/vX.Y.Z/Arquimedes-X.Y.Z-win-x64.exe
-curl -sL https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/latest.yml
+curl -sL -o /dev/null -w "exe: HTTP %{http_code}\n" https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/download/vX.Y.Z/Arquimedes-X.Y.Z-win-x64.exe
+curl -sL https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download/latest.yml
 ```
 
 `HTTP 200` ou `HTTP 206` = funcionando. E o `latest.yml` tem que mostrar a versão que você acabou de publicar.
@@ -173,7 +207,7 @@ curl -sL https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/downlo
 
 ## O que o cliente vê na hora de atualizar
 
-Ele abre **Configurações → Sobre → "Verificar atualizações"** (ou espera a checagem automática ao abrir o app), e o app baixa e instala sozinho. Não há como ele receber a versão do AionUi oficial — o feed aponta para `ragomes102030-cpu/AIONUICLONE`.
+Ele abre **Configurações → Sobre → "Verificar atualizações"** (ou espera a checagem automática ao abrir o app), e o app baixa e instala sozinho. Não há como ele receber a versão do AionUi oficial — o feed aponta para `ragomes102030-cpu/ArquimedesPlanejamento`.
 
 **Aviso do Windows:** o instalador não é assinado. O cliente vai ver a janela azul _"O Windows protegeu seu PC"_ e precisa clicar em **"Executar mesmo assim"**. Isso está escrito nas notas da release. Se quiser avisar antes, diga isso ao cliente na mensagem de entrega.
 
