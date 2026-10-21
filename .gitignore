@@ -256,6 +256,6 @@ temp/
 # Cofre de binarios nativos do better-sqlite3 (ver scripts/switch-native-abi.mjs)
 .native-abi/
 
-# Saidas geradas pela skill de WhatsApp (ver scripts/whatsapp-*.js)
+# Saidas geradas pela skill de WhatsApp (ver skills/whatsapp-automation/)
 whatsapp-*.json
 scripts/whatsapp-*.json

@@ -1,13 +1,13 @@
 /**
- * Skill WhatsApp Automação (Arquimedes).
+ * Skill WhatsApp Automação (Arquimedes) — fachada em Node.
  *
- * Fachada para as tarefas agendadas e para o agente: lê as mensagens do WhatsApp
- * Web via Chrome/CDP, monta o texto para o agente resumir e organiza o
- * armazenamento por obra.
+ * Usada pelas tarefas agendadas e pelo agente. Todos os scripts vivem nesta
+ * mesma pasta, para que a skill funcione dentro do app instalado (que nao tem
+ * a pasta "scripts/" do repositorio).
  *
  * ⚠️ AVISO: leia os avisos em SKILL.md antes de usar.
  *    - não use número pessoal (use chip dedicado da empresa)
- *    - apenas leitura e resumo; envio é opt-in em scripts/whatsapp-enviar.js
+ *    - apenas leitura e resumo; envio é opt-in em enviar.js
  *    - não é API oficial do WhatsApp; usa CDP
  *    - o Chrome precisa ficar aberto e logado
  */
@@ -15,7 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const { lerMensagens, montarTextoParaAgente } = require('../../scripts/whatsapp-cdp-client-wrapper');
+const { lerMensagens, montarTextoParaAgente, salvarJson } = require('./cdp-client');
 
 const OBRAS_ROOT = process.env.ARQUIMEDES_OBRAS || 'C:\\Arquimedes\\obras';
 
@@ -48,22 +48,22 @@ function dataDeHoje() {
  * @param {string} opts.obra      pasta da obra (ex.: 'minha-obra')
  * @param {string} [opts.chat]     nome do chat/grupo
  * @param {string} [opts.agente]   nome do agente que fará o resumo
- * @returns {Promise<{ok:boolean, total:number, arquivo:string, prompt:string}>}
  */
 async function coletarEPreparar(opts = {}) {
   const obra = opts.obra || 'whatsapp';
   const chat = opts.chat || 'PIAZZA';
   const agente = opts.agente || 'Hermes';
 
-  const mensagens = await lerMensagens({ chat });
+  const { mensagens } = await lerMensagens({ chat });
   const dir = pastaDaObra(obra);
   const arquivo = path.join(dir, `mensagens-${dataDeHoje()}.json`);
 
-  fs.writeFileSync(
-    arquivo,
-    JSON.stringify({ extraidoEm: new Date().toISOString(), chat, total: mensagens.length, mensagens }, null, 2),
-    'utf8'
-  );
+  salvarJson(arquivo, {
+    extraidoEm: new Date().toISOString(),
+    chat,
+    total: mensagens.length,
+    mensagens,
+  });
 
   const prompt = `${PROMPT_RESUMO}\n\n--- MENSAGENS (${chat}) ---\n${montarTextoParaAgente(mensagens)}`;
 

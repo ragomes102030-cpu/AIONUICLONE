@@ -1,8 +1,6 @@
 {
-  "nome": "Resumo diário do WhatsApp",
-  "descricao": "Às 7:00 da manhã, lê as mensagens do WhatsApp Web (chat PIAZZA) e gera resumo do dia anterior: o que foi solicitado, quem pediu, feito/pendente.",
-  "cron": "0 7 * * *",
-  "skill": "whatsapp-automation",
-  "acao": "lerMensagens + gerarResumoDiario",
-  "habilitado": false
+  "name": "Resumo diário do WhatsApp (grupo PIAZZA)",
+  "schedule": "0 7 * * *",
+  "schedule_description": "Todos os dias às 7:00 da manhã",
+  "message": "Gere o resumo diário das solicitações do grupo de WhatsApp PIAZZA.\n\nPASSOS\n1. Localize a pasta da skill \"whatsapp-automation\" (é a pasta que contém o arquivo SKILL.md). No Windows ela é uma destas:\n   - %APPDATA%\\Arquimedes\\arquimedes\\skills\\users\\system_default_user\\whatsapp-automation\n   - C:\\Arquimedes\\app\\skills\\whatsapp-automation\n2. Rode o comando abaixo (ajuste a pasta se ela for outra):\n   node \"<pasta-da-skill>\\coletar.js\" --obra \"piazza\" --chat \"PIAZZA\" --prompt \"C:\\Arquimedes\\obras\\piazza\\whatsapp\\prompt.txt\"\n   Se der erro de conexão com 127.0.0.1:9222, significa que o Chrome não está aberto em modo de depuração com o WhatsApp Web logado. Avise o usuário em UMA frase e encerre, sem tentar contornar.\n3. Leia o arquivo \"C:\\Arquimedes\\obras\\piazza\\whatsapp\\prompt.txt\" e escreva um resumo em markdown com exatamente estas quatro seções, nessa ordem:\n   ## O QUE FOI SOLICITADO\n   ## QUEM PEDIU\n   ## PENDÊNCIAS\n   ## CONCLUÍDO\n   Regras de conteúdo: liste cada pedido com autor e data/hora; em QUEM PEDIU, agrupe por pessoa; em PENDÊNCIAS, diga o que ficou aberto e com quem está; em CONCLUÍDO, o que já foi resolvido ou confirmado. Ignore saudações, figurinhas e confirmações de leitura. Se não houver pedido concreto no período, escreva apenas \"Sem solicitações no período\".\n4. Grave o resumo em um arquivo .md temporário e salve-o na pasta da obra com:\n   node \"<pasta-da-skill>\\resumo.js\" --obra \"piazza\" --tipo diario --arquivo \"<arquivo-temporario>.md\"\n   O destino final é C:\\Arquimedes\\obras\\piazza\\whatsapp\\resumo-diario-AAAA-MM-DD.md\n5. Entregue no chat o resumo do dia (no máximo 15 linhas) e informe o caminho do arquivo salvo."
 }
