@@ -77,6 +77,12 @@ export function getBuiltinSettingsNavItems(isDesktop: boolean, t: TranslateFn): 
       icon: isDesktop ? <Earth theme='outline' size='16' /> : <Communication theme='outline' size='16' />,
       path: 'webui',
     },
+    whatsapp: {
+      id: 'whatsapp',
+      label: t('settings.whatsapp', { defaultValue: 'WhatsApp' }),
+      icon: <Communication theme='outline' size='16' />,
+      path: 'whatsapp',
+    },
     pet: { id: 'pet', label: t('pet.desktopPet'), icon: <Cat theme='outline' size='16' />, path: 'pet' },
     system: { id: 'system', label: t('settings.system'), icon: <System theme='outline' size='16' />, path: 'system' },
     archived: {

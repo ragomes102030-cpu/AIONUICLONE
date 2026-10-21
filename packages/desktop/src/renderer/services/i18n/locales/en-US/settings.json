@@ -478,6 +478,7 @@
   "installed": "Installed",
   "builtin": "Built-in",
   "channels": "Channels",
+  "whatsapp": "WhatsApp",
   "whatsapp.tab": "WhatsApp",
   "whatsapp.title": "WhatsApp Station",
   "whatsapp.description": "Reads the WhatsApp group from the logged-in Chrome session and summarizes the requests. Use a dedicated number.",

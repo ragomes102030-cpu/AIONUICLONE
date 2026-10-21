@@ -2984,6 +2984,7 @@ export type I18nKey =
   | 'settings.weixin.step1'
   | 'settings.weixin.step2'
   | 'settings.weixin.step3'
+  | 'settings.whatsapp'
   | 'settings.whatsapp.catalog'
   | 'settings.whatsapp.checkFailed'
   | 'settings.whatsapp.chrome'
