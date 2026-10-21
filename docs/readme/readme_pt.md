@@ -140,6 +140,7 @@ Guia completo de desenvolvimento: [`docs/contributing/development.md`](../../doc
 |---|---|
 | [`docs/ROADMAP_ENGENHARIA_CIVIL.md`](../../docs/ROADMAP_ENGENHARIA_CIVIL.md) | Plano de evolução para Engenharia Civil |
 | [`docs/guides/webui.md`](../../docs/guides/webui.md) | Usando a interface web |
+| [`docs/guides/whatsapp-estacao.md`](../../docs/guides/whatsapp-estacao.md) | Estação WhatsApp: leitura do grupo e resumos agendados |
 | [`docs/guides/deploy-server.md`](../../docs/guides/deploy-server.md) | Publicando o servidor do WebUI |
 | [`docs/contributing/development.md`](../../docs/contributing/development.md) | Ambiente de desenvolvimento |
 | [`COMO_PUBLICAR_VERSAO.md`](../../COMO_PUBLICAR_VERSAO.md) | Como gerar e publicar uma versão |
