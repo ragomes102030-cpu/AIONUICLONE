@@ -26,29 +26,25 @@
         "disallowTypeAnnotations": false
       }
     ],
-    "no-floating-promises": "error",
-    "no-await-thenable": "error"
+    "no-floating-promises": "error"
   },
   "overrides": [
     {
       "files": ["*.js"],
       "rules": {
-        "no-floating-promises": "off",
-        "no-await-thenable": "off"
+        "no-floating-promises": "off"
       }
     },
     {
       "files": ["forge.config.ts", "vitest.config.ts", "tests/**/*.ts", "tests/**/*.tsx"],
       "rules": {
-        "no-floating-promises": "off",
-        "no-await-thenable": "off"
+        "no-floating-promises": "off"
       }
     },
     {
       "files": ["**/gemini/cli/**/*.ts"],
       "rules": {
-        "no-floating-promises": "off",
-        "no-await-thenable": "off"
+        "no-floating-promises": "off"
       }
     }
   ],

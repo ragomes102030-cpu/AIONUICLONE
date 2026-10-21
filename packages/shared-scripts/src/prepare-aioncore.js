@@ -139,7 +139,9 @@ function adoptLegacyBundledDir(projectRoot, runtimeKey, platform) {
   if (!fs.existsSync(currentRoot)) {
     try {
       fs.renameSync(legacyRoot, currentRoot);
-      console.log(`  Adopted pre-rebrand bundle: resources/${LEGACY_BUNDLED_DIR_NAME} -> resources/${BUNDLED_DIR_NAME}`);
+      console.log(
+        `  Adopted pre-rebrand bundle: resources/${LEGACY_BUNDLED_DIR_NAME} -> resources/${BUNDLED_DIR_NAME}`
+      );
       return;
     } catch (error) {
       console.warn(`  Could not rename resources/${LEGACY_BUNDLED_DIR_NAME}: ${error.message}`);

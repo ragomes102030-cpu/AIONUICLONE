@@ -489,7 +489,9 @@ const seedFactorySkills = async (userSkillsDir: string): Promise<void> => {
   }
   try {
     const seeded = await copyMissingEntries(factoryDir, userSkillsDir);
-    console.log(`[Arquimedes] factory skills seeded: ${seeded} new entr${seeded === 1 ? 'y' : 'ies'} from ${factoryDir}`);
+    console.log(
+      `[Arquimedes] factory skills seeded: ${seeded} new entr${seeded === 1 ? 'y' : 'ies'} from ${factoryDir}`
+    );
   } catch (error) {
     console.error('[Arquimedes] Failed to seed factory skills:', error);
   }

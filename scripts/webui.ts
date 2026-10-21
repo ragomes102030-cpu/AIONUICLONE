@@ -148,11 +148,9 @@ function resolveBackendBinary(): string {
   let raw: string | undefined = process.env.AIONUI_BACKEND_BIN;
   if (!raw) {
     const runtimeKey = process.platform + '-' + process.arch;
-    const bundledBase =
-      process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', BUNDLED_DIR_NAME);
+    const bundledBase = process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', BUNDLED_DIR_NAME);
     const legacyBundledBase =
-      process.env.AIONUI_BACKEND_BUNDLED_DIR ??
-      path.join(repoRoot, 'resources', LEGACY_BUNDLED_DIR_NAME);
+      process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', LEGACY_BUNDLED_DIR_NAME);
     const bundled = [
       path.join(bundledBase, runtimeKey, BACKEND_BINARY),
       path.join(bundledBase, runtimeKey, LEGACY_BACKEND_BINARY),
@@ -163,23 +161,23 @@ function resolveBackendBinary(): string {
   }
   if (!raw) {
     try {
-      const cmd =
-        process.platform === 'win32' ? 'where ' + BACKEND_BINARY : 'which ' + BACKEND_BINARY;
+      const cmd = process.platform === 'win32' ? 'where ' + BACKEND_BINARY : 'which ' + BACKEND_BINARY;
       // 'where' on Windows can return CRLF lines; split safely without a regex
       // literal that embeds a raw newline character.
-      const found = execSync(cmd, { encoding: 'utf-8', timeout: 5000 })
-        .trim()
-        .split(new RegExp('\r\n|\n|\r'))[0];
+      const found = execSync(cmd, { encoding: 'utf-8', timeout: 5000 }).trim().split(new RegExp('\r\n|\n|\r'))[0];
       if (found && fs.existsSync(found)) raw = found;
     } catch {
       // not on PATH
     }
   }
   if (!raw) {
-    const bundledBase =
-      process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', BUNDLED_DIR_NAME);
+    const bundledBase = process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', BUNDLED_DIR_NAME);
     throw new Error(
-      'Cannot find ' + BACKEND_BINARY + '. Set AIONUI_BACKEND_BIN, put it on PATH, or place it at ' + path.join(bundledBase, process.platform + '-' + process.arch, BACKEND_BINARY) + '.',
+      'Cannot find ' +
+        BACKEND_BINARY +
+        '. Set AIONUI_BACKEND_BIN, put it on PATH, or place it at ' +
+        path.join(bundledBase, process.platform + '-' + process.arch, BACKEND_BINARY) +
+        '.'
     );
   }
   // Normalize: aioncore must be an absolute native-OS path. A POSIX-style path
