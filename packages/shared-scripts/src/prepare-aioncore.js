@@ -519,7 +519,13 @@ function resolveLocalAioncoreBuild(projectRoot, binaryName) {
     const resolved = path.resolve(explicit);
     return fs.existsSync(resolved) ? resolved : null;
   }
-  const siblings = [path.resolve(projectRoot, '..', 'AionCore'), path.resolve(projectRoot, '..', '..', 'AionCore')];
+  // O checkout local do core em Rust pode ficar ao lado deste repo tanto no
+  // nome legado ("AionCore") quanto no nome neutro ("core").
+  const siblings = [];
+  for (const dirName of ['core', 'AionCore']) {
+    siblings.push(path.resolve(projectRoot, '..', dirName));
+    siblings.push(path.resolve(projectRoot, '..', '..', dirName));
+  }
   for (const dir of siblings) {
     for (const profile of ['release', 'debug']) {
       const candidate = path.join(dir, 'target', profile, binaryName);
