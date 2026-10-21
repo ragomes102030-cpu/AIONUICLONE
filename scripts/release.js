@@ -261,22 +261,30 @@ const publish = ({ version, exePath, ymlPath, repo, notesFile }) => {
   must('git', ['push', 'origin', tag], { noShell: true });
   ok(`tag ${tag} enviada para o origin`);
 
-  must('gh', [
-    'release',
-    'create',
-    tag,
-    exePath,
-    ymlPath,
-    '--repo',
-    repo,
-    '--target',
-    'main',
-    '--latest',
-    '--title',
-    `Arquimedes ${version}`,
-    '--notes-file',
-    notesFile,
-  ]);
+  // noShell: obrigatorio. Com shell:true o Node junta os argumentos com
+  // espaco sem aspas, entao o titulo "Arquimedes 2.3.4" virava dois argumentos
+  // e o gh tratava "2.3.4" como caminho de arquivo de asset:
+  //   no matches found for `2.3.4`
+  must(
+    'gh',
+    [
+      'release',
+      'create',
+      tag,
+      exePath,
+      ymlPath,
+      '--repo',
+      repo,
+      '--target',
+      'main',
+      '--latest',
+      '--title',
+      `Arquimedes ${version}`,
+      '--notes-file',
+      notesFile,
+    ],
+    { noShell: true }
+  );
 };
 
 /* ------------------------------------------------------------ verificacao */
