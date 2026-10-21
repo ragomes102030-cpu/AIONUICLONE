@@ -1622,6 +1622,52 @@ export const webui = {
 };
 
 // ---------------------------------------------------------------------------
+// WhatsApp station — the desktop main process owns the Chrome/CDP probe (it
+// has fetch + fs access to the user's disk), while enabling/disabling the
+// summary tasks is a plain backend HTTP call.
+// ---------------------------------------------------------------------------
+
+export interface IWhatsAppTask {
+  id: string;
+  name: string;
+  expr: string;
+  description?: string;
+  enabled: boolean;
+  nextRunAtMs?: number;
+  lastRunAtMs?: number;
+  lastStatus?: string;
+}
+
+export interface IWhatsAppStationStatus {
+  chrome: {
+    connected: boolean;
+    version?: string;
+    tabs: number;
+    whatsappTab: boolean;
+    sessionActive: boolean;
+    openChat?: string;
+    error?: string;
+  };
+  skill: {
+    installed: boolean;
+    path?: string;
+    registered: boolean;
+  };
+  catalog: { total: number; broken: number };
+  tasks: IWhatsAppTask[];
+  issues: string[];
+  checkedAt: number;
+}
+
+export const whatsapp = {
+  getStationStatus: bridge.buildProvider<IWhatsAppStationStatus, void>('whatsapp.get-station-status'),
+  setTaskEnabled: httpPut<ICronJob, { job_id: string; enabled: boolean }>(
+    (p) => `/api/cron/jobs/${p.job_id}`,
+    (p) => ({ enabled: p.enabled })
+  ),
+};
+
+// ---------------------------------------------------------------------------
 // Cron — routed to /api/cron/*
 // ---------------------------------------------------------------------------
 

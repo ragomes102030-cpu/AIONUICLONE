@@ -59,6 +59,7 @@ const CHANNEL_LOGOS = [
 ] as const;
 
 const ChannelModalContentLazy = React.lazy(() => import('./channels/ChannelModalContent'));
+const WhatsappModalContentLazy = React.lazy(() => import('./WhatsappModalContent'));
 const QRCodeSVGLazy = React.lazy(async () => {
   const mod = await import('qrcode.react');
   return { default: mod.QRCodeSVG };
@@ -76,7 +77,7 @@ const WebuiModalContent: React.FC = () => {
   const talkToButler = useTalkToButler();
   const viewMode = useSettingsViewMode();
   const isPageMode = viewMode === 'page';
-  const [activeTab, setActiveTab] = useState<'webui' | 'channels'>('webui');
+  const [activeTab, setActiveTab] = useState<'webui' | 'channels' | 'whatsapp'>('webui');
 
   // 检测是否在 Electron 桌面环境 / Check if running in Electron desktop environment
   const isDesktop = isElectronDesktop();
@@ -804,7 +805,7 @@ const WebuiModalContent: React.FC = () => {
     <div className='flex flex-col h-full w-full'>
       <Tabs
         activeTab={activeTab}
-        onChange={(key) => setActiveTab((key as 'webui' | 'channels') || 'webui')}
+        onChange={(key) => setActiveTab((key as 'webui' | 'channels' | 'whatsapp') || 'webui')}
         type='line'
         className='mb-12px settings-remote-tabs'
       >
@@ -844,16 +845,36 @@ const WebuiModalContent: React.FC = () => {
             </span>
           }
         />
+        <Tabs.TabPane
+          key='whatsapp'
+          title={
+            <span
+              data-webui-tab='whatsapp'
+              className={`inline-flex items-center gap-6px transition-colors ${activeTab === 'whatsapp' ? 'text-t-primary font-600' : 'text-t-secondary'}`}
+            >
+              <Communication theme='outline' size='15' />
+              <span>{t('settings.whatsapp.tab', 'WhatsApp')}</span>
+            </span>
+          }
+        />
       </Tabs>
 
       {activeTab === 'webui' ? (
         webuiPanel
-      ) : (
+      ) : activeTab === 'channels' ? (
         <div className='flex-1 min-h-0'>
           <Suspense
             fallback={<div className='px-[12px] md:px-[28px] text-13px text-t-secondary'>{t('common.loading')}</div>}
           >
             <ChannelModalContentLazy />
+          </Suspense>
+        </div>
+      ) : (
+        <div className='flex-1 min-h-0'>
+          <Suspense
+            fallback={<div className='px-[12px] md:px-[28px] text-13px text-t-secondary'>{t('common.loading')}</div>}
+          >
+            <WhatsappModalContentLazy />
           </Suspense>
         </div>
       )}
