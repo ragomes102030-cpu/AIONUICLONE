@@ -1,0 +1,8 @@
+{
+  "nome": "Resumo semanal do WhatsApp",
+  "descricao": "Às sextas-feiras, gera o resumo acumulado da semana de mensagens do WhatsApp Web.",
+  "cron": "0 7 * * 5",
+  "skill": "whatsapp-automation",
+  "acao": "lerMensagens + gerarResumoSemanal",
+  "habilitado": false
+}

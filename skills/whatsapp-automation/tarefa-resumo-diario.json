@@ -1,0 +1,8 @@
+{
+  "nome": "Resumo diário do WhatsApp",
+  "descricao": "Às 7:00 da manhã, lê as mensagens do WhatsApp Web (chat PIAZZA) e gera resumo do dia anterior: o que foi solicitado, quem pediu, feito/pendente.",
+  "cron": "0 7 * * *",
+  "skill": "whatsapp-automation",
+  "acao": "lerMensagens + gerarResumoDiario",
+  "habilitado": false
+}
