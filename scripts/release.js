@@ -248,10 +248,23 @@ const buildNotes = (version, previousVersion) => {
 /* ------------------------------------------------------------ publicacao */
 
 const publish = ({ version, exePath, ymlPath, repo, notesFile }) => {
+  const tag = `v${version}`;
+
+  // A tag precisa existir antes de publicar. O "gh release create" so cria
+  // a tag sozinha quando o repositorio local tem esse ref; sem ele o gh
+  // aborta com "no matches found for `<versao>`" e a release nao sai.
+  const localTag = exec('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}`], { noShell: true });
+  if (localTag.status !== 0) {
+    must('git', ['tag', tag, 'HEAD'], { noShell: true });
+    ok(`tag ${tag} criada no HEAD`);
+  }
+  must('git', ['push', 'origin', tag], { noShell: true });
+  ok(`tag ${tag} enviada para o origin`);
+
   must('gh', [
     'release',
     'create',
-    `v${version}`,
+    tag,
     exePath,
     ymlPath,
     '--repo',
