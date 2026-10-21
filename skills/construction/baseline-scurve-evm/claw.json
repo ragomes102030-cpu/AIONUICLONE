@@ -2,7 +2,7 @@
   "name": "baseline-scurve-evm",
   "version": "1.0.0",
   "description": "Snapshot baselines, compute S-curves and Earned Value: PV/EV/AC, SPI/CPI, EAC/ETC/VAC, planned vs actual deviation.",
-  "author": "AIONUICLONE",
+  "author": "ArquimedesPlanejamento",
   "license": "MIT",
   "permissions": ["filesystem"],
   "entry": "instructions.md",

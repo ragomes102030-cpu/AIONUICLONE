@@ -2,7 +2,7 @@
   "name": "lob-line-of-balance",
   "version": "1.0.0",
   "description": "Line of Balance for repetitive construction: pace, crews, rhythm, interference detection, rebalancing.",
-  "author": "AIONUICLONE",
+  "author": "ArquimedesPlanejamento",
   "license": "MIT",
   "permissions": ["filesystem"],
   "entry": "instructions.md",

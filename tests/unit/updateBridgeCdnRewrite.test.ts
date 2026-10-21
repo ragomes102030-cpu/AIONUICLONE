@@ -25,8 +25,8 @@ vi.mock('@/common/platform/bridge', () => ({
     })),
   },
 }));
-const FORK_REPO = 'ragomes102030-cpu/AIONUICLONE';
-const FORK_CDN_BASE = 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download';
+const FORK_REPO = 'ragomes102030-cpu/ArquimedesPlanejamento';
+const FORK_CDN_BASE = 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download';
 const FORK_CHANNEL_PREFIX = `${FORK_CDN_BASE}/latest`;
 
 let _originalFetch = undefined;
@@ -76,7 +76,7 @@ const makeGitHubReleaseResponse = () => [
     tag_name: 'v1.9.22',
     name: 'v1.9.22',
     body: 'release notes',
-    html_url: 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/tag/v1.9.22',
+    html_url: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/tag/v1.9.22',
     published_at: '2026-04-29T00:00:00Z',
     prerelease: false,
     draft: false,
@@ -84,21 +84,21 @@ const makeGitHubReleaseResponse = () => [
       {
         name: 'AionUi-1.9.22-mac-arm64.dmg',
         browser_download_url:
-          'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-mac-arm64.dmg',
+          'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/download/v1.9.22/AionUi-1.9.22-mac-arm64.dmg',
         size: 123,
         content_type: 'application/x-apple-diskimage',
       },
       {
         name: 'AionUi-1.9.22-win-x64.exe',
         browser_download_url:
-          'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-win-x64.exe',
+          'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/download/v1.9.22/AionUi-1.9.22-win-x64.exe',
         size: 456,
         content_type: 'application/vnd.microsoft.portable-executable',
       },
       {
         name: 'AionUi-1.9.22-linux-amd64.deb',
         browser_download_url:
-          'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-linux-amd64.deb',
+          'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/download/v1.9.22/AionUi-1.9.22-linux-amd64.deb',
         size: 789,
       },
     ],
@@ -201,15 +201,15 @@ describe('updateBridge CDN URL rewriting', () => {
       const macAsset = assets.find((a: { name: string }) => a.name === 'AionUi-1.9.22-mac-arm64.dmg');
       expect(macAsset).toBeDefined();
       expect(macAsset?.url).toBe(
-        'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/AionUi-1.9.22-mac-arm64.dmg'
+        'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download/AionUi-1.9.22-mac-arm64.dmg'
       );
       expect(macAsset?.fallbackUrl).toBe(
-        'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download/v1.9.22/AionUi-1.9.22-mac-arm64.dmg'
+        'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/download/v1.9.22/AionUi-1.9.22-mac-arm64.dmg'
       );
 
       const linuxAsset = assets.find((a: { name: string }) => a.name === 'AionUi-1.9.22-linux-amd64.deb');
       expect(linuxAsset?.url).toBe(
-        'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/AionUi-1.9.22-linux-amd64.deb'
+        'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download/AionUi-1.9.22-linux-amd64.deb'
       );
       expect(fetchMock).toHaveBeenCalled();
     } finally {
@@ -225,7 +225,7 @@ describe('updateBridge CDN URL rewriting', () => {
       const result = await handler({ repo: FORK_REPO });
       const asset = result.data?.latest?.assets?.[0];
       expect(asset?.url).toBe(
-        'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/AionUi-1.9.22-mac-arm64.dmg'
+        'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download/AionUi-1.9.22-mac-arm64.dmg'
       );
       expect(asset?.url).not.toMatch(/\/v1\.9\.22\//);
       expect(asset?.url).not.toMatch(/\/1\.9\.22\//);
@@ -267,7 +267,7 @@ describe('updateBridge allowlist includes CDN host', () => {
 
       const result = await handler({
         downloadId: 'manual-download-1',
-        url: 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download/AionUi-1.9.22-mac-arm64.dmg',
+        url: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download/AionUi-1.9.22-mac-arm64.dmg',
         file_name: 'AionUi-1.9.22-mac-arm64.dmg',
       });
 

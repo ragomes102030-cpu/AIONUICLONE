@@ -7,14 +7,14 @@ description: >-
   de prazo ou custo, previsão de término, "vamos conseguir entregar?". Do NOT use
   for raw production entry (use `production-measurement-control`) or budget
   composition (use `budget-composition-service`).
-homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
+homepage: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento'
 metadata:
   {
     'openclaw':
       {
         'emoji': '📈',
         'os': ['darwin', 'linux', 'win32'],
-        'homepage': 'https://github.com/ragomes102030-cpu/AIONUICLONE',
+        'homepage': 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento',
         'requires': { 'bins': ['python3'] },
       },
   }

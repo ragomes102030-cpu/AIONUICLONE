@@ -27,8 +27,8 @@ vi.mock('@/common/platform/bridge', () => ({
   },
 }));
 
-const FORK_CDN_BASE = 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases';
-const FORK_GITHUB_BASE = 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/download';
+const FORK_CDN_BASE = 'https://raw.githubusercontent.com/ragomes102030-cpu/ArquimedesPlanejamento/main/releases';
+const FORK_GITHUB_BASE = 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/download';
 
 const makeRequest = (version = '2.2.0', name = 'AionUi-2.2.0-mac-arm64.dmg') => ({
   url: `${FORK_CDN_BASE}/${version}/${name}`,

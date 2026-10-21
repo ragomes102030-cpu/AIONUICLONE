@@ -18,7 +18,7 @@ import type { CdnGenericProviderConfiguration, UpdateArtifactLayout } from './cd
  * Override with `AIONUI_UPDATE_URL` to use a different host (e.g. a CDN).
  */
 export const CDN_UPDATE_BASE_URL =
-  process.env.AIONUI_UPDATE_URL || 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download';
+  process.env.AIONUI_UPDATE_URL || 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download';
 
 /**
  * Layout of the artifacts relative to {@link CDN_UPDATE_BASE_URL}.

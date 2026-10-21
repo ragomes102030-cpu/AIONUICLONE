@@ -2,7 +2,7 @@
   "name": "budget-composition-service",
   "version": "1.0.0",
   "description": "Construction budgeting with service compositions: inputs, coefficients, unit cost, BDI, price versions with approval.",
-  "author": "AIONUICLONE",
+  "author": "ArquimedesPlanejamento",
   "license": "MIT",
   "permissions": ["filesystem"],
   "entry": "instructions.md",

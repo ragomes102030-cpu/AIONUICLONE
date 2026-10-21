@@ -178,7 +178,8 @@ describe('AutoUpdaterService', () => {
 
     expect(autoUpdaterMock.setFeedURL).toHaveBeenCalledWith({
       provider: 'custom',
-      url: 'https://raw.githubusercontent.com/ragomes102030-cpu/AIONUICLONE/main/releases',
+      url: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download',
+      layout: 'flat',
       updateProvider: CdnGenericProvider,
     });
   });

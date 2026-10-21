@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 Community Discussions
-    url: https://github.com/ragomes102030-cpu/AIONUICLONE/issues/new/choose
+    url: https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues/new/choose
     about: Ask questions, share ideas, and discuss Arquimedes with the community
   - name: 📖 Documentation
     url: https://ragomes102030-cpu.github.io/arquimedes/
     about: Check our documentation for setup guides, configuration, and troubleshooting
   - name: 🔒 Security Issues
-    url: https://github.com/ragomes102030-cpu/AIONUICLONE/security/advisories/new
+    url: https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/security/advisories/new
     about: Report security vulnerabilities privately (DO NOT create public issues)

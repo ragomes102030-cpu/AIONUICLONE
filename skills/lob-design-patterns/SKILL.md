@@ -8,14 +8,14 @@ description: >-
   standardise the look of a schedule/budget spreadsheet. Do NOT use to compute
   the CPM or the balance itself — use the scheduling and LOB skills for that;
   this skill only defines the layout.
-homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
+homepage: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento'
 metadata:
   {
     'openclaw':
       {
         'emoji': '📊',
         'os': ['darwin', 'linux', 'win32'],
-        'homepage': 'https://github.com/ragomes102030-cpu/AIONUICLONE',
+        'homepage': 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento',
         'requires': {},
       },
   }

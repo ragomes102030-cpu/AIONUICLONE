@@ -7,14 +7,14 @@ description: >-
   produção diária, diário de obra, produtividade, medição, boletim, memória de cálculo,
   avanço físico, or asks to close a measurement period. Do NOT use for RDO narrative
   (use `daily-progress-report`) or cost variance (use `budget-variance-analyzer`).
-homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
+homepage: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento'
 metadata:
   {
     'openclaw':
       {
         'emoji': '🏗️',
         'os': ['darwin', 'linux', 'win32'],
-        'homepage': 'https://github.com/ragomes102030-cpu/AIONUICLONE',
+        'homepage': 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento',
         'requires': { 'bins': ['python3'] },
       },
   }

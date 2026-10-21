@@ -7,14 +7,14 @@ description: >-
   SINAPI, SEINFRA, BDI, preço unitário, custo direto, or asks "quanto custa esse
   serviço?". Do NOT use for looking up a single price (use `sinapi-SEINFRA`) or for
   tracking actual cost (use `construction-cost-control`).
-homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
+homepage: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento'
 metadata:
   {
     'openclaw':
       {
         'emoji': '💰',
         'os': ['darwin', 'linux', 'win32'],
-        'homepage': 'https://github.com/ragomes102030-cpu/AIONUICLONE',
+        'homepage': 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento',
         'requires': { 'bins': ['python3'] },
       },
   }

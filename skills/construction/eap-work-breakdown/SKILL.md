@@ -8,14 +8,14 @@ description: >-
   árvore de escopo, or asks to "organize", "dividir" or "estruturar" the obra —
   even without naming EAP. Do NOT use for schedule dates (use `cpm-scheduling`)
   or pricing (use `budget-composition-service`).
-homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
+homepage: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento'
 metadata:
   {
     'openclaw':
       {
         'emoji': '🧱',
         'os': ['darwin', 'linux', 'win32'],
-        'homepage': 'https://github.com/ragomes102030-cpu/AIONUICLONE',
+        'homepage': 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento',
         'requires': { 'bins': ['python3'] },
       },
   }

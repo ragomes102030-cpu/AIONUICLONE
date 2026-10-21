@@ -8,14 +8,14 @@ description: >-
   chuva, "vai chover?", "dá para concretar/escavar/pintar no sábado?", or wants
   to justify a delay with historical weather. Do NOT use to claim schedule
   impact without cross-checking the Gantt, nor for fully indoor activities.
-homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
+homepage: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento'
 metadata:
   {
     'openclaw':
       {
         'emoji': '🌧️',
         'os': ['darwin', 'linux', 'win32'],
-        'homepage': 'https://github.com/ragomes102030-cpu/AIONUICLONE',
+        'homepage': 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento',
         'requires': { 'bins': ['curl'] },
       },
   }

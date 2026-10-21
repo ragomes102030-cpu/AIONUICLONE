@@ -60,7 +60,7 @@ interface AutoUpdateCheckParams {
   includePrerelease?: boolean;
 }
 
-const DEFAULT_REPO = 'ragomes102030-cpu/AIONUICLONE';
+const DEFAULT_REPO = 'ragomes102030-cpu/ArquimedesPlanejamento';
 const DEFAULT_USER_AGENT = 'Arquimedes';
 const ALLOWED_ASSET_EXTS = new Set(['.exe', '.msi', '.dmg', '.zip', '.deb', '.rpm']);
 // Default feed: the "latest release assets" endpoint of the repository that
@@ -68,7 +68,7 @@ const ALLOWED_ASSET_EXTS = new Set(['.exe', '.msi', '.dmg', '.zip', '.deb', '.rp
 // release flagged as *Latest*, so no binary has to be hosted in the repository.
 const CDN_HOST = process.env.AIONUI_UPDATE_HOST || 'github.com';
 const CDN_BASE_URL =
-  process.env.AIONUI_UPDATE_BASE_URL || 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download';
+  process.env.AIONUI_UPDATE_BASE_URL || 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download';
 /**
  * Artifact layout relative to the feed base URL:
  * - `flat` (default): `<base>/latest.yml` + `<base>/<file>`

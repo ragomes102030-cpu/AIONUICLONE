@@ -7,14 +7,14 @@ description: >-
   pavimento tipo, obra repetitiva, frentes de trabalho simultâneas, or asks how to keep
   crews busy across floors/units. Do NOT use for one-off linear schedules (use
   `gantt-chart`) or CPM float analysis (use `cpm-network-validator`).
-homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
+homepage: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento'
 metadata:
   {
     'openclaw':
       {
         'emoji': '🔁',
         'os': ['darwin', 'linux', 'win32'],
-        'homepage': 'https://github.com/ragomes102030-cpu/AIONUICLONE',
+        'homepage': 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento',
         'requires': { 'bins': ['python3'] },
       },
   }

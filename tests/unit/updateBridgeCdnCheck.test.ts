@@ -97,8 +97,8 @@ path: AionUi-2.1.45-mac-arm64.zip
 releaseDate: '2026-07-31T14:45:19.381Z'
 `;
 
-const FORK_REPO = 'ragomes102030-cpu/AIONUICLONE';
-const FORK_CDN = 'https://github.com/ragomes102030-cpu/AIONUICLONE/releases/latest/download';
+const FORK_REPO = 'ragomes102030-cpu/ArquimedesPlanejamento';
+const FORK_CDN = 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases/latest/download';
 const FORK_CHANNEL_PREFIX = `${FORK_CDN}/latest`;
 
 const GITHUB_RELEASES = [
@@ -134,7 +134,7 @@ let _originalFetch: any = undefined;
 const stubFetch = (scenario: FetchScenario) => {
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
-    // Fork AIONUICLONE é o canal oficial de produção (DEFAULT_REPO/CDN_BASE_URL):
+    // Fork ArquimedesPlanejamento é o canal oficial de produção (DEFAULT_REPO/CDN_BASE_URL):
     // intercepta o prefixo do canal do fork, não o do upstream iOfficeAI.
     if (url.startsWith(FORK_CHANNEL_PREFIX)) {
       if (!scenario.cdn) throw new Error('unexpected CDN request');

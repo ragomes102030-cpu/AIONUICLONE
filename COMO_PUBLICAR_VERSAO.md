@@ -37,8 +37,8 @@ Opções extras: `--skip-build` (usa o build que já está em `out/`), `--notes 
 (usa as suas próprias notas), `--repo <owner/nome>`.
 
 > **Sobre o nome do repositório:** ele foi renomeado para `ArquimedesPlanejamento`.
-> O endereço antigo (`AIONUICLONE`) continua funcionando por redirecionamento do GitHub,
-> e é por isso que o app instalado ainda consegue se atualizar. O script usa o nome novo.
+> O endereço antigo ainda redireciona no GitHub, mas o app, o script e os guias
+> usam já o nome novo — assim o atualizador não depende de redirecionamento.
 
 ---
 

@@ -8,14 +8,14 @@ description: >-
   "quais atividades não têm folga", or asks whether a schedule can be shortened —
   even without naming CPM. Do NOT use for visual Gantt rendering (use `gantt-chart`)
   or cost impact (use `budget-variance-analyzer`).
-homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
+homepage: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento'
 metadata:
   {
     'openclaw':
       {
         'emoji': '🕸️',
         'os': ['darwin', 'linux', 'win32'],
-        'homepage': 'https://github.com/ragomes102030-cpu/AIONUICLONE',
+        'homepage': 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento',
         'requires': { 'bins': ['python3'] },
       },
   }

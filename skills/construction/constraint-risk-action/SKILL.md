@@ -7,14 +7,14 @@ description: >-
   interferências, pendências de obra, or asks "o que está travando a obra?". Do NOT use
   for cost deviation (use `budget-variance-analyzer`) or schedule CPM (use
   `cpm-network-validator`).
-homepage: 'https://github.com/ragomes102030-cpu/AIONUICLONE'
+homepage: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento'
 metadata:
   {
     'openclaw':
       {
         'emoji': '⛔',
         'os': ['darwin', 'linux', 'win32'],
-        'homepage': 'https://github.com/ragomes102030-cpu/AIONUICLONE',
+        'homepage': 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento',
         'requires': { 'bins': ['python3'] },
       },
   }

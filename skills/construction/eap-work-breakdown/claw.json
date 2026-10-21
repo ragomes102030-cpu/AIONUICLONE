@@ -2,7 +2,7 @@
   "name": "eap-work-breakdown",
   "version": "1.0.0",
   "description": "Build and validate construction Work Breakdown Structures: hierarchy, WBS codes, scope-activity linkage, roll-up.",
-  "author": "AIONUICLONE",
+  "author": "ArquimedesPlanejamento",
   "license": "MIT",
   "permissions": ["filesystem"],
   "entry": "instructions.md",
