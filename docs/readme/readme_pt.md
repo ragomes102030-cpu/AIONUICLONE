@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../../resources/aionui-banner-1.png" alt="AionUi - Cowork with AI Agents" width="100%">
+  <img src="../../resources/arquimedes-banner-1.png" alt="Arquimedes - Engenharia Civil com IA" width="100%">
 </p>
 
 <p align="center">
@@ -176,10 +176,6 @@ Se você já usa Claude Code, Codex, Hermes Agent ou OpenClaw, AionUi os detecta
 ### Team Mode — Colaboração Multi-Agent Coordenada
 
 Execute múltiplos AI Agents como uma equipe organizada: um agente **Leader** recebe suas instruções, as divide em subtarefas e delega para agentes **Teammate** via um Team MCP Server integrado. Os Teammates executam em paralelo, compartilham resultados através de uma caixa de entrada assíncrona e escrevem em um quadro de tarefas compartilhado.
-
-<p align="center">
-  <img src="../../resources/AionUi_team.gif" alt="Team Mode overview" width="800">
-</p>
 
 - **Execução paralela multi-agent** — Leader divide e delega tarefas a Teammates em paralelo; Agents externos se conectam via ACP (Agent Client Protocol) e o AionUi coordena a equipe
 - **Orquestração do Leader** — Leader atribui, rastreia e agrega resultados; backends suportados: Claude Code, Codex, Hermes Agent, Gemini, Snow CLI e Aion CLI
@@ -391,10 +387,6 @@ _10+ formatos: PDF, Word, Excel, PPT, código, Markdown, imagens, HTML, Diff —
 ### **Gerenciamento inteligente de arquivos — Operações de arquivos automatizadas**
 
 _Renomeação em lote, organização automática, classificação inteligente, mesclagem de arquivos — o Cowork Agent cuida disso para você._
-
-<p align="center">
-  <img src="../../resources/aionui sort file 2.gif" alt="Smart File Management" width="800">
-</p>
 
 <details>
 <summary><strong>🔍 Ver detalhes das funcionalidades de gerenciamento de arquivos ▶️</strong></summary>
@@ -680,7 +672,7 @@ brew install aionui
 
 <p align="center">
   <a href="https://x.com/AionUi" target="_blank">
-    <img src="../../resources/contactus-x.png" alt="Contact Us on X" width="600">
+    <img src="../../resources/contactus-whatsapp.png" alt="Fale conosco no WhatsApp" width="600">
   </a>
 </p>
 

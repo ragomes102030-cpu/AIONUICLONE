@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../../resources/aionui-banner-1.png" alt="AionUi - Cowork with AI Agents" width="100%">
+  <img src="../../resources/arquimedes-banner-1.png" alt="Arquimedes - Engenharia Civil com IA" width="100%">
 </p>
 
 <p align="center">
@@ -176,10 +176,6 @@ Zaten Claude Code, Codex, Hermes Agent veya OpenClaw kullanıyorsanız, AionUi b
 ### Team Mode — Koordineli Çoklu Agent İşbirliği
 
 Birden fazla AI Agent'ı organize bir ekip olarak çalıştırın: bir **Leader** Agent talimatlarınızı alır, bunları alt görevlere böler ve yerleşik Team MCP Server aracılığıyla **Teammate** Agent'lara devreder. Teammate'ler paralel olarak çalışır, asenkron posta kutusu üzerinden sonuçları paylaşır ve paylaşılan görev panosuna yazar.
-
-<p align="center">
-  <img src="../../resources/AionUi_team.gif" alt="Team Mode overview" width="800">
-</p>
 
 - **Paralel çoklu agent çalıştırma** — Leader görevleri bölüp Teammate'lere paralel olarak devreder; harici Agent'lar ACP (Agent Client Protocol) ile bağlanır ve ekibi AionUi koordine eder
 - **Leader orkestrasyonu** — Leader atar, izler ve sonuçları toplar; desteklenen arka uçlar: Claude Code, Codex, Hermes Agent, Gemini, Snow CLI ve Aion CLI
@@ -391,10 +387,6 @@ _10+ format: PDF, Word, Excel, PPT, kod, Markdown, görüntüler, HTML, Diff —
 ### **Akıllı Dosya Yönetimi — Otomatik Dosya İşlemleri**
 
 _Toplu yeniden adlandırma, otomatik organizasyon, akıllı sınıflandırma, dosya birleştirme — Cowork Agent sizin için halleder._
-
-<p align="center">
-  <img src="../../resources/aionui sort file 2.gif" alt="Smart File Management" width="800">
-</p>
 
 <details>
 <summary><strong>🔍 Dosya Yönetimi Özellik Detaylarını Görüntüle ▶️</strong></summary>
@@ -680,7 +672,7 @@ brew install aionui
 
 <p align="center">
   <a href="https://x.com/AionUi" target="_blank">
-    <img src="../../resources/contactus-x.png" alt="Contact Us on X" width="600">
+    <img src="../../resources/contactus-whatsapp.png" alt="Fale conosco no WhatsApp" width="600">
   </a>
 </p>
 

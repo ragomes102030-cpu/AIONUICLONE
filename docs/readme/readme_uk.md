@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../../resources/aionui-banner-1.png" alt="AionUi - Спільна робота з AI-агентами" width="100%">
+  <img src="../../resources/arquimedes-banner-1.png" alt="AionUi - Спільна робота з AI-агентами" width="100%">
 </p>
 
 <p align="center">
@@ -178,10 +178,6 @@ AionUi постачається з повноцінним рушієм AI-аге
 
 Запускайте кілька AI-агентів як організовану команду: агент **Leader** отримує ваші інструкції, ділить їх на підзадачі і делегує агентам **Teammate** через вбудований Team MCP Server. Teammate-агенти виконують завдання паралельно, обмінюються результатами через асинхронну поштову скриньку та записують у спільну дошку завдань.
 
-<p align="center">
-  <img src="../../resources/AionUi_team.gif" alt="Team Mode overview" width="800">
-</p>
-
 - **Паралельне виконання кількох агентів** — Leader ділить і делегує завдання Teammate-агентам; зовнішні агенти підключаються через ACP (Agent Client Protocol), а AionUi координує команду
 - **Оркестрація Leader** — Leader призначає, відстежує та агрегує результати; підтримувані бекенди: Claude Code, Codex, Hermes Agent, Gemini, Snow CLI, Aion CLI
 - **Ізольований робочий простір команди** — всі агенти спільно використовують одну папку; кожен має свій діалог підтвердження дозволів із значком на бічній панелі для очікуваних підтверджень
@@ -359,10 +355,6 @@ _10+ форматів: PDF, Word, Excel, PPT, код, Markdown, зображен
 
 _Пакетне перейменування, автоматичне впорядкування, розумна класифікація та злиття файлів._
 
-<p align="center">
-  <img src="../../resources/aionui sort file 2.gif" alt="Керування файлами" width="800">
-</p>
-
 ---
 
 ## 🤔 Чому варто обрати AionUi замість Claude Cowork?
@@ -410,7 +402,7 @@ brew install aionui
 
 <p align="center">
   <a href="https://x.com/AionUi" target="_blank">
-    <img src="../../resources/contactus-x.png" alt="Зв'яжіться з нами в X" width="600">
+    <img src="../../resources/contactus-whatsapp.png" alt="Зв'яжіться з нами в X" width="600">
   </a>
 </p>
 

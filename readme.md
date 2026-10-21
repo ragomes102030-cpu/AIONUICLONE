@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./resources/aionui-banner-1.png" alt="AionUi - Cowork with AI Agents" width="100%">
+  <img src="./resources/arquimedes-banner-1.png" alt="Arquimedes - Engenharia Civil com IA" width="100%">
 </p>
 
 <p align="center">
@@ -178,10 +178,6 @@ If you already use Claude Code, Codex, Hermes Agent, or OpenClaw, AionUi auto-de
 ### Team Mode — Coordinated Multi-Agent Collaboration
 
 Run multiple AI agents as an organized team: a **Leader** agent receives your instructions, breaks them into subtasks, and delegates to **Teammate** agents via a built-in Team MCP Server. Teammates execute in parallel, share results through an async mailbox, and write to a shared task board.
-
-<p align="center">
-  <img src="./resources/AionUi_team.gif" alt="Team Mode overview" width="800">
-</p>
 
 - **Parallel multi-agent execution** — Leader breaks tasks into subtasks and delegates to Teammate agents running in parallel; each Teammate uses its own model through the selected backend. External agents connect through ACP (Agent Client Protocol), while AionUi coordinates the team
 - **Leader orchestration** — Leader assigns, tracks, and aggregates results; supported backends include Claude Code, Codex, Hermes Agent, Gemini, Snow CLI, and Aion CLI
@@ -394,10 +390,6 @@ _10+ formats: PDF, Word, Excel, PPT, code, Markdown, images, HTML, Diff — view
 ### **Smart File Management — Automated File Operations**
 
 _Batch renaming, automatic organization, smart classification, file merging — the Cowork agent handles it for you._
-
-<p align="center">
-  <img src="./resources/aionui sort file 2.gif" alt="Smart File Management" width="800">
-</p>
 
 <details>
 <summary><strong>🔍 View File Management Features Details ▶️</strong></summary>
@@ -688,7 +680,7 @@ brew install aionui
 
 <p align="center">
   <a href="https://x.com/AionUi" target="_blank">
-    <img src="./resources/contactus-x.png" alt="Contact Us on X" width="600">
+    <img src="./resources/contactus-whatsapp.png" alt="Fale conosco no WhatsApp" width="600">
   </a>
 </p>
 

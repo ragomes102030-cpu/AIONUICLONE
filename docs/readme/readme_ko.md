@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../../resources/aionui-banner-1.png" alt="AionUi - Cowork with AI Agents" width="100%">
+  <img src="../../resources/arquimedes-banner-1.png" alt="Arquimedes - Engenharia Civil com IA" width="100%">
 </p>
 
 <p align="center">
@@ -176,10 +176,6 @@ Office 어시스턴트는 요청을 편집하고 재사용할 수 있는 파일�
 ### Team Mode — 정렬된 멀티 에이전트 협업
 
 여러 AI Agent를 조직된 팀으로 실행: **Leader** Agent가 지시를 받아 서브태스크로 분리하고 내장 Team MCP Server를 통해 **Teammate** Agent에게 위임. Teammate들은 병렬로 실행하고 비동기 메일박스를 통해 결과를 공유하며 공유 작업 보드에 씁니다.
-
-<p align="center">
-  <img src="../../resources/AionUi_team.gif" alt="Team Mode overview" width="800">
-</p>
 
 - **병렬 멀티 에이전트 실행** — Leader가 작업을 나누어 Teammate에게 병렬 위임하며, 외부 Agent는 ACP(Agent Client Protocol)로 연결되고 팀 조정은 AionUi가 담당합니다
 - **Leader 오케스트레이션** — Leader가 할당, 추적, 집계; 지원 백엔드: Claude Code, Codex, Hermes Agent, Gemini, Snow CLI, Aion CLI
@@ -391,10 +387,6 @@ _10+ 형식: PDF, Word, Excel, PPT, 코드, Markdown, 이미지, HTML, Diff — 
 ### **스마트 파일 관리 — 자동화된 파일 작업**
 
 _일괄 이름 변경, 자동 정리, 스마트 분류, 파일 병합——Cowork Agent가 여러분을 위해 처리합니다._
-
-<p align="center">
-  <img src="../../resources/aionui sort file 2.gif" alt="Smart File Management" width="800">
-</p>
 
 <details>
 <summary><strong>🔍 파일 관리 기능 상세 보기 ▶️</strong></summary>
@@ -680,7 +672,7 @@ brew install aionui
 
 <p align="center">
   <a href="https://x.com/AionUi" target="_blank">
-    <img src="../../resources/contactus-x.png" alt="Contact Us on X" width="600">
+    <img src="../../resources/contactus-whatsapp.png" alt="Fale conosco no WhatsApp" width="600">
   </a>
 </p>
 

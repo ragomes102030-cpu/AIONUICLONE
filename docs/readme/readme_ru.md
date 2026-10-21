@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../../resources/aionui-banner-1.png" alt="AionUi - Cowork with AI Agents" width="100%">
+  <img src="../../resources/arquimedes-banner-1.png" alt="Arquimedes - Engenharia Civil com IA" width="100%">
 </p>
 
 <p align="center">
@@ -178,10 +178,6 @@ AionUi поставляется с полноценным движком ИИ-а
 ### Team Mode — скоординированная мультиагентная совместная работа
 
 Запускайте несколько ИИ-агентов как организованную команду: агент **Leader** получает ваши инструкции, разбивает их на подзадачи и делегирует агентам **Teammate** через встроенный Team MCP Server. Teammate-агенты выполняют задачи параллельно, обмениваются результатами через асинхронный почтовый ящик и записывают в общую доску задач.
-
-<p align="center">
-  <img src="../../resources/AionUi_team.gif" alt="Team Mode overview" width="800">
-</p>
 
 - **Параллельное выполнение нескольких агентов** — Leader разбивает и делегирует задачи Teammate-агентам; внешние агенты подключаются через ACP (Agent Client Protocol), а AionUi координирует команду
 - **Оркестрация Leader** — Leader назначает, отслеживает и агрегирует результаты; поддерживаемые бэкенды: Claude Code, Codex, Hermes Agent, Gemini, Snow CLI, Aion CLI
@@ -398,10 +394,6 @@ _10+ форматов: PDF, Word, Excel, PPT, код, Markdown, изображе
 ### **Умное управление файлами — автоматические операции с файлами**
 
 _Пакетное переименование, автоматическая организация, умная классификация, объединение файлов — Cowork-агент справится с этим за вас._
-
-<p align="center">
-  <img src="../../resources/aionui sort file 2.gif" alt="Smart File Management" width="800">
-</p>
 
 <details>
 <summary><strong>🔍 Подробности о функциях управления файлами ▶️</strong></summary>
@@ -698,7 +690,7 @@ brew install aionui
 
 <p align="center">
   <a href="https://x.com/AionUi" target="_blank">
-    <img src="../../resources/contactus-x.png" alt="Contact Us on X" width="600">
+    <img src="../../resources/contactus-whatsapp.png" alt="Fale conosco no WhatsApp" width="600">
   </a>
 </p>
 

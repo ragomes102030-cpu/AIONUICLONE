@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Arquimedes - monochrome mark (white glyph on transparent), for dark UI surfaces. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Arquimedes">
+  <g stroke="#ffffff" stroke-width="26" stroke-linecap="round" fill="none">
+    <path d="M256 104 L176 366" />
+    <path d="M256 104 L336 366" />
+  </g>
+  <circle cx="256" cy="104" r="40" fill="#ffffff" />
+  <g stroke="#ffffff" stroke-width="9" opacity="0.9">
+    <path d="M176 372V420" />
+    <path d="M336 372V420" />
+  </g>
+  <g stroke="#ffffff" stroke-width="14" stroke-linecap="round" fill="none">
+    <path d="M176 420H336" />
+    <path d="M176 396V444" />
+    <path d="M336 396V444" />
+  </g>
+</svg>

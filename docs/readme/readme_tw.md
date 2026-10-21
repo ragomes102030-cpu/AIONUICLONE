@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../../resources/aionui-banner-1.png" alt="AionUi - Cowork with AI Agents" width="100%">
+  <img src="../../resources/arquimedes-banner-1.png" alt="Arquimedes - Engenharia Civil com IA" width="100%">
 </p>
 
 <p align="center">
@@ -178,10 +178,6 @@ AionUi 自帶完整的 AI Agent 引擎。不像其他工具需要您手動安裝
 ### Team Mode — 多 Agent 有序協作
 
 以團隊形式運行多個 AI Agent：**Leader** Agent 接收您的指令，將其分解為子任務，並透過內建 Team MCP Server 委派給 **Teammate** Agent。Teammate 並行執行，透過非同步郵箱共享結果，並將進度寫入共享任務看板。
-
-<p align="center">
-  <img src="../../resources/AionUi_team.gif" alt="Team Mode overview" width="800">
-</p>
 
 - **多 Agent 並行執行** — Leader 將任務拆分並委派給並行運行的 Teammate；外部 Agent 透過 ACP（Agent Client Protocol）連線，由 AionUi 負責團隊協調
 - **Leader 統籌編排** — Leader 分配、追蹤並彙總結果；支援的後端包括 Claude Code、Codex、Hermes Agent、Gemini、Snow CLI 和 Aion CLI
@@ -394,10 +390,6 @@ _支援 10+ 種格式：PDF、Word、Excel、PPT、程式碼、Markdown、圖像
 ### **智慧檔案管理 — 讓 AI 幫您整理檔案**
 
 _批次重新命名、自動整理、智慧分類、檔案合併 — 這些繁瑣的事，交給 Cowork Agent 就行。_
-
-<p align="center">
-  <img src="../../resources/aionui sort file 2.gif" alt="Smart File Management" width="800">
-</p>
 
 <details>
 <summary><strong>🔍 查看檔案管理功能詳情 ▶️</strong></summary>
@@ -683,7 +675,7 @@ brew install aionui
 
 <p align="center">
   <a href="https://x.com/AionUi" target="_blank">
-    <img src="../../resources/contactus-x.png" alt="Contact Us on X" width="600">
+    <img src="../../resources/contactus-whatsapp.png" alt="Fale conosco no WhatsApp" width="600">
   </a>
 </p>
 

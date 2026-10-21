@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Arquimedes - cartao de contato (WhatsApp) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" width="600" height="300" role="img" aria-label="Contato WhatsApp Arquimedes">
+  <defs>
+    <linearGradient id="cBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f1a2e" />
+      <stop offset="1" stop-color="#08101c" />
+    </linearGradient>
+    <linearGradient id="waFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4ade80" />
+      <stop offset="1" stop-color="#15a34a" />
+    </linearGradient>
+  </defs>
+  <rect width="600" height="300" rx="24" fill="url(#cBg)" />
+  <g>
+    <circle cx="100" cy="150" r="70" fill="url(#waFill)" />
+    <g transform="translate(100 150) scale(2.9) translate(-12 -12)">
+      <path
+        d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.61 21 3 13.39 3 4c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"
+        fill="#06240f"
+      />
+    </g>
+  </g>
+  <text x="200" y="132" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#f8fafc">+55 85 987708-8724</text>
+  <text x="200" y="176" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="600" fill="#4ade80">WhatsApp &#8212; Arquimedes</text>
+  <text x="200" y="212" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="19" fill="#94a3b8">Suporte, EAP, cronograma e orcamento de obras</text>
+</svg>

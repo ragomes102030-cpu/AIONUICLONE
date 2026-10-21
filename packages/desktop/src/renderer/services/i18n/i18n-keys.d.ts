@@ -2123,6 +2123,8 @@ export type I18nKey =
   | 'settings.configureCustomAgent'
   | 'settings.configureModel'
   | 'settings.contactMe'
+  | 'settings.contactWhatsapp'
+  | 'settings.contactWhatsappCta'
   | 'settings.createAssistant'
   | 'settings.cronNotificationEnabled'
   | 'settings.crossSessionMessage'
