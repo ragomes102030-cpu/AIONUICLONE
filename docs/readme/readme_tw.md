@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/iOfficeAI/AionUi?style=flat-square&color=32CD32" alt="Version">
+  <img src="https://img.shields.io/github/v/release/ragomes102030-cpu/ArquimedesPlanejamento?style=flat-square&color=32CD32" alt="Version">
   &nbsp;
   <img src="https://img.shields.io/badge/license-Apache--2.0-32CD32?style=flat-square&logo=apache&logoColor=white" alt="License">
   &nbsp;
@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases">
     <img src="https://img.shields.io/badge/⬇️%20立即下載-最新版本-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="下載最新版本" height="50">
   </a>
 </p>
@@ -620,7 +620,7 @@ AionUi 是一個**免費開源的 Multi-AI Agent 桌面應用**。相比只能�
 ### 安裝
 
 <p>
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases">
     <img src="https://img.shields.io/badge/下載-最新版本-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="下載最新版本" height="50">
   </a>
 </p>
@@ -679,9 +679,9 @@ brew install aionui
   </a>
 </p>
 
-- [GitHub Discussions](https://github.com/iOfficeAI/AionUi/discussions) — 分享想法，交流使用技巧
-- [報告問題](https://github.com/iOfficeAI/AionUi/issues) — 遇到 bug 或有新功能想法？告訴我們
-- [發布更新](https://github.com/iOfficeAI/AionUi/releases) — 取得最新版本
+- [GitHub Discussions](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/discussions) — 分享想法，交流使用技巧
+- [報告問題](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues) — 遇到 bug 或有新功能想法？告訴我們
+- [發布更新](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases) — 取得最新版本
 - [Discord 社群](https://discord.gg/2QAwJn7Egx) — 英語社群
 - [微信群](../../resources/wx-23.png) — 中文社群
 
@@ -737,16 +737,16 @@ AionUi 本機開發涉及兩個倉庫：AionUi 負責 Electron 前端，AionCore
 ## 貢獻者
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=iOfficeAI/AionUi&max=100" alt="Contributors" />
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=ragomes102030-cpu/ArquimedesPlanejamento&max=100" alt="Contributors" />
   </a>
 </p>
 
 ## Star 歷史
 
 <p align="center">
-  <a href="https://www.star-history.com/#iOfficeAI/aionui&Date" target="_blank">
-    <img src="https://api.star-history.com/svg?repos=iOfficeAI/aionui&type=Date" alt="Star History" width="600">
+  <a href="https://www.star-history.com/#ragomes102030-cpu/ArquimedesPlanejamento&Date" target="_blank">
+    <img src="https://api.star-history.com/svg?repos=ragomes102030-cpu/ArquimedesPlanejamento&type=Date" alt="Star History" width="600">
   </a>
 </p>
 
@@ -754,6 +754,6 @@ AionUi 本機開發涉及兩個倉庫：AionUi 負責 Electron 前端，AionCore
 
 **如果覺得不錯，給我們點個 Star 吧**
 
-[報告 Bug](https://github.com/iOfficeAI/AionUi/issues) · [請求功能](https://github.com/iOfficeAI/AionUi/issues)
+[報告 Bug](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues) · [請求功能](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues)
 
 </div>

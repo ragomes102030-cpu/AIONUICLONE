@@ -236,6 +236,6 @@ removePackageScripts: true
 publish:
   provider: github
   owner: ragomes102030-cpu
-  repo: AIONUICLONE
+  repo: ArquimedesPlanejamento
   publishAutoUpdate: true
   releaseType: release

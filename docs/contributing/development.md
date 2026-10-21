@@ -15,7 +15,7 @@ On Windows, install the Rust MSVC toolchain. If Rust compilation fails because n
 AionUi development uses two repositories:
 
 - **AionCore** (`https://github.com/iOfficeAI/AionCore.git`) builds the local backend binary: `aioncore` on macOS/Linux and `aioncore.exe` on Windows.
-- **AionUi** (`https://github.com/iOfficeAI/AionUi.git`) starts the Electron desktop app and launches the backend binary automatically.
+- **Arquimedes** (`https://github.com/ragomes102030-cpu/ArquimedesPlanejamento.git`) starts the Electron desktop app and launches the backend binary automatically.
 
 Keep the repositories side by side when possible:
 
@@ -33,7 +33,7 @@ The desktop development server resolves the backend from the `PATH` inherited by
 
 ```bash
 git clone https://github.com/iOfficeAI/AionCore.git
-git clone https://github.com/iOfficeAI/AionUi.git
+git clone https://github.com/ragomes102030-cpu/ArquimedesPlanejamento.git
 ```
 
 Use the `main` branch for both repositories unless a maintainer asks you to test another branch.

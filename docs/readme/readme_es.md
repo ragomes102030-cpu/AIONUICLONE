@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/iOfficeAI/AionUi?style=flat-square&color=32CD32" alt="Version">
+  <img src="https://img.shields.io/github/v/release/ragomes102030-cpu/ArquimedesPlanejamento?style=flat-square&color=32CD32" alt="Version">
   &nbsp;
   <img src="https://img.shields.io/badge/license-Apache--2.0-32CD32?style=flat-square&logo=apache&logoColor=white" alt="License">
   &nbsp;
@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases">
     <img src="https://img.shields.io/badge/⬇️%20Descargar%20ahora-Última%20versión-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Descargar última versión" height="50">
   </a>
 </p>
@@ -617,7 +617,7 @@ R: Todos los datos se almacenan localmente en una base de datos SQLite. No se su
 ### Instalar
 
 <p>
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases">
     <img src="https://img.shields.io/badge/Descargar-Última%20versión-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Descargar última versión" height="50">
   </a>
 </p>
@@ -676,9 +676,9 @@ brew install aionui
   </a>
 </p>
 
-- [GitHub Discussions](https://github.com/iOfficeAI/AionUi/discussions) — comparte ideas e intercambia consejos
-- [Reportar problemas](https://github.com/iOfficeAI/AionUi/issues) — errores y solicitudes de funciones
-- [Actualizaciones de lanzamiento](https://github.com/iOfficeAI/AionUi/releases) — obtén la última versión
+- [GitHub Discussions](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/discussions) — comparte ideas e intercambia consejos
+- [Reportar problemas](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues) — errores y solicitudes de funciones
+- [Actualizaciones de lanzamiento](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases) — obtén la última versión
 - [Comunidad Discord](https://discord.gg/2QAwJn7Egx) — comunidad en inglés
 - [Grupo WeChat](../../resources/wx-23.png) — comunidad china
 
@@ -707,16 +707,16 @@ Este proyecto está licenciado bajo [Apache-2.0](../../LICENSE).
 ## Contribuidores
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=iOfficeAI/AionUi&max=100" alt="Contributors" />
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=ragomes102030-cpu/ArquimedesPlanejamento&max=100" alt="Contributors" />
   </a>
 </p>
 
 ## Historial de estrellas
 
 <p align="center">
-  <a href="https://www.star-history.com/#iOfficeAI/aionui&Date" target="_blank">
-    <img src="https://api.star-history.com/svg?repos=iOfficeAI/aionui&type=Date" alt="Star History" width="600">
+  <a href="https://www.star-history.com/#ragomes102030-cpu/ArquimedesPlanejamento&Date" target="_blank">
+    <img src="https://api.star-history.com/svg?repos=ragomes102030-cpu/ArquimedesPlanejamento&type=Date" alt="Star History" width="600">
   </a>
 </p>
 
@@ -724,6 +724,6 @@ Este proyecto está licenciado bajo [Apache-2.0](../../LICENSE).
 
 **Si te gusta, danos una estrella**
 
-[Reportar error](https://github.com/iOfficeAI/AionUi/issues) · [Solicitar función](https://github.com/iOfficeAI/AionUi/issues)
+[Reportar error](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues) · [Solicitar función](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues)
 
 </div>

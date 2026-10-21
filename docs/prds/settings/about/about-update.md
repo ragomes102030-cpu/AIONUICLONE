@@ -15,7 +15,7 @@
 2. 页面顶部居中显示应用名 "AionUi"（h3 标题）
 3. 下方显示应用描述（通过 i18n 系统，随语言设置变化）
 4. 显示当前版本号 badge（格式 `v{x.y.z}`），版本号来自打包时的 `package.json`
-5. 版本号旁有 GitHub 图标，点击在系统浏览器中打开项目仓库 `https://github.com/iOfficeAI/AionUi`
+5. 版本号旁有 GitHub 图标，点击在系统浏览器中打开项目仓库 `https://github.com/ragomes102030-cpu/ArquimedesPlanejamento`
 
 **异常情况**：
 
@@ -384,8 +384,8 @@
 | 序号 | 标题     | 行为               | 目标                                           |
 | ---- | -------- | ------------------ | ---------------------------------------------- |
 | 1    | 帮助文档 | 打开外部链接       | `https://github.com/iOfficeAI/AionUi/wiki`     |
-| 2    | 更新日志 | 打开外部链接       | `https://github.com/iOfficeAI/AionUi/releases` |
-| 3    | 意见反馈 | 打开外部链接       | `https://github.com/iOfficeAI/AionUi/issues`   |
+| 2    | 更新日志 | 打开外部链接       | `https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases` |
+| 3    | 意见反馈 | 打开外部链接       | `https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues`   |
 | 4    | 问题报告 | **打开应用内弹窗** | FeedbackReportModal（见 F-ABOUT-11）           |
 | 5    | 联系我   | 打开外部链接       | `https://x.com/WailiVery`                      |
 | 6    | 官网     | 打开外部链接       | `https://ragomes102030-cpu.github.io/arquimedes`                       |

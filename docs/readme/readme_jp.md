@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/iOfficeAI/AionUi?style=flat-square&color=32CD32" alt="Version">
+  <img src="https://img.shields.io/github/v/release/ragomes102030-cpu/ArquimedesPlanejamento?style=flat-square&color=32CD32" alt="Version">
   &nbsp;
   <img src="https://img.shields.io/badge/license-Apache--2.0-32CD32?style=flat-square&logo=apache&logoColor=white" alt="License">
   &nbsp;
@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases">
     <img src="https://img.shields.io/badge/⬇️%20今すぐダウンロード-最新版-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="最新版をダウンロード" height="50">
   </a>
 </p>
@@ -617,7 +617,7 @@ A: すべてのデータはローカルの SQLite データベースに保存さ
 ### インストール
 
 <p>
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases">
     <img src="https://img.shields.io/badge/ダウンロード-最新版-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="最新版をダウンロード" height="50">
   </a>
 </p>
@@ -676,9 +676,9 @@ brew install aionui
   </a>
 </p>
 
-- [GitHub Discussions](https://github.com/iOfficeAI/AionUi/discussions) — アイデアを共有し、ヒントを交換
-- [問題を報告](https://github.com/iOfficeAI/AionUi/issues) — バグと機能リクエスト
-- [リリース更新](https://github.com/iOfficeAI/AionUi/releases) — 最新版を取得
+- [GitHub Discussions](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/discussions) — アイデアを共有し、ヒントを交換
+- [問題を報告](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues) — バグと機能リクエスト
+- [リリース更新](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases) — 最新版を取得
 - [Discord コミュニティ](https://discord.gg/2QAwJn7Egx) — 英語コミュニティ
 - [WeChat グループ](../../resources/wx-23.png) — 中国語コミュニティ
 
@@ -707,16 +707,16 @@ AionUi のローカル開発では、Electron フロントエンド用の AionUi
 ## 貢献者
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=iOfficeAI/AionUi&max=100" alt="Contributors" />
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=ragomes102030-cpu/ArquimedesPlanejamento&max=100" alt="Contributors" />
   </a>
 </p>
 
 ## Star 履歴
 
 <p align="center">
-  <a href="https://www.star-history.com/#iOfficeAI/aionui&Date" target="_blank">
-    <img src="https://api.star-history.com/svg?repos=iOfficeAI/aionui&type=Date" alt="Star History" width="600">
+  <a href="https://www.star-history.com/#ragomes102030-cpu/ArquimedesPlanejamento&Date" target="_blank">
+    <img src="https://api.star-history.com/svg?repos=ragomes102030-cpu/ArquimedesPlanejamento&type=Date" alt="Star History" width="600">
   </a>
 </p>
 
@@ -724,6 +724,6 @@ AionUi のローカル開発では、Electron フロントエンド用の AionUi
 
 **気に入ったら、スターをお願いします**
 
-[バグを報告](https://github.com/iOfficeAI/AionUi/issues) · [機能をリクエスト](https://github.com/iOfficeAI/AionUi/issues)
+[バグを報告](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues) · [機能をリクエスト](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues)
 
 </div>

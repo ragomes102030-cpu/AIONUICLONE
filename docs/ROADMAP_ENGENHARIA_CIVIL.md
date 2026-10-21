@@ -4,7 +4,7 @@
 > o que o mercado (2026) faz melhor, e a ordem priorizada de evolução para virar o
 > "sistema de gestão de obras com IA" do escritório.
 >
-> Versão: 1.0 · Base: auditoria do repositório `AIONUICLONE` (branch `main`) + pesquisa de mercado (out./2026).
+> Versão: 1.0 · Base: auditoria do repositório `ArquimedesPlanejamento` (branch `main`) + pesquisa de mercado (out./2026).
 
 ---
 
@@ -169,7 +169,7 @@ O Arquimedes deve ocupar (c) com a vantagem de (b) e, via MCP aberto, conectar-s
 
 | ID | Item | Esforço |
 |---|---|---|
-| E1 | **Fechar o rebrand textual**: README raiz e `docs/readme/*` ainda falam "AionUi" e apontam para `iOfficeAI/AionUi` (wiki, badges, links) | M |
+| E1 | **Rebrand textual (em andamento)**: README raiz e `docs/readme/readme_pt.md` reescritos para o Arquimedes; badges e links de release/issue/discussions repontados para `ragomes102030-cpu/ArquimedesPlanejamento`. Falta reescrever os readmes traduzidos (es/ru/ch/tw/tr/ko/jp/uk) e trocar as menções em texto ao nome antigo | M |
 | E2 | **Mobile**: `mobile/app.config.ts` (name/slug/scheme), bundle `ai.resopod.aionui` e i18n zh-CN ainda com a marca antiga | S/M |
 | E3 | **Repo size**: pack Git de ~601 MB por causa dos GIFs de demo removidos; avaliar **Git LFS** ou `git filter-repo` (o histórico ainda carrega ~118 MB de GIFs) | M |
 | E4 | **Nome interno do binário Rust**: `aionui-backend.db`, `aionui-process/`, `aionrs-sessions/`, `*.aioncore.log` — só muda recompilando o aioncore | L |

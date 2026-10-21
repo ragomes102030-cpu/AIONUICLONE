@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/iOfficeAI/AionUi?style=flat-square&color=32CD32" alt="Version">
+  <img src="https://img.shields.io/github/v/release/ragomes102030-cpu/ArquimedesPlanejamento?style=flat-square&color=32CD32" alt="Version">
   &nbsp;
   <img src="https://img.shields.io/badge/license-Apache--2.0-32CD32?style=flat-square&logo=apache&logoColor=white" alt="License">
   &nbsp;
@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases">
     <img src="https://img.shields.io/badge/⬇️%20Download%20Now-Latest%20Release-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Download Latest Release" height="50">
   </a>
 </p>
@@ -633,7 +633,7 @@ AionUi — это **бесплатное open-source десктопное при
 ### Установка
 
 <p>
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases">
     <img src="https://img.shields.io/badge/Download-Latest%20Release-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Download Latest Release" height="50">
   </a>
 </p>
@@ -694,9 +694,9 @@ brew install aionui
   </a>
 </p>
 
-- [GitHub Discussions](https://github.com/iOfficeAI/AionUi/discussions) — делитесь идеями и обменивайтесь советами
-- [Сообщить о проблемах](https://github.com/iOfficeAI/AionUi/issues) — ошибки и запросы функций
-- [Обновления релизов](https://github.com/iOfficeAI/AionUi/releases) — получите последнюю версию
+- [GitHub Discussions](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/discussions) — делитесь идеями и обменивайтесь советами
+- [Сообщить о проблемах](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues) — ошибки и запросы функций
+- [Обновления релизов](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases) — получите последнюю версию
 - [Сообщество Discord](https://discord.gg/2QAwJn7Egx) — англоязычное сообщество
 - [Группа WeChat](../../resources/wx-23.png) — китайское сообщество
 
@@ -725,16 +725,16 @@ brew install aionui
 ## Участники
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=iOfficeAI/AionUi&max=100" alt="Contributors" />
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=ragomes102030-cpu/ArquimedesPlanejamento&max=100" alt="Contributors" />
   </a>
 </p>
 
 ## История звёзд
 
 <p align="center">
-  <a href="https://www.star-history.com/#iOfficeAI/aionui&Date" target="_blank">
-    <img src="https://api.star-history.com/svg?repos=iOfficeAI/aionui&type=Date" alt="Star History" width="600">
+  <a href="https://www.star-history.com/#ragomes102030-cpu/ArquimedesPlanejamento&Date" target="_blank">
+    <img src="https://api.star-history.com/svg?repos=ragomes102030-cpu/ArquimedesPlanejamento&type=Date" alt="Star History" width="600">
   </a>
 </p>
 
@@ -742,7 +742,7 @@ brew install aionui
 
 **Если нравится, поставьте нам звезду**
 
-[Сообщить об ошибке](https://github.com/iOfficeAI/AionUi/issues) · [Запросить функцию](https://github.com/iOfficeAI/AionUi/issues)
+[Сообщить об ошибке](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues) · [Запросить функцию](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues)
 
 </div>
 

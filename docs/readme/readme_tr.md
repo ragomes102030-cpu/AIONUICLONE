@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/iOfficeAI/AionUi?style=flat-square&color=32CD32" alt="Version">
+  <img src="https://img.shields.io/github/v/release/ragomes102030-cpu/ArquimedesPlanejamento?style=flat-square&color=32CD32" alt="Version">
   &nbsp;
   <img src="https://img.shields.io/badge/license-Apache--2.0-32CD32?style=flat-square&logo=apache&logoColor=white" alt="License">
   &nbsp;
@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases">
     <img src="https://img.shields.io/badge/⬇️%20Şimdi%20İndir-En%20Son%20Sürüm-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="En Son Sürümü İndir" height="50">
   </a>
 </p>
@@ -617,7 +617,7 @@ C: Tüm veriler yerel olarak bir SQLite veritabanında saklanır. Hiçbir şey h
 ### Kurulum
 
 <p>
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases">
     <img src="https://img.shields.io/badge/İndir-En%20Son%20Sürüm-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="En Son Sürümü İndir" height="50">
   </a>
 </p>
@@ -676,9 +676,9 @@ brew install aionui
   </a>
 </p>
 
-- [GitHub Discussions](https://github.com/iOfficeAI/AionUi/discussions) — fikirleri paylaşın ve ipuçları alışverişi yapın
-- [Sorun Bildir](https://github.com/iOfficeAI/AionUi/issues) — hatalar ve özellik istekleri
-- [Sürüm Güncellemeleri](https://github.com/iOfficeAI/AionUi/releases) — en son sürümü alın
+- [GitHub Discussions](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/discussions) — fikirleri paylaşın ve ipuçları alışverişi yapın
+- [Sorun Bildir](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues) — hatalar ve özellik istekleri
+- [Sürüm Güncellemeleri](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/releases) — en son sürümü alın
 - [Discord Topluluğu](https://discord.gg/2QAwJn7Egx) — İngilizce topluluk
 - [WeChat Grubu](../../resources/wx-23.png) — Çince topluluk
 
@@ -705,16 +705,16 @@ Bu proje [Apache-2.0](../../LICENSE) lisansı altında lisanslanmıştır.
 ## Katkıda Bulunanlar
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=iOfficeAI/AionUi&max=100" alt="Contributors" />
+  <a href="https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=ragomes102030-cpu/ArquimedesPlanejamento&max=100" alt="Contributors" />
   </a>
 </p>
 
 ## Yıldız Geçmişi
 
 <p align="center">
-  <a href="https://www.star-history.com/#iOfficeAI/aionui&Date" target="_blank">
-    <img src="https://api.star-history.com/svg?repos=iOfficeAI/aionui&type=Date" alt="Star History" width="600">
+  <a href="https://www.star-history.com/#ragomes102030-cpu/ArquimedesPlanejamento&Date" target="_blank">
+    <img src="https://api.star-history.com/svg?repos=ragomes102030-cpu/ArquimedesPlanejamento&type=Date" alt="Star History" width="600">
   </a>
 </p>
 
@@ -722,6 +722,6 @@ Bu proje [Apache-2.0](../../LICENSE) lisansı altında lisanslanmıştır.
 
 **Beğendiyseniz, bize bir yıldız verin**
 
-[Hata Bildir](https://github.com/iOfficeAI/AionUi/issues) · [Özellik İste](https://github.com/iOfficeAI/AionUi/issues)
+[Hata Bildir](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues) · [Özellik İste](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/issues)
 
 </div>

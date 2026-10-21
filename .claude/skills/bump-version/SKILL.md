@@ -119,7 +119,7 @@ Prepend the new entry in this format:
 ```markdown
 # Changelog
 
-## [{target}](https://github.com/iOfficeAI/AionUi/compare/v{previous}...v{target}) ({date YYYY-MM-DD})
+## [{target}](https://github.com/ragomes102030-cpu/ArquimedesPlanejamento/compare/v{previous}...v{target}) ({date YYYY-MM-DD})
 
 ### Desktop
 
