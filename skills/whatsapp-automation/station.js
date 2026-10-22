@@ -2,7 +2,10 @@
 /**
  * station.js - instalador de 1 comando da estacao WhatsApp do Arquimedes.
  *
- *   node station.js --chat PIAZZA --obra piazza
+ *   node station.js
+ *
+ * O escopo e GLOBAL: vale para a conta que estiver conectada no Chrome da
+ * estacao, nao para um grupo nem para um numero fixo.
  *
  * O que ele faz, em ordem:
  *   1. Descobre o data-dir e a API do backend (o app pode estar aberto ou nao)
@@ -30,7 +33,6 @@ const valor = (n, padrao) => {
   return i >= 0 && args[i + 1] ? args[i + 1] : padrao;
 };
 
-const CHAT = valor('--chat', 'PIAZZA');
 const PERFIL_CHROME = process.env.ARQUIMEDES_CHROME_PROFILE || 'C:\\Arquimedes\\chrome-arquimedes';
 const NOME_SKILL = 'whatsapp-automation';
 
@@ -133,29 +135,28 @@ async function principal() {
   if (!tem('--sem-cron')) {
     const existentes = await cliente.get('/api/cron/jobs');
     const lista = existentes.ok && existentes.dados?.data ? existentes.dados.data : [];
-    const modelos = [
-      { arquivo: 'tarefa-resumo-diario.json', nome: 'Resumo diário do WhatsApp (grupo ' + CHAT + ')' },
-      { arquivo: 'tarefa-resumo-semanal.json', nome: 'Resumo semanal do WhatsApp (grupo ' + CHAT + ')' },
-    ];
-    for (const m of modelos) {
-      if (lista.some((t) => t.name === m.nome)) {
-        passo(true, 'tarefa ja existe', m.nome);
-        continue;
-      }
-      const arquivoModelo = path.join(destino, m.arquivo);
+    const modelos = ['tarefa-resumo-diario.json', 'tarefa-resumo-semanal.json'];
+    for (const arquivo of modelos) {
+      const arquivoModelo = path.join(destino, arquivo);
       if (!fs.existsSync(arquivoModelo)) {
-        passo(false, 'criar tarefa', 'modelo ausente: ' + m.arquivo);
+        passo(false, 'criar tarefa', 'modelo ausente: ' + arquivo);
         continue;
       }
       const modelo = JSON.parse(fs.readFileSync(arquivoModelo, 'utf8'));
+      // O nome vem do proprio modelo: o escopo e global, nao um grupo fixo.
+      const nome = modelo.name || arquivo.replace('.json', '');
+      if (lista.some((t) => t.name === nome || t.name?.startsWith(nome.split('(')[0].trim()))) {
+        passo(true, 'tarefa ja existe', nome);
+        continue;
+      }
       const r = await cliente.post('/api/internal/conversation-cron/create', {
-        name: m.nome,
+        name: nome,
         schedule: modelo.schedule,
         schedule_description: modelo.schedule_description || '',
         message: modelo.message,
       });
-      if (r.ok) passo(true, 'tarefa criada', `${m.nome}  (${modelo.schedule})`);
-      else passo(false, 'criar tarefa', `${m.nome}: ${r.status} ${(r.texto || '').slice(0, 120)}`);
+      if (r.ok) passo(true, 'tarefa criada', `${nome}  (${modelo.schedule})`);
+      else passo(false, 'criar tarefa', `${nome}: ${r.status} ${(r.texto || '').slice(0, 120)}`);
     }
   }
 

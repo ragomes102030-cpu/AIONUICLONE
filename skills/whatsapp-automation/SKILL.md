@@ -1,14 +1,15 @@
 ---
 name: whatsapp-automation
 description: >-
-  Lê mensagens do WhatsApp Web (grupos e chats da empresa) através de um Chrome
-  aberto em modo de depuração (CDP, porta 9222), salva o histórico e gera resumos
-  diários (7:00 da manhã) e semanais (sexta-feira) do que foi solicitado, por quem
-  e o que ficou pendente — usando os agentes do Arquimedes (Hermes, Open Code).
-  Use quando o usuário pedir para "ver o que pediram no WhatsApp", "resumir o grupo
-  PIAZZA", "o que ficou pendente ontem", "resumo da semana do grupo", ou pedir
-  para configurar o monitoramento do WhatsApp. NÃO use para responder conversas
-  automaticamente nem com o número pessoal do usuário.
+  Lê o WhatsApp Web através de um Chrome aberto em modo de depuração (CDP, porta
+  9222) e gera resumos globais diários (7:00) e semanais (sexta 7:00) do que foi
+  solicitado, por quem e o que ficou pendente — usando os agentes do Arquimedes
+  (Hermes, Open Code). O escopo é GLOBAL: vale para a conta que estiver conectada
+  no Chrome da estação, não para um grupo nem para um número fixo.
+  Use quando o usuário pedir para "ver o que pediram no WhatsApp", "o que ficou
+  pendente ontem", "resumo da semana", ou para configurar o monitoramento do
+  WhatsApp. NÃO use para responder conversas automaticamente nem com o número
+  pessoal do usuário.
 homepage: 'https://github.com/ragomes102030-cpu/ArquimedesPlanejamento'
 metadata:
   {
@@ -55,8 +56,23 @@ Todos os scripts vivem **na mesma pasta deste SKILL.md** — não há dependênc
 Rode sempre com o caminho completo, a partir da raiz da skill:
 
 ```bash
-node "<pasta-da-skill>\coletar.js" --obra "<obra>" --chat "PIAZZA"
+node "<pasta-da-skill>\coletar.js" --obra "<obra>" --global
 ```
+
+## Escopo: global, não vinculado a um número
+
+Esta skill **não fica presa a um número nem a um grupo**. A estação detecta **qual
+conta está conectada** no Chrome e lê **todas as conversas da lista**.
+
+- A conta é identificada no momento da coleta (nome do perfil e identificador da
+  sessão) e vem registrada no relatório — para você auditar de onde veio.
+- A leitura da **lista de conversas** (título, horário, prévia da última mensagem,
+  contador de não lidas) **não abre nenhuma conversa**, portanto **não marca nada
+  como lida**.
+- Nada precisa ser configurado com número fixo: se a conta conectada mudar, a
+  estação continua funcionando e o relatório passa a refletir a conta nova.
+- Para o conteúdo detalhado de uma conversa específica (as mensagens), use o modo
+  `--chat`: ele exige que aquela conversa esteja aberta na aba do Chrome.
 
 ## Pré-requisitos
 
@@ -66,16 +82,18 @@ Chrome aberto em modo de depuração (porta **local**, só `127.0.0.1`):
 chrome.exe --remote-debugging-port=9222 --user-data-dir=C:\Arquimedes\chrome-arquimedes --no-first-run https://web.whatsapp.com/
 ```
 
-O cliente CDP usa o `WebSocket` nativo do Node (22+), sem pacote externo. O chat
-precisa estar **aberto** na aba do Chrome quando a coleta roda — o script confere o
-nome do chat e avisa se for outro.
+O cliente CDP usa o `WebSocket` nativo do Node (22+), sem pacote externo.
+
+No **modo global** (`--global`) nenhuma conversa precisa estar aberta: o script lê a
+lista inteira. No **modo por conversa** (`--chat`) a conversa precisa estar **aberta**
+na aba do Chrome — o script confere o nome e avisa se for outra.
 
 ## Scripts
 
 | Script | Função |
 |--------|--------|
 | `cdp-client.js` | Cliente CDP: conecta na aba do WhatsApp, extrai as mensagens visíveis, monta o texto para o agente. Também exporta `lerMensagens()`, `montarTextoParaAgente()`, `salvarJson()`. |
-| `coletar.js` | CLI de coleta: lê as mensagens, salva o JSON do dia e imprime o prompt para o agente resumir. |
+| `coletar.js` | CLI de coleta: no modo `--global` lê a **lista de todas as conversas** (sem abrir nenhuma) + a conta conectada; no modo `--chat` lê as mensagens da conversa aberta. Salva o JSON do dia e imprime o prompt para o agente resumir. |
 | `resumo.js` | CLI: salva o resumo gerado pelo agente em markdown. |
 | `enviar.js` | CLI de envio (opt-in, exige `--confirmar`). |
 | `index.js` | Fachada em Node: `coletarEPreparar()` e `salvarResumo()`, para uso por código. |
@@ -90,7 +108,7 @@ o Arquimedes em modo servidor. O **app nunca instala nada sozinho** — ele só 
 estado e liga/desliga. A preparação é feita na estação:
 
 ```bash
-node "<pasta-da-skill>\station.js" --chat "PIAZZA" --obra "piazza"
+node "<pasta-da-skill>\station.js"
 ```
 
 No repositório, o atalho é `npm run station:whatsapp`.
@@ -128,16 +146,28 @@ skill não registrada, tarefa ausente, caminho de skill quebrado.
 
 ## Uso
 
-### 1. Coletar as mensagens do chat aberto
+### 1. Coletar (modo global — padrão)
+
+```bash
+node "<pasta-da-skill>\coletar.js" --obra "whatsapp" --global --prompt "C:\Arquimedes\obras\whatsapp\whatsapp\prompt.txt"
+```
+
+- Grava `C:\Arquimedes\obras\<obra>\whatsapp\chats-AAAA-MM-DD.json`
+  (`{ extraidoEm, escopo: "global", conta: { nome, identificador, avatar }, total,
+  chats: [{ titulo, hora, preview, naoLidas }] }`).
+- **Nenhuma conversa é aberta** → nada é marcado como lido.
+- Com `--prompt`, grava também o prompt pronto para o agente — **prefira o arquivo**
+  ao console do Windows, que troca acentos e emojis por mojibake.
+
+### 1b. Coletar as mensagens de uma conversa específica
 
 ```bash
 node "<pasta-da-skill>\coletar.js" --obra "piazza" --chat "PIAZZA" --prompt "C:\Arquimedes\obras\piazza\whatsapp\prompt.txt"
 ```
 
 - Grava `C:\Arquimedes\obras\<obra>\whatsapp\mensagens-AAAA-MM-DD.json`
-  (`{ extraidoEm, chat, total, mensagens: [{ id, dataHora, autor, texto }] }`).
-- Com `--prompt`, grava também o prompt pronto para o agente — **prefira o arquivo**
-  ao console do Windows, que troca acentos e emojis por mojibake.
+  (`{ extraidoEm, escopo: "conversa", chat, total, mensagens: [{ id, dataHora, autor, texto }] }`).
+- Exige a conversa **aberta** na aba do Chrome.
 
 ### 2. Resumir (feito pelo agente)
 
@@ -166,6 +196,8 @@ Grava `C:\Arquimedes\obras\<obra>\whatsapp\resumo-<tipo>-AAAA-MM-DD.md`.
 node "<pasta-da-skill>\enviar.js" "texto" --chat "PIAZZA"              # só mostra (dry-run)
 node "<pasta-da-skill>\enviar.js" "texto" --chat "PIAZZA" --confirmar  # envia de verdade
 ```
+
+Troque `"PIAZZA"` pela conversa de destino — o nome é conferido antes de escrever.
 
 Sem `--confirmar` nada é enviado. Com `--confirmar`, o script confere o nome do chat
 antes de escrever (sai com código 2 se não bater).
@@ -202,7 +234,8 @@ Regras do app:
 
 Padrão: `C:\Arquimedes\obras\<obra>\whatsapp\`
 
-- `mensagens-AAAA-MM-DD.json` — o que foi coletado por dia
+- `chats-AAAA-MM-DD.json` — a lista global de conversas do dia (com a conta conectada)
+- `mensagens-AAAA-MM-DD.json` — as mensagens de uma conversa específica (modo `--chat`)
 - `prompt.txt` — prompt de resumo (quando usar `--prompt`)
 - `resumo-diario-AAAA-MM-DD.md` — o resumo gerado
 - `resumo-semanal-AAAA-MM-DD.md` — o resumo da semana
@@ -211,7 +244,11 @@ A pasta da obra pode ser trocada pela variável `ARQUIMEDES_OBRAS`.
 
 ## Limites conhecidos
 
+- **Modo global** mostra a prévia de cada conversa, não as mensagens. Para o conteúdo
+  de uma conversa, use `--chat` — ou peça para o usuário abrir a conversa.
 - Só extrai o que está visível na viewport (virtualização do WhatsApp Web).
 - Rolar o histórico programaticamente via `Input.dispatchMouseEvent` trava a conexão
   com o CDP; rolagem manual pelo usuário é a via confiável.
 - O botão de enviar depende de seletores (`data-testid="send"`) que podem mudar.
+- Se o Chrome for aberto **sem** a flag `--remote-debugging-port=9222`, a estação
+  perde a conexão (o `doctor.js` avisa e o `station.js` reinicia o Chrome).

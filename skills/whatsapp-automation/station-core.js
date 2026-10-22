@@ -361,6 +361,113 @@ async function lerChatAberto(wsUrl) {
   return typeof valor === 'string' ? valor : null;
 }
 
+/* --------------------------------------------------- conta e lista global */
+
+/**
+ * Expressao que devolve a conta conectada.
+ * A conta nao vem de um numero fixo: e lida do WhatsApp Web que esta aberto.
+ * O nome aparece no drawer de perfil ([data-testid="drawer-title-body"]).
+ * O avatar do botao "Voce" (nav lateral) serve de identificador estavel.
+ */
+const EXPRESSAO_CONTA = `(() => {
+  const rotulo = (b) => (b.getAttribute('aria-label') || b.getAttribute('title') || '').trim();
+  const btn = Array.from(document.querySelectorAll('[role="button"],button')).find((b) => /^voc(e|\\u00ea)$/i.test(rotulo(b)));
+  const img = btn ? btn.querySelector('img') : null;
+  const drawer = document.querySelector('[data-testid="drawer-title-body"]');
+  return {
+    nome: drawer ? (drawer.innerText || '').trim() : null,
+    avatar: img ? (img.getAttribute('src') || '').split('?')[0] : null,
+    drawerAberto: !!drawer,
+  };
+})()`;
+
+/** Clica num item da navegacao lateral (ex.: "Voce", "Conversas"). */
+function expressaoCliqueNav(padrao) {
+  return `(() => {
+    const rotulo = (b) => (b.getAttribute('aria-label') || b.getAttribute('title') || '').trim();
+    const btn = Array.from(document.querySelectorAll('[role="button"],button')).find((b) => new RegExp(${JSON.stringify(
+      padrao
+    )}, 'i').test(rotulo(b)));
+    if (!btn) return 'sem-botao';
+    const r = btn.getBoundingClientRect();
+    const ev = (t) => new MouseEvent(t, { bubbles: true, cancelable: true, clientX: r.x + r.width / 2, clientY: r.y + r.height / 2, view: window });
+    btn.dispatchEvent(ev('pointerdown'));
+    btn.dispatchEvent(ev('mousedown'));
+    btn.dispatchEvent(ev('pointerup'));
+    btn.dispatchEvent(ev('mouseup'));
+    btn.dispatchEvent(ev('click'));
+    return 'clicado';
+  })()`;
+}
+
+/**
+ * Detecta qual conta esta conectada no WhatsApp Web aberto.
+ * Se o drawer de perfil estiver fechado, abre, le o nome e volta para "Conversas".
+ * Nao fixa nem exige nenhum numero: quem estiver logado e a conta.
+ */
+async function detectarConta(wsUrl) {
+  if (!wsUrl) return { nome: null, avatar: null, erro: 'sem aba do WhatsApp' };
+  let valor = await avaliarNaAba(wsUrl, EXPRESSAO_CONTA);
+  let abriuDrawer = false;
+  if (!valor || !valor.nome) {
+    abriuDrawer = true;
+    await avaliarNaAba(wsUrl, expressaoCliqueNav('^voc(e|\\u00ea)$'));
+    await new Promise((r) => setTimeout(r, 1200));
+    valor = await avaliarNaAba(wsUrl, EXPRESSAO_CONTA);
+  }
+  // devolve a tela para a lista de conversas: o drawer aberto esconde o chat
+  if (valor && valor.drawerAberto) {
+    await avaliarNaAba(wsUrl, expressaoCliqueNav('^conversas$'));
+    await new Promise((r) => setTimeout(r, 700));
+  }
+  const nome = (valor && valor.nome) || null;
+  const avatar = (valor && valor.avatar) || null;
+  return {
+    nome,
+    avatar,
+    identificador: avatar ? avatar.split('/').pop() : null,
+    drawerAberto: !!(valor && valor.drawerAberto),
+    abriuDrawer,
+  };
+}
+
+/**
+ * Le a lista de conversas da barra lateral SEM abrir nenhum chat.
+ * Nada e marcado como lida: e so leitura do DOM ja renderizado.
+ */
+const EXPRESSAO_LISTA_CHATS = `(() => {
+  const linhas = Array.from(document.querySelectorAll('[role="row"][data-testid^="list-item-"]'));
+  const celulas = linhas.length ? linhas : Array.from(document.querySelectorAll('[role="gridcell"]'));
+  const chats = [];
+  for (const c of celulas) {
+    const caixaTitulo = c.querySelector('[data-testid="cell-frame-title"]');
+    if (!caixaTitulo) continue;
+    const nomeEl = caixaTitulo.querySelector('span[title]');
+    const titulo = ((nomeEl && nomeEl.getAttribute('title')) || '').trim() ||
+      (caixaTitulo.innerText || '').trim().split('\\n').pop().trim();
+    const ts = c.querySelector('[data-testid="chat-list-timestamp"]');
+    const hora = ts ? (ts.innerText || '').trim() : '';
+    const sec = c.querySelector('[data-testid="cell-frame-secondary"]');
+    const preview = sec ? (sec.innerText || '').trim().split('\\n')[0].trim() : '';
+    let naoLidas = 0;
+    const badge = c.querySelector('[data-testid="icon-unread-count"]');
+    if (badge) naoLidas = parseInt((badge.innerText || '').replace(/\\D+/g, ''), 10) || 0;
+    if (!naoLidas) {
+      const m = (caixaTitulo.innerText || '').match(/(\\d+)\\s+mensagens?\\s+n[aã]o\\s+lida/i);
+      if (m) naoLidas = parseInt(m[1], 10) || 0;
+    }
+    chats.push({ titulo, hora, preview, naoLidas });
+  }
+  return { total: chats.length, chats };
+})()`;
+
+async function lerListaChats(wsUrl) {
+  if (!wsUrl) return { total: 0, chats: [] };
+  const valor = await avaliarNaAba(wsUrl, EXPRESSAO_LISTA_CHATS);
+  if (!valor || !Array.isArray(valor.chats)) return { total: 0, chats: [] };
+  return valor;
+}
+
 /** Estado do Chrome em modo de depuracao: versao, abas e chat aberto do WhatsApp. */
 async function inspecionarChrome(porta = DEFAULT_CDP_PORT) {
   const base = `http://127.0.0.1:${porta}`;
@@ -387,14 +494,18 @@ async function inspecionarChrome(porta = DEFAULT_CDP_PORT) {
     /* ignora */
   }
   const whatsapp = abas.find((a) => /web\.whatsapp\.com/.test(a.url || ''));
+  const conta = whatsapp ? await detectarConta(whatsapp.webSocketDebuggerUrl) : null;
   const estado = {
     conectado: true,
     porta,
     navegador: info.Browser || 'desconhecido',
     abas: abas.length,
-    abaWhatsapp: whatsapp ? { titulo: whatsapp.title, url: whatsapp.url, id: whatsapp.id } : null,
+    abaWhatsapp: whatsapp
+      ? { titulo: whatsapp.title, url: whatsapp.url, id: whatsapp.id, webSocketDebuggerUrl: whatsapp.webSocketDebuggerUrl }
+      : null,
     sessaoAtiva: whatsapp ? /\(\d+\)\s*WhatsApp/.test(whatsapp.title || '') : false,
     chatAberto: whatsapp ? await lerChatAberto(whatsapp.webSocketDebuggerUrl) : null,
+    conta,
   };
   if (!whatsapp) estado.motivo = 'o Chrome esta em depuracao, mas nao ha aba do WhatsApp aberta';
   return estado;
@@ -441,4 +552,9 @@ module.exports = {
   inspecionarChrome,
   lerJson,
   copiarPasta,
+  detectarConta,
+  lerListaChats,
+  expressaoCliqueNav,
+  EXPRESSAO_CONTA,
+  EXPRESSAO_LISTA_CHATS,
 };

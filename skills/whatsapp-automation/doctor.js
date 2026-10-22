@@ -33,6 +33,10 @@ async function coletar() {
   const portaCdp = Number(valor('--cdp', String(core.DEFAULT_CDP_PORT)));
 
   const chrome = await core.inspecionarChrome(portaCdp);
+  const listaChats =
+    chrome.conectado && chrome.abaWhatsapp?.webSocketDebuggerUrl
+      ? await core.lerListaChats(chrome.abaWhatsapp.webSocketDebuggerUrl)
+      : { total: 0, chats: [] };
   const db = core.abrirBanco(dataDir);
   const skills = core.inspecionarSkills(db);
   const cron = core.inspecionarCron(db);
@@ -68,6 +72,7 @@ async function coletar() {
     dataDir,
     banco: { caminho: core.caminhoBanco(dataDir), existe: require('fs').existsSync(core.caminhoBanco(dataDir)) },
     chrome,
+    listaChats: { total: listaChats.total, naoLidas: listaChats.chats.reduce((s, c) => s + (c.naoLidas || 0), 0) },
     skill: {
       pasta: skillInstalada,
       noDisco: skillNoDisco,
@@ -109,7 +114,10 @@ function apresentar(r) {
     if (r.chrome.abaWhatsapp) {
       linha('aba do WhatsApp', r.chrome.abaWhatsapp.titulo, true);
       linha('sessao do WhatsApp', r.chrome.sessaoAtiva ? 'ativa' : 'EXPIRADA - precisa escanear o QR de novo', r.chrome.sessaoAtiva);
-      linha('chat aberto', r.chrome.chatAberto || 'nenhum - abra o chat antes de coletar', !!r.chrome.chatAberto);
+      linha('conta conectada', r.chrome.conta?.nome || 'nao identificada', !!r.chrome.conta?.nome);
+      linha('conversas na lista', String(r.listaChats.total), r.listaChats.total > 0);
+      linha('mensagens nao lidas', String(r.listaChats.naoLidas), null);
+      linha('chat aberto', r.chrome.chatAberto || 'nenhum (o escopo global nao precisa)', null);
     } else {
       linha('aba do WhatsApp', r.chrome.motivo || 'nao encontrada', false);
     }
@@ -166,12 +174,14 @@ function apresentar(r) {
   if (!r.chrome.conectado) problemas.push('Chrome nao esta em modo de depuracao');
   if (r.chrome.conectado && !r.chrome.abaWhatsapp) problemas.push('aba do WhatsApp nao esta aberta');
   if (r.chrome.conectado && r.chrome.abaWhatsapp && !r.chrome.sessaoAtiva) problemas.push('sessao do WhatsApp expirada');
+  if (r.chrome.conectado && r.chrome.abaWhatsapp && !r.chrome.conta?.nome) problemas.push('conta conectada nao identificada');
+  if (r.chrome.conectado && r.chrome.abaWhatsapp && r.listaChats.total === 0) problemas.push('nenhuma conversa visivel na lista');
   if (!r.skill.noDisco) problemas.push('skill nao instalada no data-dir');
   if (!r.skill.registrada) problemas.push('skill nao registrada no catalogo');
   if (r.skills.quebradas > 0) problemas.push(`${r.skills.quebradas} skills com caminho quebrado`);
   if (lista.length === 0) problemas.push('nenhuma tarefa agendada');
   if (problemas.length === 0) {
-    console.log('   ESTACAO PRONTA - o resumo diario vai rodar as 7:00');
+    console.log('   ESTACAO PRONTA - o resumo global vai rodar as 7:00');
   } else {
     console.log('   PENDENCIAS:');
     for (const p of problemas) console.log('     - ' + p);

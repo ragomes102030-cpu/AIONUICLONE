@@ -1,6 +1,6 @@
 # Estação WhatsApp do Arquimedes
 
-> Como o Arquimedes lê um grupo do WhatsApp Web, monta o resumo do dia e o da semana,
+> Como o Arquimedes lê o WhatsApp Web, monta o resumo do dia e o da semana,
 > e como você acessa isso de outro dispositivo.
 
 ---
@@ -32,6 +32,9 @@ as mensagens do WhatsApp Web em **resumos de trabalho**.
 
 - A **sessão do WhatsApp é a do Chrome**, não uma sessão do Arquimedes. O app só
   **lê** o que já está na tela.
+- O **escopo é global**: a estação não fica presa a um grupo nem a um número. Ela
+  detecta **qual conta está conectada** e lê **todas as conversas da lista** — sem
+  abrir nenhuma, portanto sem marcar nada como lido.
 - O app **nunca instala nada sozinho**. A instalação da estação é **um comando**, na
   máquina que vai ficar ligada.
 - O resumo **aparece na conversa do Arquimedes**. Devolvê-lo pelo WhatsApp é
@@ -78,7 +81,7 @@ Esse comando faz, sozinho:
 Opções úteis:
 
 ```bash
-node skills/whatsapp-automation/station.js --chat PIAZZA --obra piazza
+node skills/whatsapp-automation/station.js
 node skills/whatsapp-automation/station.js --sem-cron      # não cria tarefas
 node skills/whatsapp-automation/station.js --sem-chrome    # não sobe o Chrome
 node skills/whatsapp-automation/station.js --data-dir "C:\...\Arquimedes\arquimedes"
@@ -108,18 +111,29 @@ node skills/whatsapp-automation/doctor.js --json
 
 ## 5. Coleta manual
 
+Modo **global** (padrão) — lê a lista de todas as conversas, sem abrir nenhuma:
+
+```bash
+node skills/whatsapp-automation/coletar.js --obra whatsapp --global \
+  --prompt "C:\Arquimedes\obras\whatsapp\whatsapp\prompt.txt"
+```
+
+Grava a lista do dia em `C:\Arquimedes\obras\<obra>\whatsapp\chats-AAAA-MM-DD.json`
+(com a **conta conectada**, o total de conversas e, por conversa, título, horário,
+prévia e contador de não lidas) e escreve o **prompt de resumo** em arquivo (o
+console do Windows embaralha acentos e emoji — por isso o prompt vai para arquivo,
+não para a tela).
+
+Para o conteúdo de **uma** conversa, use o modo por conversa (a conversa precisa
+estar aberta na aba do Chrome):
+
 ```bash
 node skills/whatsapp-automation/coletar.js --obra piazza --chat PIAZZA \
   --prompt "C:\Arquimedes\obras\piazza\whatsapp\prompt.txt"
 ```
 
-Grava as mensagens do dia em
-`C:\Arquimedes\obras\<obra>\whatsapp\mensagens-AAAA-MM-DD.json` e escreve o
-**prompt de resumo** em arquivo (o console do Windows embaralha acentos e emoji —
-por isso o prompt vai para arquivo, não para a tela).
-
-O prompt pede 4 seções: **o que foi solicitado**, **quem pediu**, **pendências**
-e **o que foi concluído**.
+O prompt pede 5 seções: **o que foi solicitado**, **quem pediu**, **pendências**,
+**o que foi concluído** e **conversas sem pedido**.
 
 Para gravar o resumo final:
 
@@ -219,7 +233,7 @@ Com `--confirmar`, ele confere se o chat aberto é o indicado e só então envia
 |---|---|
 | `station.js` | instala a estação (1 comando) |
 | `doctor.js` | diagnóstico (`--json` para máquina) |
-| `coletar.js` | lê as mensagens e monta o prompt de resumo |
+| `coletar.js` | coleta global (lista de conversas) ou por conversa, e monta o prompt de resumo |
 | `resumo.js` | grava o resumo (diário/semanal) em arquivo |
 | `enviar.js` | envio opcional pelo WhatsApp (`--confirmar`) |
 | `cdp-client.js` | cliente CDP (base de `coletar.js`) |

@@ -22,7 +22,7 @@
     "webui:prod": "cross-env NODE_ENV=production tsx scripts/webui.ts",
     "webui:prod:remote": "cross-env NODE_ENV=production tsx scripts/webui.ts --remote",
     "resetpass": "tsx scripts/resetpass.ts",
-    "station:whatsapp": "node skills/whatsapp-automation/station.js --chat PIAZZA --obra piazza",
+    "station:whatsapp": "node skills/whatsapp-automation/station.js",
     "doctor:whatsapp": "node skills/whatsapp-automation/doctor.js",
     "package": "cross-env NODE_OPTIONS=--max-old-space-size=8192 electron-vite build --config packages/desktop/electron.vite.config.ts",
     "make": "cross-env NODE_OPTIONS=--max-old-space-size=8192 electron-vite build --config packages/desktop/electron.vite.config.ts",
