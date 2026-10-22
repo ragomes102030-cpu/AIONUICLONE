@@ -503,7 +503,7 @@
   "whatsapp.warning2": "The tool reads and summarizes; sending messages is optional.",
   "whatsapp.warning3": "Not an official API: it uses the Chrome DevTools protocol.",
   "whatsapp.warning4": "Chrome must stay open with WhatsApp Web logged in.",
-  "whatsapp.warning5": "Only the messages visible on screen are read.",
+  "whatsapp.warning5": "In global scope the summary uses the preview of the conversations in the list, without opening any.",
   "whatsapp.checkFailed": "Could not read the station status",
   "whatsapp.taskEnabled": "Task enabled",
   "whatsapp.taskDisabled": "Task disabled",
@@ -1477,5 +1477,9 @@
   "crossSessionMessageDesc": "Let agents send messages to your other conversations. Turning this off also disables the @@ conversation mention in the input box.",
   "crossSessionMessageDisabledBanner": "Cross-conversation messages are off, so the @@ conversation mention is unavailable.",
   "crossSessionMessageResume": "Turn back on",
-  "crossSessionMessageUpdateFailed": "Failed to update the cross-conversation message setting"
+  "crossSessionMessageUpdateFailed": "Failed to update the cross-conversation message setting",
+  "whatsapp.account": "Connected account",
+  "whatsapp.conversations": "Conversations in the list",
+  "whatsapp.unread": "Unread messages",
+  "whatsapp.warning6": "It works for any account connected in the station Chrome - nothing is bound to a single number."
 }

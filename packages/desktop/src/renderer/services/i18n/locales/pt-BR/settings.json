@@ -503,7 +503,7 @@
   "whatsapp.warning2": "A ferramenta lê e resume; o envio de mensagem é opcional.",
   "whatsapp.warning3": "Não é API oficial: usa o protocolo DevTools do Chrome.",
   "whatsapp.warning4": "O Chrome precisa ficar aberto com o WhatsApp Web logado.",
-  "whatsapp.warning5": "Só as mensagens visíveis na tela são lidas.",
+  "whatsapp.warning5": "No escopo global o resumo usa a previa das conversas da lista, sem abrir nenhuma.",
   "whatsapp.checkFailed": "Não foi possível ler o status da estação",
   "whatsapp.taskEnabled": "Tarefa ativada",
   "whatsapp.taskDisabled": "Tarefa desativada",
@@ -1480,5 +1480,9 @@
   "crossSessionMessageDesc": "Permite que agentes enviem mensagens para suas outras conversas. Desativar também desliga a menção @@ na caixa de entrada.",
   "crossSessionMessageDisabledBanner": "As mensagens entre conversas estão desativadas, a menção @@ não está disponível.",
   "crossSessionMessageResume": "Ativar novamente",
-  "crossSessionMessageUpdateFailed": "Falha ao atualizar a configuração de mensagens entre conversas"
+  "crossSessionMessageUpdateFailed": "Falha ao atualizar a configuração de mensagens entre conversas",
+  "whatsapp.account": "Conta conectada",
+  "whatsapp.conversations": "Conversas na lista",
+  "whatsapp.unread": "Mensagens nao lidas",
+  "whatsapp.warning6": "Vale para qualquer conta conectada no Chrome da estacao - nada fica preso a um numero."
 }

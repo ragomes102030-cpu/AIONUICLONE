@@ -1646,6 +1646,10 @@ export interface IWhatsAppStationStatus {
     whatsappTab: boolean;
     sessionActive: boolean;
     openChat?: string;
+    conta?: string;
+    identificadorConta?: string;
+    conversas?: number;
+    naoLidas?: number;
     error?: string;
   };
   skill: {

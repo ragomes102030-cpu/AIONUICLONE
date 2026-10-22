@@ -170,9 +170,19 @@ const WhatsappModalContent: React.FC = () => {
                 ok={Boolean(status?.chrome.sessionActive)}
               />
               <StatusRow
-                label={t('settings.whatsapp.openChat', 'Chat aberto')}
-                value={status?.chrome.openChat || '-'}
-                ok={Boolean(status?.chrome.openChat)}
+                label={t('settings.whatsapp.account', 'Conta conectada')}
+                value={status?.chrome.conta || '-'}
+                ok={Boolean(status?.chrome.conta)}
+              />
+              <StatusRow
+                label={t('settings.whatsapp.conversations', 'Conversas na lista')}
+                value={status?.chrome.conversas !== undefined ? `${status.chrome.conversas}` : '-'}
+                ok={Boolean(status?.chrome.conversas)}
+              />
+              <StatusRow
+                label={t('settings.whatsapp.unread', 'Mensagens nao lidas')}
+                value={status?.chrome.naoLidas !== undefined ? `${status.chrome.naoLidas}` : '-'}
+                ok={Boolean(status?.chrome.naoLidas)}
               />
             </div>
 
@@ -253,7 +263,8 @@ const WhatsappModalContent: React.FC = () => {
                 <li>{t('settings.whatsapp.warning2', 'A ferramenta le e resume; o envio de mensagem e opcional.')}</li>
                 <li>{t('settings.whatsapp.warning3', 'Nao e API oficial: usa o DevTools do Chrome.')}</li>
                 <li>{t('settings.whatsapp.warning4', 'O Chrome precisa ficar aberto com o WhatsApp Web logado.')}</li>
-                <li>{t('settings.whatsapp.warning5', 'So as mensagens visiveis na tela sao lidas.')}</li>
+                <li>{t('settings.whatsapp.warning5', 'No escopo global o resumo usa a previa das conversas da lista, sem abrir nenhuma.')}</li>
+                <li>{t('settings.whatsapp.warning6', 'Vale para qualquer conta conectada no Chrome da estacao — nada fica preso a um numero.')}</li>
               </ul>
             </div>
           </>

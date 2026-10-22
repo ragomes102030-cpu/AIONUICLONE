@@ -14,6 +14,10 @@
  * The probe runs in the main process because it needs `fetch` (no CORS on
  * the DevTools endpoint) and `fs.existsSync` (to spot skills whose path
  * points to a folder that no longer exists).
+ *
+ * Scope is GLOBAL: nothing here is bound to a phone number or to a single
+ * chat. The probe reports which account is currently connected and how many
+ * conversations the station can see.
  */
 
 import { ipcBridge } from '@/common';
@@ -84,34 +88,89 @@ async function backendGet<T>(path: string): Promise<T | null> {
   return (payload === undefined ? json : payload) as T;
 }
 
+/* ---------------------------------------------------------- expressoes do DOM */
+
+const EXPRESSAO_PAGINA = `(() => {
+  const header = document.querySelector('[data-testid="conversation-info-header-chat-title"]');
+  const chat = header ? (header.getAttribute('title') || header.textContent || '').trim() : '';
+  const pane = document.querySelector('[data-testid="pane-side"], #pane-side');
+  const search = document.querySelector('[data-testid="search"], [data-testid="search-input"]');
+  const qr = document.querySelector('canvas');
+  return JSON.stringify({
+    chat,
+    loggedIn: Boolean(pane || search || chat),
+    qrVisible: Boolean(qr)
+  });
+})()`;
+
+const EXPRESSAO_CONTA = `(async () => {
+  const nomeAtual = () => {
+    const d = document.querySelector('[data-testid="drawer-title-body"]');
+    return d ? (d.textContent || '').trim() : '';
+  };
+  const botaoPorRotulo = (padrao) => Array.from(document.querySelectorAll('button,[role="button"]')).find((b) => {
+    const rotulo = (b.getAttribute('aria-label') || b.getAttribute('title') || '').trim();
+    return padrao.test(rotulo);
+  });
+  const clicar = (el) => {
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const opts = { bubbles: true, cancelable: true, clientX: r.x + r.width / 2, clientY: r.y + r.height / 2, view: window };
+    el.dispatchEvent(new PointerEvent('pointerdown', opts));
+    el.dispatchEvent(new MouseEvent('mousedown', opts));
+    el.dispatchEvent(new PointerEvent('pointerup', opts));
+    el.dispatchEvent(new MouseEvent('mouseup', opts));
+    el.dispatchEvent(new MouseEvent('click', opts));
+  };
+
+  let nome = nomeAtual();
+  if (nome) return JSON.stringify({ nome });
+
+  const avatar = document.querySelector('button[aria-label="Você"] img, button[aria-label="Voce"] img');
+  const identificador = avatar ? (avatar.getAttribute('src') || '').split('/').pop() || '' : '';
+
+  const abrir = botaoPorRotulo(/^voc(e|ê)$/i);
+  if (!abrir) return JSON.stringify({ nome: '', identificador });
+  clicar(abrir);
+  await new Promise((r) => setTimeout(r, 1300));
+  nome = nomeAtual();
+  const voltar = botaoPorRotulo(/conversas|chats/i);
+  clicar(voltar);
+  await new Promise((r) => setTimeout(r, 700));
+  return JSON.stringify({ nome, identificador });
+})()`;
+
+const EXPRESSAO_LISTA = `(() => {
+  const linhas = Array.from(document.querySelectorAll('[role="row"][data-testid^="list-item-"]'));
+  let naoLidas = 0;
+  for (const linha of linhas) {
+    const badge = linha.querySelector('[data-testid="icon-unread-count"]');
+    const n = parseInt((badge && badge.textContent ? badge.textContent : '').replace(/\\D+/g, ''), 10);
+    if (!Number.isNaN(n)) naoLidas += n;
+  }
+  return JSON.stringify({ conversas: linhas.length, naoLidas });
+})()`;
+
+/* ------------------------------------------------------------------ CDP probe */
+
 /**
- * Ask the WhatsApp tab what it is showing. Returns null when the DevTools
- * WebSocket is unavailable (older Electron) — the caller then falls back to
- * the tab title.
+ * Evaluate an expression inside the WhatsApp tab and return the parsed JSON.
+ * Returns null when the DevTools WebSocket is unavailable (older Electron).
  */
-async function readChatFromTab(target: ChromeTarget): Promise<{ chat?: string; loggedIn?: boolean } | null> {
+async function evaluateInTab<T>(
+  target: ChromeTarget,
+  expression: string,
+  options: { awaitPromise?: boolean; timeoutMs?: number } = {}
+): Promise<T | null> {
   const wsUrl = target.webSocketDebuggerUrl;
   if (!wsUrl) return null;
   const WebSocketCtor = (globalThis as typeof globalThis & { WebSocket?: typeof WebSocket }).WebSocket;
   if (!WebSocketCtor) return null;
 
-  const expression = `(() => {
-    const header = document.querySelector('[data-testid="conversation-info-header-chat-title"]');
-    const chat = header ? (header.getAttribute('title') || header.textContent || '').trim() : '';
-    const pane = document.querySelector('[data-testid="pane-side"], #pane-side');
-    const search = document.querySelector('[data-testid="search"], [data-testid="search-input"]');
-    const qr = document.querySelector('canvas');
-    return JSON.stringify({
-      chat,
-      loggedIn: Boolean(pane || search || chat),
-      qrVisible: Boolean(qr)
-    });
-  })()`;
-
   return new Promise((resolve) => {
     let settled = false;
     let socket: WebSocket | null = null;
-    const finish = (value: { chat?: string; loggedIn?: boolean } | null) => {
+    const finish = (value: T | null) => {
       if (settled) return;
       settled = true;
       try {
@@ -129,9 +188,15 @@ async function readChatFromTab(target: ChromeTarget): Promise<{ chat?: string; l
       return;
     }
 
-    const timer = setTimeout(() => finish(null), 4000);
+    const timer = setTimeout(() => finish(null), options.timeoutMs ?? 6000);
     socket.addEventListener('open', () => {
-      socket?.send(JSON.stringify({ id: 1, method: 'Runtime.evaluate', params: { expression, returnByValue: true } }));
+      socket?.send(
+        JSON.stringify({
+          id: 1,
+          method: 'Runtime.evaluate',
+          params: { expression, returnByValue: true, awaitPromise: Boolean(options.awaitPromise) },
+        })
+      );
     });
     socket.addEventListener('message', (event: MessageEvent) => {
       try {
@@ -140,9 +205,8 @@ async function readChatFromTab(target: ChromeTarget): Promise<{ chat?: string; l
         };
         const value = payload?.result?.result?.value;
         if (typeof value !== 'string') return;
-        const parsed = JSON.parse(value) as { chat?: string; loggedIn?: boolean; qrVisible?: boolean };
         clearTimeout(timer);
-        finish({ chat: parsed.chat || undefined, loggedIn: Boolean(parsed.loggedIn) && !parsed.qrVisible });
+        finish(JSON.parse(value) as T);
       } catch {
         /* keep waiting */
       }
@@ -156,6 +220,22 @@ async function readChatFromTab(target: ChromeTarget): Promise<{ chat?: string; l
       finish(null);
     });
   });
+}
+
+interface PageDetail {
+  chat?: string;
+  loggedIn?: boolean;
+  qrVisible?: boolean;
+}
+
+interface AccountDetail {
+  nome?: string;
+  identificador?: string;
+}
+
+interface ListDetail {
+  conversas?: number;
+  naoLidas?: number;
 }
 
 async function inspectChrome(): Promise<IWhatsAppStationStatus['chrome']> {
@@ -180,8 +260,11 @@ async function inspectChrome(): Promise<IWhatsAppStationStatus['chrome']> {
   }
 
   const title = whatsappTarget.title || '';
-  const detail = await readChatFromTab(whatsappTarget);
+  const detail = await evaluateInTab<PageDetail>(whatsappTarget, EXPRESSAO_PAGINA);
   const sessionActive = detail?.loggedIn ?? /\(\d+\)\s*WhatsApp/.test(title);
+
+  const account = sessionActive ? await evaluateInTab<AccountDetail>(whatsappTarget, EXPRESSAO_CONTA, { awaitPromise: true }) : null;
+  const list = sessionActive ? await evaluateInTab<ListDetail>(whatsappTarget, EXPRESSAO_LISTA) : null;
 
   return {
     connected: true,
@@ -190,6 +273,10 @@ async function inspectChrome(): Promise<IWhatsAppStationStatus['chrome']> {
     whatsappTab: true,
     sessionActive,
     openChat: detail?.chat || undefined,
+    conta: account?.nome || undefined,
+    identificadorConta: account?.identificador || undefined,
+    conversas: list?.conversas,
+    naoLidas: list?.naoLidas,
     error: sessionActive ? undefined : 'A sessao do WhatsApp Web nao esta conectada (escaneie o QR no Chrome)',
   };
 }
@@ -253,7 +340,10 @@ export function initWhatsappBridge(): void {
     } else if (!chrome.sessionActive) {
       issues.push('Sessao do WhatsApp Web expirada — escaneie o QR novamente');
     }
-    if (!skillInfo.skill.installed) {
+    if (chrome.sessionActive && !chrome.conta) {
+      issues.push('Nao foi possivel identificar a conta conectada — reabra o WhatsApp Web no Chrome de depuracao');
+    }
+    if (skillInfo.skill.installed === false) {
       issues.push(`A skill ${SKILL_NAME} nao esta instalada — rode "npm run station:whatsapp"`);
     } else if (!skillInfo.skill.registered) {
       issues.push(`A skill ${SKILL_NAME} nao esta registrada no catalogo — rode "npm run station:whatsapp"`);
