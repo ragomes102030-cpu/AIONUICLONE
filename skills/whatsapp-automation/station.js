@@ -186,6 +186,16 @@ async function principal() {
   if (!tem('--sem-cron')) {
     const existentes = await cliente.get('/api/cron/jobs');
     const lista = existentes.ok && existentes.dados?.data ? existentes.dados.data : [];
+
+    // As tarefas do WhatsApp moram em conversas DEDICADAS (uma por tarefa).
+    // Se elas dividissem conversa com outro assunto, um turno em andamento
+    // seguraria o resumo e a entrega dos 7:00 se perderia.
+    const respConversas = await cliente.get('/api/conversations');
+    const itensConversa =
+      respConversas.ok && respConversas.dados?.data?.items ? respConversas.dados.data.items : [];
+    // Modelo (provider) que funciona nesta maquina: vem de uma conversa que ja usa.
+    const referencia = itensConversa.find((c) => c.model?.provider_id && c.model?.model);
+
     const modelos = ['tarefa-resumo-diario.json', 'tarefa-resumo-semanal.json'];
     const rotuloTarefa = rotulo || 'todas as conversas';
     for (const arquivo of modelos) {
@@ -198,37 +208,109 @@ async function principal() {
       // O nome vem do proprio modelo, com o rotulo da estacao (numero do
       // cliente). O escopo e global: nao um grupo fixo.
       const nome = String(modelo.name || arquivo.replace('.json', '')).replace(/\{ROTULO\}/g, rotuloTarefa);
-      const mensagem = String(modelo.message || '').replace(/\{(\w+)\}/g, (m, chave) =>
-        contexto[chave] !== undefined && contexto[chave] !== '' ? contexto[chave] : m
-      );
+      // Placeholder sem valor (ex.: numero nao configurado) recebe um texto
+      // legivel, para a mensagem da tarefa nao ficar com "{NUMERO}" cru.
+      const semValor = {
+        NUMERO: 'nao configurado (vale para qualquer conta conectada)',
+        ROTULO: 'estacao global',
+        CONTA: 'qualquer conta conectada',
+      };
+      const mensagem = String(modelo.message || '').replace(/\{(\w+)\}/g, (m, chave) => {
+        const valor = contexto[chave];
+        if (valor !== undefined && valor !== '') return valor;
+        return semValor[chave] || m;
+      });
+
+      /* 6.1) conversa dedicada ------------------------------------------- */
+      let conversa = itensConversa.find((c) => c.name === nome);
+      if (conversa) {
+        passo(true, 'conversa da tarefa', `${nome}  (reaproveitada)`);
+      } else {
+        const rc = await cliente.post('/api/conversations', {
+          name: nome,
+          type: referencia?.type || 'aionrs',
+          model: referencia?.model,
+          assistant: referencia?.assistant
+            ? {
+                id: referencia.assistant.id,
+                name: referencia.assistant.name,
+                backend: referencia.assistant.backend,
+                source: referencia.assistant.source,
+              }
+            : undefined,
+          source: 'aionui',
+          extra: {},
+        });
+        conversa = rc.ok ? rc.dados?.data : null;
+        if (conversa) passo(true, 'conversa da tarefa', `${nome}  (criada)`);
+        else {
+          passo(false, 'conversa da tarefa', `${nome}: ${rc.status} ${(rc.texto || '').slice(0, 120)}`);
+          continue;
+        }
+      }
+
+      // O PUT /api/cron/jobs/{id} espera o schedule como objeto
+      // {kind:"cron", expr, tz}. O modelo do repo guarda so a expressao
+      // cron como texto, entao montamos o objeto aqui.
+      const schedule = {
+        kind: 'cron',
+        expr: modelo.schedule,
+        tz: modelo.schedule_tz || 'America/Sao_Paulo',
+        description: modelo.schedule_description || '',
+      };
+      const agentConfig = {
+        name: referencia?.assistant?.name || 'Aion CLI',
+        assistant_id: referencia?.assistant?.id,
+        mode: 'aionrs',
+        model: referencia?.model,
+      };
+
+      /* 6.2) tarefa agendada --------------------------------------------- */
       const existente = lista.find((t) => t.name === nome || t.name?.startsWith(nome.split('(')[0].trim()));
-      if (existente) {
-        // A tarefa ja existe: atualiza nome, agenda e mensagem para que os
-        // caminhos apontem para a maquina e o rotulo do cliente atual.
-        // O PUT /api/cron/jobs/{id} espera o schedule como objeto
-        // {kind:"cron", expr, tz}. O modelo do repo guarda so a expressao
-        // cron como texto, entao montamos o objeto aqui.
+      const conversaDaTarefa = existente?.metadata?.conversation_id || existente?.conversation_id || null;
+
+      if (existente && conversaDaTarefa === conversa.id) {
+        // Ja esta na conversa certa: so atualiza nome, agenda e mensagem.
         const r = await cliente.put(`/api/cron/jobs/${existente.id}`, {
           name: nome,
           description: modelo.schedule_description || '',
           enabled: true,
-          schedule: {
-            kind: 'cron',
-            expr: modelo.schedule,
-            tz: modelo.schedule_tz || 'America/Sao_Paulo',
-            description: modelo.schedule_description || '',
-          },
+          schedule,
           message: mensagem,
+          conversation_title: conversa.name,
+          execution_mode: 'existing',
+          agent_config: agentConfig,
         });
         if (r.ok) passo(true, 'tarefa atualizada', `${nome}  (${modelo.schedule})`);
         else passo(false, 'atualizar tarefa', `${nome}: ${r.status} ${(r.texto || '').slice(0, 120)}`);
         continue;
       }
-      const r = await cliente.post('/api/internal/conversation-cron/create', {
+
+      // A tarefa existe mas esta presa em outra conversa: o PUT nao troca a
+      // conversa, entao recriamos apontando para a conversa dedicada.
+      if (existente) {
+        const apagada = await cliente.delete(`/api/cron/jobs/${existente.id}`);
+        passo(
+          apagada.ok,
+          'tarefa realocada',
+          apagada.ok
+            ? `${nome}  (saiu da conversa ${conversaDaTarefa || 'desconhecida'})`
+            : `${nome}: ${apagada.status} ${(apagada.texto || '').slice(0, 120)}`
+        );
+        if (!apagada.ok) continue;
+      }
+
+      const r = await cliente.post('/api/cron/jobs', {
         name: nome,
-        schedule: modelo.schedule,
-        schedule_description: modelo.schedule_description || '',
+        description: modelo.schedule_description || '',
+        schedule,
         message: mensagem,
+        conversation_id: conversa.id,
+        conversation_title: conversa.name,
+        created_by: 'agent',
+        execution_mode: 'existing',
+        queue_enabled: false,
+        agent_config: agentConfig,
       });
       if (r.ok) passo(true, 'tarefa criada', `${nome}  (${modelo.schedule})`);
       else passo(false, 'criar tarefa', `${nome}: ${r.status} ${(r.texto || '').slice(0, 120)}`);

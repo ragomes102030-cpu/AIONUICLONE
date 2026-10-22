@@ -74,9 +74,24 @@ Esse comando faz, sozinho:
 4. **repara as skills do catálogo** cujo caminho aponta para uma instalação
    antiga (ex.: a pasta do AionUi que foi removida) e atualiza para a atual;
 5. registra a skill no catálogo (import via API);
-6. cria as **duas tarefas agendadas** (diária e semanal), se ainda não existirem;
+6. cria as **duas tarefas agendadas** (diária e semanal), cada uma em sua
+   conversa dedicada, se ainda nao existirem;
 7. sobe o Chrome em modo depuração, se não estiver de pé;
 8. roda o diagnóstico final.
+
+### Por que cada tarefa tem uma conversa propria
+
+A tarefa diaria e a semanal sao criadas em conversas **dedicadas**, criadas pelo
+instalador (uma por tarefa, com o nome da tarefa). Isso nao e detalhe: quando a
+tarefa divide conversa com outro assunto, um turno em andamento segura o resumo e
+a entrega das 7:00 se perde. Com conversa propria:
+
+- o resumo cai sempre no mesmo lugar, e a conversa do dia;
+- a tarefa nunca disputa turno com outro assunto;
+- a regra do app de "1 tarefa por conversa" continua valendo.
+
+O instalador detecta a conversa antiga, apaga a tarefa que estava presa nela e
+recria apontando para a conversa dedicada. Nao e preciso fazer nada a mao.
 
 Opções úteis:
 

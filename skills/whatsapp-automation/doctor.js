@@ -116,7 +116,10 @@ function apresentar(r) {
     linha('abas abertas', String(r.chrome.abas), true);
     if (r.chrome.abaWhatsapp) {
       linha('aba do WhatsApp', r.chrome.abaWhatsapp.titulo, true);
-      linha('sessao do WhatsApp', r.chrome.sessaoAtiva ? 'ativa' : 'EXPIRADA - precisa escanear o QR de novo', r.chrome.sessaoAtiva);
+      const sessao = r.chrome.sessao || {};
+      let estadoSessao = 'ativa';
+      if (!sessao.temLista) estadoSessao = sessao.temQR ? 'EXPIRADA - precisa escanear o QR de novo' : 'carregando (sem lista de conversas)';
+      linha('sessao do WhatsApp', estadoSessao, r.chrome.sessaoAtiva);
       linha('conta conectada', r.chrome.conta?.nome || 'nao identificada', !!r.chrome.conta?.nome);
       linha('conversas na lista', String(r.listaChats.total), r.listaChats.total > 0);
       linha('mensagens nao lidas', String(r.listaChats.naoLidas), null);
@@ -195,7 +198,13 @@ function apresentar(r) {
   const problemas = [];
   if (!r.chrome.conectado) problemas.push('Chrome nao esta em modo de depuracao');
   if (r.chrome.conectado && !r.chrome.abaWhatsapp) problemas.push('aba do WhatsApp nao esta aberta');
-  if (r.chrome.conectado && r.chrome.abaWhatsapp && !r.chrome.sessaoAtiva) problemas.push('sessao do WhatsApp expirada');
+  if (r.chrome.conectado && r.chrome.abaWhatsapp && !r.chrome.sessaoAtiva) {
+    problemas.push(
+      r.chrome.pedidoQr
+        ? 'sessao do WhatsApp expirada - escaneie o QR de novo no Chrome da estacao'
+        : 'sessao do WhatsApp ainda nao carregou (sem lista de conversas)'
+    );
+  }
   if (r.chrome.conectado && r.chrome.abaWhatsapp && !r.chrome.conta?.nome) problemas.push('conta conectada nao identificada');
   if (
     r.config?.contaEsperada &&

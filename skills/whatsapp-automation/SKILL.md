@@ -263,6 +263,16 @@ antes de escrever (sai com código 2 se não bater).
 
 ## Tarefas agendadas (cron)
 
+### Conversas dedicadas (por que o resumo sempre chega)
+
+Cada tarefa agendada tem uma **conversa propria**, criada pelo instalador. O
+motivo e pratico: se a tarefa dividisse conversa com outro assunto, um turno em
+andamento seguraria o resumo e a entrega das 7:00 se perderia. Com conversa
+dedicada, o resumo cai sempre na mesma conversa do dia.
+
+O instalador detecta a conversa antiga, apaga a tarefa presa nela e recria
+apontando para a conversa dedicada. Nao e preciso fazer nada a mao.
+
 A skill **não** cria tarefas sozinha — elas são criadas pelo agente via o CLI de
 configuração do app (ou pelo `station.js`, que já deixa as duas criadas).
 Contrato:

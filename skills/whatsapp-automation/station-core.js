@@ -229,6 +229,10 @@ class Api {
   async put(rota, corpo) {
     return this.req('PUT', rota, corpo);
   }
+
+  async delete(rota) {
+    return this.req('DELETE', rota);
+  }
 }
 
 /* --------------------------------------------------- descoberta do backend */
@@ -455,10 +459,15 @@ async function detectarConta(wsUrl) {
   if (!wsUrl) return { nome: null, avatar: null, erro: 'sem aba do WhatsApp' };
   let valor = await avaliarNaAba(wsUrl, EXPRESSAO_CONTA);
   let abriuDrawer = false;
-  if (!valor || !valor.nome) {
+  // O clique em "Voce" pode demorar a abrir o drawer (a interface anima).
+  // Repetimos algumas vezes antes de desistir, senao a leitura fica flaky.
+  let tentativas = 0;
+  while ((!valor || !valor.nome) && tentativas < 3) {
+    tentativas++;
     abriuDrawer = true;
-    await avaliarNaAba(wsUrl, expressaoCliqueNav('^voc(e|\\u00ea)$'));
-    await new Promise((r) => setTimeout(r, 1200));
+    const clique = await avaliarNaAba(wsUrl, expressaoCliqueNav('^voc(e|\\u00ea)$'));
+    if (clique !== 'clicado') break;
+    await new Promise((r) => setTimeout(r, 1500));
     valor = await avaliarNaAba(wsUrl, EXPRESSAO_CONTA);
   }
   // devolve a tela para a lista de conversas: o drawer aberto esconde o chat
@@ -474,6 +483,36 @@ async function detectarConta(wsUrl) {
     identificador: avatar ? avatar.split('/').pop() : null,
     drawerAberto: !!(valor && valor.drawerAberto),
     abriuDrawer,
+  };
+}
+
+/**
+ * Estado da sessao do WhatsApp Web na aba:
+ *   temLista = a barra de conversas existe (sessao logada);
+ *   temQR    = a tela e o QR code (sessao expirada / deslogada).
+ * O titulo sozinho nao serve: "WhatsApp" aparece tanto no QR quanto logado,
+ * e "(7) WhatsApp" so aparece quando ha nao lidas.
+ */
+const EXPRESSAO_SESSAO = `(() => {
+  const pane = document.querySelector('#pane-side');
+  const lista = document.querySelector('[data-testid="conversation-list"], [aria-label="Chat list"], [data-testid="cell-frame-title"]');
+  const canvas = document.querySelector('canvas');
+  return {
+    temLista: !!(pane || lista),
+    temQR: !!canvas,
+    titulo: document.title,
+  };
+})()`;
+
+/** Le o estado da sessao na aba do WhatsApp. */
+async function lerSessao(wsUrl) {
+  if (!wsUrl) return { temLista: false, temQR: false, titulo: null };
+  const valor = await avaliarNaAba(wsUrl, EXPRESSAO_SESSAO);
+  if (!valor) return { temLista: false, temQR: false, titulo: null };
+  return {
+    temLista: !!valor.temLista,
+    temQR: !!valor.temQR,
+    titulo: valor.titulo || null,
   };
 }
 
@@ -539,7 +578,13 @@ async function inspecionarChrome(porta = DEFAULT_CDP_PORT) {
   } catch {
     /* ignora */
   }
-  const whatsapp = abas.find((a) => /web\.whatsapp\.com/.test(a.url || ''));
+  // O /json/list tambem traz service workers e workers. A aba do WhatsApp
+  // e a unica do tipo "page" - pegar o service worker quebra a leitura
+  // (titulo vazio, zero conversas, conta nao identificada).
+  const whatsapp =
+    abas.find((a) => a.type === 'page' && /^https:\/\/web\.whatsapp\.com\/?$/.test(a.url || '')) ||
+    abas.find((a) => a.type === 'page' && /web\.whatsapp\.com/.test(a.url || ''));
+  const sessao = whatsapp ? await lerSessao(whatsapp.webSocketDebuggerUrl) : null;
   const conta = whatsapp ? await detectarConta(whatsapp.webSocketDebuggerUrl) : null;
   const estado = {
     conectado: true,
@@ -549,7 +594,9 @@ async function inspecionarChrome(porta = DEFAULT_CDP_PORT) {
     abaWhatsapp: whatsapp
       ? { titulo: whatsapp.title, url: whatsapp.url, id: whatsapp.id, webSocketDebuggerUrl: whatsapp.webSocketDebuggerUrl }
       : null,
-    sessaoAtiva: whatsapp ? /\(\d+\)\s*WhatsApp/.test(whatsapp.title || '') : false,
+    sessaoAtiva: !!(sessao && sessao.temLista),
+    pedidoQr: !!(sessao && sessao.temQR && !sessao.temLista),
+    sessao,
     chatAberto: whatsapp ? await lerChatAberto(whatsapp.webSocketDebuggerUrl) : null,
     conta,
   };
@@ -677,6 +724,8 @@ module.exports = {
   inspecionarChrome,
   lerJson,
   copiarPasta,
+  lerSessao,
+  EXPRESSAO_SESSAO,
   detectarConta,
   lerListaChats,
   expressaoCliqueNav,
