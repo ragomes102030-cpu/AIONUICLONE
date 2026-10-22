@@ -258,7 +258,7 @@ async function principal() {
         tz: modelo.schedule_tz || 'America/Sao_Paulo',
         description: modelo.schedule_description || '',
       };
-      const agentConfig = {
+      const agente = {
         name: referencia?.assistant?.name || 'Aion CLI',
         assistant_id: referencia?.assistant?.id,
         mode: 'aionrs',
@@ -268,8 +268,14 @@ async function principal() {
       /* 6.2) tarefa agendada --------------------------------------------- */
       const existente = lista.find((t) => t.name === nome || t.name?.startsWith(nome.split('(')[0].trim()));
       const conversaDaTarefa = existente?.metadata?.conversation_id || existente?.conversation_id || null;
+      const assistenteDaTarefa = existente?.metadata?.agent_config?.assistant_id || null;
+      // O PUT de uma tarefa em andamento nao aceita agent_config ("ongoing
+      // conversation jobs must keep their original assistant"). Se o assistente
+      // da tarefa nao for o da maquina, recriamos em vez de tentar corrigir.
+      const assistenteDiferente =
+        !!existente && !!agente.assistant_id && !!assistenteDaTarefa && agente.assistant_id !== assistenteDaTarefa;
 
-      if (existente && conversaDaTarefa === conversa.id) {
+      if (existente && conversaDaTarefa === conversa.id && !assistenteDiferente) {
         // Ja esta na conversa certa: so atualiza nome, agenda e mensagem.
         const r = await cliente.put(`/api/cron/jobs/${existente.id}`, {
           name: nome,
@@ -278,16 +284,14 @@ async function principal() {
           schedule,
           message: mensagem,
           conversation_title: conversa.name,
-          execution_mode: 'existing',
-          agent_config: agentConfig,
         });
         if (r.ok) passo(true, 'tarefa atualizada', `${nome}  (${modelo.schedule})`);
         else passo(false, 'atualizar tarefa', `${nome}: ${r.status} ${(r.texto || '').slice(0, 120)}`);
         continue;
       }
 
-      // A tarefa existe mas esta presa em outra conversa: o PUT nao troca a
-      // conversa, entao recriamos apontando para a conversa dedicada.
+      // A tarefa existe mas esta presa em outra conversa (ou com outro
+      // assistente): o PUT nao troca a conversa nem o agente, entao recriamos.
       if (existente) {
         const apagada = await cliente.delete(`/api/cron/jobs/${existente.id}`);
         passo(
@@ -310,7 +314,7 @@ async function principal() {
         created_by: 'agent',
         execution_mode: 'existing',
         queue_enabled: false,
-        agent_config: agentConfig,
+        agent_config: agente,
       });
       if (r.ok) passo(true, 'tarefa criada', `${nome}  (${modelo.schedule})`);
       else passo(false, 'criar tarefa', `${nome}: ${r.status} ${(r.texto || '').slice(0, 120)}`);
