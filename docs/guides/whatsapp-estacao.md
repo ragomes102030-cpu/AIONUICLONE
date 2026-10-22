@@ -89,6 +89,24 @@ node skills/whatsapp-automation/station.js --data-dir "C:\...\Arquimedes\arquime
 
 ---
 
+## 3b. Configuracao por numero (qualquer cliente)
+
+A estacao **nao fica presa a um numero**. Para instalar em um cliente, informe o numero dele:
+
+```bash
+node skills/whatsapp-automation/station.js --numero "+55 85 99999-9999" --rotulo "Cliente Exemplo" --conta "Nome da Conta"
+```
+
+| Item | Comportamento |
+|---|---|
+| **Perfil do Chrome** | um por numero (`<base>\<slug-do-numero>`). As sessoes nao se misturam. |
+| **Configuracao** | `{data-dir}\whatsapp-station.json` (numero, rotulo, conta esperada, perfil, porta, obra e chat padrao). |
+| **Tarefas agendadas** | nomeadas com o rotulo do cliente e com os caminhos ja substituidos para a maquina dele. |
+| **Validacao** | conta conectada diferente da esperada = aviso no instalador e no doctor. |
+
+Opcoes: `--numero`, `--rotulo`, `--conta`, `--perfil`, `--cdp`, `--obra`, `--chat`.
+
+
 ## 4. Diagnóstico
 
 Sempre que algo parecer errado, rode:

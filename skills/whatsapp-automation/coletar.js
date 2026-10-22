@@ -25,7 +25,7 @@ const path = require('path');
 const fs = require('fs');
 
 const { lerMensagens, montarTextoParaAgente, salvarJson, conectar } = require('./cdp-client');
-const { detectarConta, lerListaChats } = require('./station-core');
+const { detectarConta, lerListaChats, lerConfig, descobrirDataDir } = require('./station-core');
 
 const OBRAS_ROOT = process.env.ARQUIMEDES_OBRAS || 'C:\\Arquimedes\\obras';
 
@@ -54,7 +54,21 @@ const PROMPT_RESUMO_GLOBAL = [
 ].join(' ');
 
 function lerArgs(argv) {
-  const opts = { obra: 'whatsapp', chat: 'PIAZZA', saida: null, prompt: null, global: false };
+  // Os padroes vem da configuracao da estacao (numero do cliente), quando ela
+  // existe. Sem configuracao, nada fica preso a um chat nem a um numero.
+  let cfg = {};
+  try {
+    cfg = lerConfig(descobrirDataDir(null)) || {};
+  } catch {
+    cfg = {};
+  }
+  const opts = {
+    obra: cfg.obraPadrao || 'whatsapp',
+    chat: cfg.chatPadrao || null,
+    saida: null,
+    prompt: null,
+    global: false,
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--obra') opts.obra = argv[++i];

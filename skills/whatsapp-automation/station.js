@@ -3,9 +3,15 @@
  * station.js - instalador de 1 comando da estacao WhatsApp do Arquimedes.
  *
  *   node station.js
+ *   node station.js --numero "+55 85 99999-9999" --rotulo "Cliente Exemplo"
  *
  * O escopo e GLOBAL: vale para a conta que estiver conectada no Chrome da
  * estacao, nao para um grupo nem para um numero fixo.
+ *
+ * A estacao e CONFIGURAVEL: quem instala (o proprio usuario ou um cliente)
+ * informa o numero/identificador que vai usar. Cada numero ganha a sua propria
+ * pasta de perfil do Chrome, a sua configuracao e as suas tarefas agendadas.
+ * Nada fica preso ao numero de quem configurou.
  *
  * O que ele faz, em ordem:
  *   1. Descobre o data-dir e a API do backend (o app pode estar aberto ou nao)
@@ -13,9 +19,10 @@
  *   3. Repara as skills do catalogo que apontam para pastas apagadas
  *      (caminho apontava para a antiga instalacao do AionUi)
  *   4. Registra a skill whatsapp-automation no catalogo (via API de import)
- *   5. Cria as 2 tarefas agendadas: resumo diario (7:00) e semanal (sexta 7:00)
- *   6. Sobe o Chrome em modo de depuracao, se nao estiver de pe
- *   7. Roda o doctor e mostra o resultado
+ *   5. Grava a configuracao da estacao (numero, perfil do Chrome, conta)
+ *   6. Cria as 2 tarefas agendadas: resumo diario (7:00) e semanal (sexta 7:00)
+ *   7. Sobe o Chrome em modo de depuracao, se nao estiver de pe
+ *   8. Roda o doctor e mostra o resultado
  *
  * O app NUNCA instala sozinho: a instalacao e na estacao, este comando.
  * O app apenas le o estado e liga/desliga as tarefas.
@@ -33,7 +40,7 @@ const valor = (n, padrao) => {
   return i >= 0 && args[i + 1] ? args[i + 1] : padrao;
 };
 
-const PERFIL_CHROME = process.env.ARQUIMEDES_CHROME_PROFILE || 'C:\\Arquimedes\\chrome-arquimedes';
+const PERFIL_CHROME_BASE = process.env.ARQUIMEDES_CHROME_PROFILE || 'C:\\Arquimedes\\chrome-arquimedes';
 const NOME_SKILL = 'whatsapp-automation';
 
 const passos = [];
@@ -68,6 +75,29 @@ async function principal() {
   /* 1) data-dir e API ---------------------------------------------------- */
   const dataDir = core.descobrirDataDir(valor('--data-dir', null));
   passo(fs.existsSync(core.caminhoBanco(dataDir)), 'data-dir do Arquimedes', dataDir);
+
+  /* 1b) configuracao da estacao (de quem e o numero que vai usar) -------- */
+  const anterior = core.lerConfig(dataDir);
+  const numero = valor('--numero', anterior.numero || null);
+  const rotulo = valor('--rotulo', anterior.rotulo || (numero ? numero : null));
+  const contaEsperada = valor('--conta', anterior.contaEsperada || null);
+  const cdpPorta = Number(valor('--cdp', String(anterior.cdpPorta || core.DEFAULT_CDP_PORT)));
+  const obraPadrao = valor('--obra', anterior.obraPadrao || 'whatsapp');
+  const chatPadrao = valor('--chat', anterior.chatPadrao || null);
+  const slugNumero = numero ? core.slug(numero) : null;
+  const perfilChrome = valor(
+    '--perfil',
+    anterior.perfilChrome || (slugNumero ? path.join(PERFIL_CHROME_BASE, slugNumero) : PERFIL_CHROME_BASE)
+  );
+  const obrasDir = process.env.ARQUIMEDES_OBRAS || 'C:\\Arquimedes\\obras';
+  const contexto = {
+    SKILL_DIR: null, // preenchido depois que a skill e instalada
+    OBRAS_DIR: obrasDir,
+    NUMERO: numero || '',
+    ROTULO: rotulo || '',
+    PERFIL: perfilChrome,
+    CONTA: contaEsperada || '',
+  };
 
   const api = await core.descobrirApi({ url: valor('--url', null), porta: valor('--port', null) });
   if (!api.base) {
@@ -131,11 +161,33 @@ async function principal() {
     passo(false, 'skill registrada no catalogo', String(e.message));
   }
 
-  /* 5) tarefas agendadas -------------------------------------------------- */
+  /* 5) configuracao da estacao ------------------------------------------- */
+  contexto.SKILL_DIR = destino;
+  const config = {
+    versao: 1,
+    numero: numero || null,
+    rotulo: rotulo || null,
+    contaEsperada: contaEsperada || null,
+    perfilChrome,
+    cdpPorta,
+    obraPadrao,
+    chatPadrao,
+    atualizadoEm: new Date().toISOString(),
+  };
+  try {
+    const arquivo = core.salvarConfig(dataDir, config);
+    passo(true, 'configuracao da estacao', `${numero ? numero + ' | ' : ''}${perfilChrome}`);
+    passo(true, 'arquivo de configuracao', arquivo);
+  } catch (e) {
+    passo(false, 'configuracao da estacao', String(e.message));
+  }
+
+  /* 6) tarefas agendadas -------------------------------------------------- */
   if (!tem('--sem-cron')) {
     const existentes = await cliente.get('/api/cron/jobs');
     const lista = existentes.ok && existentes.dados?.data ? existentes.dados.data : [];
     const modelos = ['tarefa-resumo-diario.json', 'tarefa-resumo-semanal.json'];
+    const rotuloTarefa = rotulo || 'todas as conversas';
     for (const arquivo of modelos) {
       const arquivoModelo = path.join(destino, arquivo);
       if (!fs.existsSync(arquivoModelo)) {
@@ -143,26 +195,41 @@ async function principal() {
         continue;
       }
       const modelo = JSON.parse(fs.readFileSync(arquivoModelo, 'utf8'));
-      // O nome vem do proprio modelo: o escopo e global, nao um grupo fixo.
-      const nome = modelo.name || arquivo.replace('.json', '');
-      if (lista.some((t) => t.name === nome || t.name?.startsWith(nome.split('(')[0].trim()))) {
-        passo(true, 'tarefa ja existe', nome);
+      // O nome vem do proprio modelo, com o rotulo da estacao (numero do
+      // cliente). O escopo e global: nao um grupo fixo.
+      const nome = String(modelo.name || arquivo.replace('.json', '')).replace(/\{ROTULO\}/g, rotuloTarefa);
+      const mensagem = String(modelo.message || '').replace(/\{(\w+)\}/g, (m, chave) =>
+        contexto[chave] !== undefined && contexto[chave] !== '' ? contexto[chave] : m
+      );
+      const existente = lista.find((t) => t.name === nome || t.name?.startsWith(nome.split('(')[0].trim()));
+      if (existente) {
+        // A tarefa ja existe: atualiza nome, agenda e mensagem para que os
+        // caminhos apontem para a maquina e o rotulo do cliente atual.
+        const r = await cliente.put(`/api/cron/jobs/${existente.id}`, {
+          name: nome,
+          description: modelo.schedule_description || '',
+          enabled: true,
+          schedule: modelo.schedule,
+          message: mensagem,
+        });
+        if (r.ok) passo(true, 'tarefa atualizada', `${nome}  (${modelo.schedule})`);
+        else passo(false, 'atualizar tarefa', `${nome}: ${r.status} ${(r.texto || '').slice(0, 120)}`);
         continue;
       }
       const r = await cliente.post('/api/internal/conversation-cron/create', {
         name: nome,
         schedule: modelo.schedule,
         schedule_description: modelo.schedule_description || '',
-        message: modelo.message,
+        message: mensagem,
       });
       if (r.ok) passo(true, 'tarefa criada', `${nome}  (${modelo.schedule})`);
       else passo(false, 'criar tarefa', `${nome}: ${r.status} ${(r.texto || '').slice(0, 120)}`);
     }
   }
 
-  /* 6) Chrome em modo de depuracao ---------------------------------------- */
+  /* 7) Chrome em modo de depuracao ---------------------------------------- */
   if (!tem('--sem-chrome')) {
-    const estado = await core.inspecionarChrome(Number(valor('--cdp', String(core.DEFAULT_CDP_PORT))));
+    const estado = await core.inspecionarChrome(cdpPorta);
     if (estado.conectado) {
       passo(true, 'Chrome em modo de depuracao', estado.navegador);
     } else {
@@ -174,8 +241,8 @@ async function principal() {
           const filho = spawn(
             exe,
             [
-              `--remote-debugging-port=${valor('--cdp', String(core.DEFAULT_CDP_PORT))}`,
-              `--user-data-dir=${PERFIL_CHROME}`,
+              `--remote-debugging-port=${cdpPorta}`,
+              `--user-data-dir=${perfilChrome}`,
               '--no-first-run',
               '--no-default-browser-check',
               'https://web.whatsapp.com/',
@@ -184,7 +251,7 @@ async function principal() {
           );
           filho.unref();
           await new Promise((r) => setTimeout(r, 5000));
-          const depois = await core.inspecionarChrome(Number(valor('--cdp', String(core.DEFAULT_CDP_PORT))));
+          const depois = await core.inspecionarChrome(cdpPorta);
           passo(depois.conectado, 'Chrome em modo de depuracao', depois.conectado ? depois.navegador : 'nao respondeu na porta');
         } catch (e) {
           passo(false, 'Chrome em modo de depuracao', String(e.message));
@@ -193,9 +260,22 @@ async function principal() {
     }
   }
 
+  /* 7b) confere se a conta conectada e a que a estacao espera ------------- */
+  if (!tem('--sem-chrome')) {
+    const estado = await core.inspecionarChrome(cdpPorta);
+    const nomeConectado = estado.conta?.nome || null;
+    if (!nomeConectado) {
+      passo(false, 'conta conectada', 'nao foi possivel identificar - abra o WhatsApp Web no Chrome de depuracao');
+    } else if (contaEsperada && nomeConectado.toLowerCase() !== String(contaEsperada).toLowerCase()) {
+      passo(false, 'conta conectada', `"${nomeConectado}" - a estacao foi configurada para "${contaEsperada}"`);
+    } else {
+      passo(true, 'conta conectada', contaEsperada ? `${nomeConectado} (esperada: ${contaEsperada})` : nomeConectado);
+    }
+  }
+
   if (db) db.close();
 
-  /* 7) doctor -------------------------------------------------------------- */
+  /* 8) doctor -------------------------------------------------------------- */
   console.log('');
   console.log('  --- verificacao final ---');
   console.log('');

@@ -49,6 +49,48 @@ function caminhoSkillInstalada(dataDir, nome = 'whatsapp-automation') {
   return path.join(caminhoPastaSkills(dataDir), nome);
 }
 
+/* ------------------------------------------------------------- configuracao */
+
+/**
+ * A estacao e configuravel: cada cliente/número tem a sua propria configuracao.
+ * O arquivo fica no data-dir do Arquimedes, para acompanhar a maquina estacao.
+ */
+function caminhoConfig(dataDir) {
+  return path.join(dataDir, 'whatsapp-station.json');
+}
+
+/** Le a configuracao da estacao (vazio se ainda nao existir). */
+function lerConfig(dataDir) {
+  try {
+    const bruto = fs.readFileSync(caminhoConfig(dataDir), 'utf8');
+    const cfg = JSON.parse(bruto);
+    return cfg && typeof cfg === 'object' ? cfg : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Grava a configuracao da estacao e devolve o caminho do arquivo. */
+function salvarConfig(dataDir, cfg) {
+  const arquivo = caminhoConfig(dataDir);
+  fs.mkdirSync(path.dirname(arquivo), { recursive: true });
+  fs.writeFileSync(arquivo, JSON.stringify(cfg, null, 2), 'utf8');
+  return arquivo;
+}
+
+/**
+ * Transforma um texto em um "slug" seguro para nome de pasta.
+ *   "+55 85 99999-9999" -> "55-85-99999-9999"
+ */
+function slug(texto) {
+  return String(texto || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+}
+
 /* ------------------------------------------------------------------ sqlite */
 
 /**
@@ -182,6 +224,10 @@ class Api {
 
   async post(rota, corpo) {
     return this.req('POST', rota, corpo);
+  }
+
+  async put(rota, corpo) {
+    return this.req('PUT', rota, corpo);
   }
 }
 
@@ -540,6 +586,10 @@ module.exports = {
   caminhoBanco,
   caminhoPastaSkills,
   caminhoSkillInstalada,
+  caminhoConfig,
+  lerConfig,
+  salvarConfig,
+  slug,
   abrirBanco,
   inspecionarSkills,
   inspecionarCron,

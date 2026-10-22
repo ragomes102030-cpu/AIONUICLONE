@@ -66,10 +66,12 @@ async function coletar() {
 
   const skillInstalada = core.caminhoSkillInstalada(dataDir);
   const skillNoDisco = require('fs').existsSync(path.join(skillInstalada, 'SKILL.md'));
+  const config = core.lerConfig(dataDir);
 
   return {
     geradoEm: new Date().toISOString(),
     dataDir,
+    config,
     banco: { caminho: core.caminhoBanco(dataDir), existe: require('fs').existsSync(core.caminhoBanco(dataDir)) },
     chrome,
     listaChats: { total: listaChats.total, naoLidas: listaChats.chats.reduce((s, c) => s + (c.naoLidas || 0), 0) },
@@ -127,6 +129,19 @@ function apresentar(r) {
   }
   console.log('');
 
+  console.log('  ESTACAO (configuracao)');
+  const cfg = r.config || {};
+  linha('numero / identificador', cfg.numero || 'nao configurado (vale para qualquer conta)', cfg.numero ? true : null);
+  linha('rotulo', cfg.rotulo || '(sem rotulo)', null);
+  linha('perfil do Chrome', cfg.perfilChrome || '(padrao do sistema)', !!cfg.perfilChrome);
+  linha('conta esperada', cfg.contaEsperada || 'qualquer conta conectada', null);
+  if (cfg.contaEsperada && r.chrome.conta?.nome) {
+    const bate = r.chrome.conta.nome.toLowerCase() === String(cfg.contaEsperada).toLowerCase();
+    linha('conta conectada', r.chrome.conta.nome, bate);
+  }
+  linha('obra padrao', cfg.obraPadrao || 'whatsapp', null);
+  console.log('');
+
   console.log('  ARQUIMEDES');
   linha('data-dir', r.dataDir, true);
   linha('banco de dados', r.banco.existe ? 'presente' : 'AUSENTE', r.banco.existe);
@@ -175,6 +190,13 @@ function apresentar(r) {
   if (r.chrome.conectado && !r.chrome.abaWhatsapp) problemas.push('aba do WhatsApp nao esta aberta');
   if (r.chrome.conectado && r.chrome.abaWhatsapp && !r.chrome.sessaoAtiva) problemas.push('sessao do WhatsApp expirada');
   if (r.chrome.conectado && r.chrome.abaWhatsapp && !r.chrome.conta?.nome) problemas.push('conta conectada nao identificada');
+  if (
+    r.config?.contaEsperada &&
+    r.chrome.conta?.nome &&
+    r.chrome.conta.nome.toLowerCase() !== String(r.config.contaEsperada).toLowerCase()
+  ) {
+    problemas.push(`a conta conectada (${r.chrome.conta.nome}) nao e a esperada (${r.config.contaEsperada})`);
+  }
   if (r.chrome.conectado && r.chrome.abaWhatsapp && r.listaChats.total === 0) problemas.push('nenhuma conversa visivel na lista');
   if (!r.skill.noDisco) problemas.push('skill nao instalada no data-dir');
   if (!r.skill.registrada) problemas.push('skill nao registrada no catalogo');

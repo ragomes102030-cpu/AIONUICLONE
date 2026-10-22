@@ -101,6 +101,39 @@ na aba do Chrome — o script confere o nome e avisa se for outra.
 | `doctor.js` | Diagnóstico da estação: Chrome, sessão do WhatsApp, data-dir, API, skill instalada e registrada, skills com caminho quebrado, tarefas agendadas e resumos. |
 | `station.js` | **Instalador de 1 comando**: prepara tudo o que a estação precisa (abaixo). |
 
+## Configuracao por numero (qualquer cliente)
+
+A estacao nao fica presa a um numero. Cada cliente configura **o numero dele** e a estacao
+passa a funcionar para ele:
+
+```bash
+node "<pasta-da-skill>\station.js" --numero "+55 85 99999-9999" --rotulo "Cliente Exemplo" --conta "Nome da Conta"
+```
+
+O que acontece na configuracao:
+
+| Item | Comportamento |
+|---|---|
+| **Perfil do Chrome** | cada numero recebe a sua propria pasta: `<base>\<slug-do-numero>`. As sessoes nao se misturam entre clientes. |
+| **Arquivo de configuracao** | `{data-dir}\whatsapp-station.json` guarda numero, rotulo, conta esperada, perfil, porta CDP, obra e chat padrao. |
+| **Tarefas agendadas** | recebem o rotulo do cliente no nome ("Resumo diario do WhatsApp (Cliente Exemplo)") e os caminhos sao substituidos na instalacao, para funcionar na maquina dele. |
+| **Validacao** | se a conta conectada no Chrome for diferente da conta esperada, o instalador e o doctor avisam. |
+
+Opcoes:
+
+| Flag | O que faz |
+|---|---|
+| `--numero "<numero>"` | numero do cliente (define o perfil do Chrome e o rotulo padrao) |
+| `--rotulo "<nome>"` | nome curto que aparece no nome das tarefas agendadas |
+| `--conta "<nome>"` | conta esperada no WhatsApp Web (o doctor compara e avisa se divergir) |
+| `--perfil "<caminho>"` | usar um perfil do Chrome especifico em vez do padrao |
+| `--cdp <porta>` | porta de depuracao do Chrome (padrao 9222) |
+| `--obra "<obra>"` | pasta de obras onde os resumos sao gravados |
+| `--chat "<conversa>"` | conversa especifica (opcional; sem isso o escopo e global) |
+
+Sem `--numero`, a estacao usa o perfil e a configuracao ja salvos (ou os valores padrao).
+
+
 ## Instalação da estação (1 comando)
 
 A estação é a máquina que fica ligada: Chrome em depuração + WhatsApp Web logado +
