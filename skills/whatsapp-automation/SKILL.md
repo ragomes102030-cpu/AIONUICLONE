@@ -134,6 +134,32 @@ Opcoes:
 Sem `--numero`, a estacao usa o perfil e a configuracao ja salvos (ou os valores padrao).
 
 
+## Inicializacao automatica (a estacao liga sozinha)
+
+Para o resumo das 7:00 rodar todo dia, o PC precisa ligar com o Chrome em modo de
+depuracao e o Arquimedes aberto. A estacao resolve isso criando um atalho na pasta
+**Inicializar do Windows**:
+
+`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\Arquimedes - Estacao WhatsApp.cmd`
+
+O que esse arquivo faz, em ordem:
+
+1. abre o Chrome com `--remote-debugging-port=<porta>` e o perfil da estacao;
+2. espera 15 segundos (o WhatsApp Web terminar de carregar);
+3. abre o Arquimedes (e por dentro dele o cron que roda as 7:00).
+
+| Flag | Efeito |
+|---|---|
+| `--sem-inicio` | nao cria o atalho de inicializacao (ou remove o que existe) |
+| `--sem-iniciar-app` | o atalho abre so o Chrome, sem subir o Arquimedes |
+
+Para conferir se esta tudo no lugar: `npm run doctor:whatsapp` mostra a linha
+**inicio automatico** com o caminho do arquivo.
+
+> O atalho e um arquivo `.cmd` comum na pasta de Inicializar: pode apagar, mover ou
+> desabilitar pelo Gerenciador de Tarefas do Windows a qualquer momento.
+
+
 ## Instalação da estação (1 comando)
 
 A estação é a máquina que fica ligada: Chrome em depuração + WhatsApp Web logado +

@@ -107,6 +107,28 @@ node skills/whatsapp-automation/station.js --numero "+55 85 99999-9999" --rotulo
 Opcoes: `--numero`, `--rotulo`, `--conta`, `--perfil`, `--cdp`, `--obra`, `--chat`.
 
 
+## 3c. Como fazer a estacao rodar sozinha
+
+O resumo das 7:00 so acontece se o PC ligar com o Chrome em modo de depuracao e o
+Arquimedes aberto. Para isso a estacao cria um atalho na pasta de Inicializar do
+Windows:
+
+`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\Arquimedes - Estacao WhatsApp.cmd`
+
+Ele abre o Chrome com a porta de depuracao, espera 15 segundos e abre o Arquimedes.
+Da liga do PC em diante a estacao esta de pe sozinha.
+
+| Flag | Efeito |
+|---|---|
+| `--sem-inicio` | nao cria (ou remove) o atalho de inicializacao |
+| `--sem-iniciar-app` | o atalho abre so o Chrome, sem subir o Arquimedes |
+
+Confirme com `npm run doctor:whatsapp` (bloco ESTACAO, linha **inicio automatico**).
+
+> Se o cliente nao quiser que o PC abra isso sozinho, basta desmarcar o atalho em
+> Gerenciador de Tarefas > Guia de inicializacao.
+
+
 ## 4. Diagnóstico
 
 Sempre que algo parecer errado, rode:

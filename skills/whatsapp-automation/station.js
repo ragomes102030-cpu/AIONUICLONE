@@ -205,11 +205,19 @@ async function principal() {
       if (existente) {
         // A tarefa ja existe: atualiza nome, agenda e mensagem para que os
         // caminhos apontem para a maquina e o rotulo do cliente atual.
+        // O PUT /api/cron/jobs/{id} espera o schedule como objeto
+        // {kind:"cron", expr, tz}. O modelo do repo guarda so a expressao
+        // cron como texto, entao montamos o objeto aqui.
         const r = await cliente.put(`/api/cron/jobs/${existente.id}`, {
           name: nome,
           description: modelo.schedule_description || '',
           enabled: true,
-          schedule: modelo.schedule,
+          schedule: {
+            kind: 'cron',
+            expr: modelo.schedule,
+            tz: modelo.schedule_tz || 'America/Sao_Paulo',
+            description: modelo.schedule_description || '',
+          },
           message: mensagem,
         });
         if (r.ok) passo(true, 'tarefa atualizada', `${nome}  (${modelo.schedule})`);
@@ -270,6 +278,28 @@ async function principal() {
       passo(false, 'conta conectada', `"${nomeConectado}" - a estacao foi configurada para "${contaEsperada}"`);
     } else {
       passo(true, 'conta conectada', contaEsperada ? `${nomeConectado} (esperada: ${contaEsperada})` : nomeConectado);
+    }
+  }
+
+  /* 7c) inicializacao automatica ------------------------------------------- */
+  {
+    const acao = tem('--sem-inicio') ? 'remover' : 'criar';
+    const exeChrome = acharChrome();
+    const exeApp = core.acharArquimedes();
+    const r = core.gerenciarInicializacao({
+      acao,
+      exeChrome,
+      perfilChrome,
+      portaCdp: cdpPorta,
+      exeApp,
+      iniciarApp: !tem('--sem-iniciar-app'),
+    });
+    if (acao === 'remover') {
+      passo(r.ok, 'inicializacao automatica', r.mensagem);
+    } else if (!r.ok) {
+      passo(false, 'inicializacao automatica', r.mensagem);
+    } else {
+      passo(true, 'inicializacao automatica', r.arquivo);
     }
   }
 

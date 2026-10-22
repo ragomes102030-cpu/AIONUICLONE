@@ -72,6 +72,7 @@ async function coletar() {
     geradoEm: new Date().toISOString(),
     dataDir,
     config,
+    inicializacao: core.gerenciarInicializacao({ acao: 'status' }),
     banco: { caminho: core.caminhoBanco(dataDir), existe: require('fs').existsSync(core.caminhoBanco(dataDir)) },
     chrome,
     listaChats: { total: listaChats.total, naoLidas: listaChats.chats.reduce((s, c) => s + (c.naoLidas || 0), 0) },
@@ -140,6 +141,12 @@ function apresentar(r) {
     linha('conta conectada', r.chrome.conta.nome, bate);
   }
   linha('obra padrao', cfg.obraPadrao || 'whatsapp', null);
+  const inicializacao = core.gerenciarInicializacao({ acao: 'status' });
+  linha(
+    'inicio automatico',
+    inicializacao.existe ? inicializacao.arquivo : 'nao configurado (a estacao sobe so nesta sessao)',
+    inicializacao.existe ? true : null
+  );
   console.log('');
 
   console.log('  ARQUIMEDES');

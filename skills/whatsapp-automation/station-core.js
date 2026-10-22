@@ -567,6 +567,81 @@ function lerJson(arquivo) {
   }
 }
 
+/* ------------------------------------------------- inicializacao automatica */
+
+/** Pasta de inicializacao do usuario logado (Startup do Windows). */
+function pastaInicializacao() {
+  const appdata = process.env.APPDATA || '';
+  return path.join(appdata, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup');
+}
+
+const NOME_INICIO = 'Arquimedes - Estacao WhatsApp.cmd';
+
+/** Procura o executavel do Arquimedes (per-machine ou per-user). */
+function acharArquimedes() {
+  const candidatos = [
+    'C:\\Program Files\\Arquimedes\\Arquimedes.exe',
+    path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Arquimedes', 'Arquimedes.exe'),
+  ];
+  for (const c of candidatos) if (c && fs.existsSync(c)) return c;
+  const base = 'C:\\Program Files';
+  try {
+    for (const entrada of fs.readdirSync(base)) {
+      if (!/^arquimedes/i.test(entrada)) continue;
+      const exe = path.join(base, entrada, 'Arquimedes.exe');
+      if (fs.existsSync(exe)) return exe;
+    }
+  } catch {
+    /* ignora */
+  }
+  return null;
+}
+
+/**
+ * Cria (ou remove) o script de inicializacao automatica da estacao.
+ * Ele abre o Chrome em modo de depuracao (com o perfil do numero) e sobe
+ * o Arquimedes, que e quem executa as tarefas agendadas.
+ */
+function gerenciarInicializacao({ acao = 'status', exeChrome, perfilChrome, portaCdp, exeApp, iniciarApp = true }) {
+  const pasta = pastaInicializacao();
+  const arquivo = path.join(pasta, NOME_INICIO);
+  const existe = fs.existsSync(arquivo);
+
+  if (acao === 'remover') {
+    if (!existe) return { ok: true, arquivo, removido: false, mensagem: 'nao havia inicializacao automatica' };
+    try {
+      fs.unlinkSync(arquivo);
+      return { ok: true, arquivo, removido: true, mensagem: 'inicializacao automatica removida' };
+    } catch (e) {
+      return { ok: false, arquivo, removido: false, mensagem: String(e.message) };
+    }
+  }
+
+  if (acao === 'criar') {
+    if (!exeChrome || !fs.existsSync(exeChrome)) {
+      return { ok: false, arquivo, mensagem: 'chrome.exe nao encontrado' };
+    }
+    const linhas = [
+      '@echo off',
+      'REM Gerado pela estacao WhatsApp do Arquimedes. Pode apagar a vontade.',
+      `title Estacao WhatsApp - Arquimedes`,
+      `start "" "${exeChrome}" --remote-debugging-port=${portaCdp} --user-data-dir="${perfilChrome}" --no-first-run --no-default-browser-check https://web.whatsapp.com/`,
+    ];
+    if (iniciarApp && exeApp) {
+      linhas.push('timeout /t 15 /nobreak >nul', `start "" "${exeApp}"`);
+    }
+    try {
+      fs.mkdirSync(pasta, { recursive: true });
+      fs.writeFileSync(arquivo, linhas.join('\r\n') + '\r\n', 'utf8');
+      return { ok: true, arquivo, removido: false, mensagem: 'inicializacao automatica criada' };
+    } catch (e) {
+      return { ok: false, arquivo, mensagem: String(e.message) };
+    }
+  }
+
+  return { ok: true, arquivo, existe, mensagem: existe ? 'inicializacao automatica ativa' : 'sem inicializacao automatica' };
+}
+
 /** Copia uma pasta recursivamente (usa o nativo do Node quando disponivel). */
 function copiarPasta(origem, destino) {
   fs.mkdirSync(destino, { recursive: true });
@@ -606,5 +681,9 @@ module.exports = {
   lerListaChats,
   expressaoCliqueNav,
   EXPRESSAO_CONTA,
+  pastaInicializacao,
+  NOME_INICIO,
+  acharArquimedes,
+  gerenciarInicializacao,
   EXPRESSAO_LISTA_CHATS,
 };
