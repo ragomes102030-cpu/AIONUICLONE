@@ -483,13 +483,20 @@ const CssThemeSettings: React.FC = () => {
 
               {/* 底部渐变遮罩与名称、编辑按钮 / Bottom gradient overlay with name and edit button */}
               <div className='absolute bottom-0 start-0 end-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-between p-8px'>
-                <span className='text-13px text-white truncate flex-1'>{theme.name}</span>
+                <span className='text-13px text-white truncate flex-1'>{theme.name}{theme.cover ? ' (WP)' : ''}</span>
                 {/* 编辑按钮（仅用户主题） / Edit button (user themes only) */}
                 {hoveredThemeId === theme.id && !theme.builtin && (
                   <div
                     className='p-4px rounded-6px bg-white/20 cursor-pointer hover:bg-white/40 transition-colors ms-8px'
                     onClick={(e) => handleEditTheme(theme, e)}
                   >
+               {theme.cover && (
+                 <div className='absolute top-4px end-4px z-10'>
+                   <div className='flex items-center justify-center bg-black/50 text-white text-xs px-2 px py-1 rounded-full'>
+                     WP
+                   </div>
+                 </div>
+               )}
                     <EditTwo theme='outline' size='16' fill='#fff' />
                   </div>
                 )}

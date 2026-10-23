@@ -204,5 +204,13 @@
   "selectedCount": "Selected {{count}}",
   "selectedSkills": "Selected skills",
   "aiAssistant": "AI Assistant",
-  "defaultUser": "Default user"
+  "defaultUser": "Default user",
+  "sider": {
+    "memory": {
+      "search": "Search memories...",
+      "open_first": "Open first result",
+      "no_results": "No memories found",
+      "add_new": "+ Add Memory"
+    }
+  }
 }

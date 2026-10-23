@@ -204,5 +204,13 @@
   "selectedCount": "{{count}} selecionado(s)",
   "selectedSkills": "Habilidades selecionadas",
   "aiAssistant": "Assistente de IA",
-  "defaultUser": "Usuário padrão"
+  "defaultUser": "Usuário padrão",
+  "sider": {
+    "memory": {
+      "search": "Procurar memórias...",
+      "open_first": "Abrir primeiro resultado",
+      "no_results": "Nenhuma memória encontrada",
+      "add_new": "+ Adicionar Memória"
+    }
+  }
 }
