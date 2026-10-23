@@ -1,91 +1,5 @@
 /**
  * @license
-// Helper functions for EVM (Earned Value Management) calculations
-// Using duration as a proxy for cost when actual cost data is not available
-function calculateEVMDurations(card: KanbanCard, now: number): { 
-  ev: number; 
-  pv: number; 
-  ac: number; 
-  sv: number; 
-  cv: number; 
-  spi: number; 
-  cpi: number 
-} {
-  // If the card doesn't have scheduling information, return zeros
-  if (!card.scheduled_for) {
-    return { ev: 0, pv: 0, ac: 0, sv: 0, cv: 0, spi: 0, cpi: 0 };
-  }
-
-  const scheduledStart = card.scheduled_for;
-  const plannedStart = card.start_for ?? scheduledStart;
-  const actualStart = card.started_at ?? null;
-  const actualFinish = card.finished_at ?? null;
-  
-  // Planned duration (in days)
-  const plannedDurationMs = (card.start_for ?? scheduledStart + (8 * 60 * 60 * 1000)) - scheduledStart; // Default 8hr workday if start_for not set
-  const plannedDurationDays = Math.max(1, plannedDurationMs / (24 * 60 * 60 * 1000));
-  
-  // Calculate PV (Planned Value) - budgeted cost for work scheduled
-  // Using planned duration as proxy for budget
-  let pv = 0;
-  if (now >= scheduledStart) {
-    const elapsedDays = Math.min(plannedDurationDays, (now - scheduledStart) / (24 * 60 * 60 * 1000));
-    pv = (elapsedDays / plannedDurationDays) * 100; // As percentage
-  }
-  
-  // Calculate EV (Earned Value) - budgeted cost for work performed
-  // Using actual progress as proxy for earned value
-  let ev = 0;
-  if (actualStart) {
-    if (actualFinish) {
-      // Finished work: EV is based on actual duration vs planned duration
-      const actualDurationMs = actualFinish - actualStart;
-      const actualDurationDays = Math.max(0, actualDurationMs / (24 * 60 * 60 * 1000));
-      ev = (actualDurationDays / plannedDurationDays) * 100; // As percentage, capped at 100%
-      if (ev > 100) ev = 100;
-    } else {
-      // In progress work: EV based on elapsed time since start
-      const elapsedDaysSinceStart = (now - actualStart) / (24 * 60 * 60 * 1000);
-      ev = (elapsedDaysSinceStart / plannedDurationDays) * 100;
-      if (ev > 100) ev = 100;
-    }
-  }
-  
-  // Calculate AC (Actual Cost) - actual cost incurred
-  // Using actual time spent as proxy for actual cost
-  let ac = 0;
-  if (actualStart) {
-    const actualDurationMs = (actualFinish ?? now) - actualStart;
-    const actualDurationDays = Math.max(0, actualDurationMs / (24 * 60 * 60 * 1000));
-    ac = (actualDurationDays / plannedDurationDays) * 100; // As percentage
-    if (ac > 100) ac = 100; // Cap at 100% for simplicity
-  }
-  
-  // Calculate variances
-  const sv = ev - pv; // Schedule Variance
-  const cv = ev - ac; // Cost Variance
-  
-  // Calculate performance indices
-  const spi = pv !== 0 ? ev / pv : 0; // Schedule Performance Index
-  const cpi = ac !== 0 ? ev / ac : 0; // Cost Performance Index
-  
-  return { ev, pv, ac, sv, cv, spi, cpi };
-}
-
-// Function to get EVM status color based on CV%
-function getEVMCostStatusColor(cv: number): string {
-  if (cv >= -5) return 'success'; // Green: within 5% of budget
-  if (cv >= -10) return 'warning'; // Yellow: 5-10% over budget
-  return 'error'; // Red: more than 10% over budget
-}
-
-// Function to get EVM status color based on SV%
-function getEVMScheduleStatusColor(sv: number): string {
-  if (sv >= -5) return 'success'; // Green: within 5% of schedule
-  if (sv >= -10) return 'warning'; // Yellow: 5-10% behind schedule
-  return 'error'; // Red: more than 10% behind schedule
-}
- * @license
  * Copyright 2026 AionUi (aionui.com)
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -213,16 +127,16 @@ function calculateEVMDurations(card: KanbanCard, now: number): {
 
 // Function to get EVM status color based on CV%
 function getEVMCostStatusColor(cv: number): string {
-  if (cv >= -5) return 'success'; // Green: within 5% of budget
-  if (cv >= -10) return 'warning'; // Yellow: 5-10% over budget
-  return 'error'; // Red: more than 10% over budget
+  if (cv >= -5) return 'green'; // within 5% of the planned value
+  if (cv >= -10) return 'orange'; // 5-10% over
+  return 'red'; // more than 10% over
 }
 
 // Function to get EVM status color based on SV%
 function getEVMScheduleStatusColor(sv: number): string {
-  if (sv >= -5) return 'success'; // Green: within 5% of schedule
-  if (sv >= -10) return 'warning'; // Yellow: 5-10% behind schedule
-  return 'error'; // Red: more than 10% behind schedule
+  if (sv >= -5) return 'green'; // within 5% of schedule
+  if (sv >= -10) return 'orange'; // 5-10% behind
+  return 'red'; // more than 10% behind
 }
 
 
@@ -359,7 +273,7 @@ function KanbanCardView({
 }) {
   const scheduleStatus = deriveScheduleStatus(card, columns, now);
 
-  const { ev, pv, ac, sv, cv, spi, cpi } = calculateEVMDurations(card, now);
+  const { sv, cv, spi, cpi } = calculateEVMDurations(card, now);
   const isOverdue = scheduleStatus === 'overdue';
   const riskBorder = isOverdue
     ? 'border-danger-5 hover:border-danger-5'
@@ -423,6 +337,44 @@ function KanbanCardView({
               <span className='line-clamp-1 text-11px text-danger-6'>{card.not_done_reason}</span>
             </Tooltip>
           ) : null}
+        </div>
+      ) : null}
+      {card.started_at !== null ? (
+        <div className='mt-6px flex flex-wrap items-center gap-5px' onClick={(event) => event.stopPropagation()}>
+          <Tooltip
+            content={t('agentTasks.kanban.evmSvTooltip', {
+              defaultValue: 'SV = EV − PV. Negativo significa atrasado em relação ao planejado.',
+            })}
+          >
+            <Tag size='small' color={getEVMScheduleStatusColor(sv)} className='shrink-0'>
+              SV {sv >= 0 ? '+' : ''}
+              {sv.toFixed(0)}%
+            </Tag>
+          </Tooltip>
+          <Tooltip
+            content={t('agentTasks.kanban.evmCvTooltip', {
+              defaultValue: 'CV = EV − AC. Negativo significa acima do previsto.',
+            })}
+          >
+            <Tag size='small' color={getEVMCostStatusColor(cv)} className='shrink-0'>
+              CV {cv >= 0 ? '+' : ''}
+              {cv.toFixed(0)}%
+            </Tag>
+          </Tooltip>
+          <Tooltip
+            content={t('agentTasks.kanban.evmSpiTooltip', {
+              defaultValue: 'SPI = EV / PV. Abaixo de 1 indica atraso.',
+            })}
+          >
+            <span className='text-11px text-t-tertiary'>SPI {spi.toFixed(2)}</span>
+          </Tooltip>
+          <Tooltip
+            content={t('agentTasks.kanban.evmCpiTooltip', {
+              defaultValue: 'CPI = EV / AC. Abaixo de 1 indica consumo acima do previsto.',
+            })}
+          >
+            <span className='text-11px text-t-tertiary'>CPI {cpi.toFixed(2)}</span>
+          </Tooltip>
         </div>
       ) : null}
       {card.assignee ? (
@@ -1927,95 +1879,3 @@ const KanbanPage: React.FC = () => {
 };
 
 export default KanbanPage;
-
-
-// Helper functions for EVM (Earned Value Management) calculations
-// Using duration as a proxy for cost when actual cost data is not available
-function calculateEVMDurations(card: KanbanCard, now: number): { 
-  ev: number; 
-  pv: number; 
-  ac: number; 
-  sv: number; 
-  cv: number; 
-  spi: number; 
-  cpi: number 
-} {
-  // If the card doesn't have scheduling information, return zeros
-  if (!card.scheduled_for) {
-    return { ev: 0, pv: 0, ac: 0, sv: 0, cv: 0, spi: 0, cpi: 0 };
-  }
-
-  const scheduledStart = card.scheduled_for;
-  const plannedStart = card.start_for ?? scheduledStart;
-  const actualStart = card.started_at ?? null;
-  const actualFinish = card.finished_at ?? null;
-  
-  // Planned duration (in days) - using a reasonable default if not specified
-  // For simplicity, we'll use the time between scheduled_for and (scheduled_for + 8 hours) 
-  // as the planned duration for a task, or use start_for - scheduled_for if available
-  let plannedDurationMs: number;
-  if (card.start_for !== null && card.start_for > card.scheduled_for) {
-    plannedDurationMs = card.start_for - card.scheduled_for;
-  } else {
-    // Default to 8 hours workday if start_for not specified or invalid
-    plannedDurationMs = 8 * 60 * 60 * 1000;
-  }
-  const plannedDurationDays = Math.max(0.1, plannedDurationMs / (24 * 60 * 60 * 1000)); // Avoid division by zero
-  
-  // Calculate PV (Planned Value) - budgeted cost for work scheduled
-  // Using time elapsed as proxy for planned value accumulation
-  let pv = 0;
-  if (now >= scheduledStart) {
-    const elapsedDays = Math.min(plannedDurationDays, (now - scheduledStart) / (24 * 60 * 60 * 1000));
-    pv = (elapsedDays / plannedDurationDays) * 100; // As percentage of total planned value
-  }
-  
-  // Calculate EV (Earned Value) - budgeted cost for work performed
-  // Using actual progress as proxy for earned value
-  let ev = 0;
-  if (actualStart !== null) {
-    if (actualFinish !== null) {
-      // Finished work: EV is proportional to actual duration vs planned duration
-      const actualDurationMs = actualFinish - actualStart;
-      const actualDurationDays = Math.max(0, actualDurationMs / (24 * 60 * 60 * 1000));
-      ev = Math.min(100, (actualDurationDays / plannedDurationDays) * 100); // Cap at 100%
-    } else {
-      // In progress work: EV based on elapsed time since start
-      const elapsedDaysSinceStart = (now - actualStart) / (24 * 60 * 60 * 1000);
-      ev = Math.min(100, (elapsedDaysSinceStart / plannedDurationDays) * 100); // Cap at 100%
-    }
-  }
-  
-  // Calculate AC (Actual Cost) - actual cost incurred
-  // Using actual time spent as proxy for actual cost
-  let ac = 0;
-  if (actualStart !== null) {
-    const actualDurationMs = (actualFinish ?? now) - actualStart;
-    const actualDurationDays = Math.max(0, actualDurationMs / (24 * 60 * 60 * 1000));
-    ac = Math.min(100, (actualDurationDays / plannedDurationDays) * 100); // Cap at 100%
-  }
-  
-  // Calculate variances
-  const sv = ev - pv; // Schedule Variance (negative = behind schedule)
-  const cv = ev - ac; // Cost Variance (negative = over budget)
-  
-  // Calculate performance indices
-  const spi = pv !== 0 ? ev / pv : 0; // Schedule Performance Index
-  const cpi = ac !== 0 ? ev / ac : 0; // Cost Performance Index
-  
-  return { ev, pv, ac, sv, cv, spi, cpi };
-}
-
-// Function to get EVM status color based on CV%
-function getEVMCostStatusColor(cv: number): string {
-  if (cv >= -5) return 'success'; // Green: within 5% of budget
-  if (cv >= -10) return 'warning'; // Yellow: 5-10% over budget
-  return 'error'; // Red: more than 10% over budget
-}
-
-// Function to get EVM status color based on SV%
-function getEVMScheduleStatusColor(sv: number): string {
-  if (sv >= -5) return 'success'; // Green: within 5% of schedule
-  if (sv >= -10) return 'warning'; // Yellow: 5-10% behind schedule
-  return 'error'; // Red: more than 10% behind schedule
-}
