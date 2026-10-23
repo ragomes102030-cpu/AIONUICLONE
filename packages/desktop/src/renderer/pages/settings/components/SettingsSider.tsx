@@ -4,6 +4,7 @@ import { type IExtensionSettingsTab } from '@/common/adapter/ipcBridge';
 import { useExtI18n } from '@/renderer/hooks/system/useExtI18n';
 import { useExtensionSettingsTabs } from '@/renderer/hooks/system/useExtensionSettingsTabs';
 import {
+  BookOpen,
   Cat,
   Communication,
   Computer,
@@ -27,6 +28,7 @@ import { getSiderTooltipProps } from '@/renderer/utils/ui/siderTooltip';
 /** Builtin settings tab IDs in display order (must match router paths). */
 export const BUILTIN_TAB_IDS = [
   'agent',
+  'memory',
   'model',
   'skills',
   'tools',
@@ -92,6 +94,12 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
         label: t('settings.agents', { defaultValue: 'Agents' }),
         icon: <Speed />,
         path: 'agent',
+      },
+      memory: {
+        id: 'memory',
+        label: t('settings.memory', { defaultValue: 'Memories' }),
+        icon: <BookOpen theme='outline' size='16' fill='currentColor' />,
+        path: 'memory',
       },
       skills: {
         id: 'skills',

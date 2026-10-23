@@ -14,6 +14,7 @@ const SkillsSettings = React.lazy(() => import('@renderer/pages/settings/SkillsS
 const SkillDetailPage = React.lazy(() => import('@renderer/pages/settings/SkillsSettings/SkillDetailPage'));
 const ToolsSettings = React.lazy(() => import('@renderer/pages/settings/ToolsSettings'));
 const AppearanceSettings = React.lazy(() => import('@renderer/pages/settings/AppearanceSettings'));
+const MemorySettings = React.lazy(() => import('@renderer/pages/settings/MemorySettings'));
 const ModeSettings = React.lazy(() => import('@renderer/pages/settings/ModeSettings'));
 const SystemSettings = React.lazy(() => import('@renderer/pages/settings/SystemSettings'));
 const WebuiSettings = React.lazy(() => import('@renderer/pages/settings/WebuiSettings'));
@@ -86,6 +87,7 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           {/* Assistants moved out of Settings to a top-level entry; keep a redirect
               so old deep links / back-nav still land on the new page. */}
           <Route path='/settings/assistants' element={<Navigate to='/assistants' replace />} />
+          <Route path='/settings/memory' element={withRouteFallback(MemorySettings)} />
           <Route path='/settings/agent' element={withRouteFallback(AgentSettings)} />
           <Route path='/settings/agent/:id/repair' element={withRouteFallback(AgentRepairPage)} />
           {/* Skills and Tools are top-level settings entries. */}

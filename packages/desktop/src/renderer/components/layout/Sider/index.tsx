@@ -10,7 +10,6 @@ import { blurActiveElement } from '@renderer/utils/ui/focus';
 import { useThemeContext } from '@renderer/hooks/context/ThemeContext';
 import { BookOpen, Lightning, Puzzle, ViewGridList } from '@icon-park/react';
 import { SiderToolbar, SiderSearchEntry, SiderScheduledEntry, SiderAssistantEntry, SiderNavEntry } from './SiderNav';
-import SiderMemoryEntry from './SiderMemoryEntry';
 import SiderFooter from './SiderFooter';
 import TeamSiderSection from './TeamSiderSection';
 import siderStyles from './Sider.module.css';
@@ -224,12 +223,6 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
               collapsed={collapsed}
               siderTooltipProps={siderTooltipProps}
               onClick={handleAssistantClick}
-            />
-            <SiderMemoryEntry
-              isMobile={isMobile}
-              collapsed={collapsed}
-              siderTooltipProps={siderTooltipProps}
-              onSessionClick={onSessionClick}
             />
             <SiderNavEntry
               label={t('kanban.title', { defaultValue: 'Kanban' })}
