@@ -94,7 +94,7 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
                 <div className='text-10px text-text-secondary line-clamp-2'>{memory.preview}</div>
               </div>
               <div className='text-10px text-text-secondary'>
-                >
+                <Right theme='outline' size='10' fill='currentColor' />
               </div>
             </Button>
           ))
