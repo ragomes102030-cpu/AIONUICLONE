@@ -38,18 +38,21 @@ async function publishThemeToElectron(theme: Theme): Promise<void> {
 }
 
 /**
- * Write the two appearance attributes as one coupled unit:
- *  - `data-theme` on `<html>` drives our own design tokens
+ * Write the appearance attributes as one coupled unit:
+ *  - `data-color-scheme='default'` on `<html>` enables the default color scheme
+ *    (defined in styles/themes/default-color-scheme.css) which provides baseline
+ *    light/dark values. This MUST be present for the default scheme to work.
+ *  - `data-theme` on `<html>` drives our own design tokens (tokensToCss).
  *  - `arco-theme` on `<body>` drives Arco's color scales and the
  *    `body[arco-theme='dark']` overrides in arco-override.css
  *
- * Both must stay in sync or dark mode splits (our tokens go dark while Arco
- * stays light). `<html>` always exists; `<body>` can be null during early boot
- * (`readyState === 'loading'`). In that case we must NOT silently skip the
- * `arco-theme` write — defer it to DOMContentLoaded so the two attributes still
- * converge once the body is parsed.
+ * All three must stay in sync or dark mode splits. `<html>` always exists;
+ * `<body>` can be null during early boot (`readyState === 'loading'`). In that
+ * case we must NOT silently skip the `arco-theme` write — defer it to
+ * DOMContentLoaded so the attributes still converge once the body is parsed.
  */
 function applyAppearanceAttributes(root: Document, appearance: Theme['appearance']): void {
+  root.documentElement.setAttribute('data-color-scheme', 'default');
   root.documentElement.setAttribute('data-theme', appearance);
   if (root.body) {
     root.body.setAttribute('arco-theme', appearance);
