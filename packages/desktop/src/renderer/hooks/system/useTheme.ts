@@ -26,11 +26,10 @@ function cacheAppearance(theme: Theme): void {
 }
 
 function getPersistedActiveId(): string {
-  // Always default to 'light' to ensure the app is usable after install/upgrade.
-  // The user can explicitly switch to 'system' or 'dark' in Appearance settings.
-  // This prevents the app from becoming unusable (all-black) if a saved dark
-  // theme preference causes CSS conflicts after an upgrade.
-  return LIGHT_THEME_ID;
+  // Respect the user's saved theme. Falls back to Light only when nothing is
+  // persisted yet (first run/upgrade), so a fresh install is always usable.
+  const saved = configService.get('theme.activeId') as string | undefined;
+  return saved || LIGHT_THEME_ID;
 }
 
 async function initActiveTheme(): Promise<Theme> {

@@ -490,17 +490,17 @@ const CssThemeSettings: React.FC = () => {
                     className='p-4px rounded-6px bg-white/20 cursor-pointer hover:bg-white/40 transition-colors ms-8px'
                     onClick={(e) => handleEditTheme(theme, e)}
                   >
-               {theme.cover && (
-                 <div className='absolute top-4px end-4px z-10'>
-                   <div className='flex items-center justify-center bg-black/50 text-white text-xs px-2 px py-1 rounded-full'>
-                     WP
-                   </div>
-                 </div>
-               )}
                     <EditTwo theme='outline' size='16' fill='#fff' />
                   </div>
                 )}
               </div>
+
+              {/* 壁纸标识 / Wallpaper badge (themes that inject a cover image) */}
+              {theme.cover && (
+                <div className='absolute top-4px start-4px z-10 flex items-center justify-center bg-black/50 text-white text-xs px-8px py-2px rounded-full'>
+                  WP
+                </div>
+              )}
 
               {/* 选中标记 / Selected indicator */}
               {activeThemeId === theme.id && (

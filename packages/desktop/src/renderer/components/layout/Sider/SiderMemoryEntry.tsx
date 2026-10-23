@@ -5,11 +5,10 @@
  */
 
 import classNames from 'classnames';
-import React, { useCallback, useState } from 'react';
-import { Button, Input, Popover, Tooltip } from '@arco-design/web-react';
-import { BookOpen } from '@icon-park/react';
+import React, { useState } from 'react';
+import { Button, Input, Tooltip } from '@arco-design/web-react';
+import { BookOpen, Right } from '@icon-park/react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { cleanupSiderTooltips, getSiderTooltipProps } from '@renderer/utils/ui/siderTooltip';
 
 interface SiderMemoryEntryProps {
@@ -26,7 +25,6 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
   onSessionClick,
 }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [memories, setMemories] = useState<Array<{ id: string; title: string; preview: string }>>([
     // Sample memories - in a real implementation, these would come from localStorage or a memory system
@@ -40,8 +38,8 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
     memory.preview.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
   };
 
   const handleMemoryClick = (memoryId: string) => {
@@ -56,7 +54,6 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
   return (
     <div className='min-h-full flex flex-col gap-2px'>
       {/* Memory Search Bar */}
-            {/* Memory Search Bar */}
       <div className='flex items-center gap-2px mb-4px'>
         <Input
           placeholder={t('sider.memory.search', { defaultValue: 'Search memories...' })}
@@ -65,16 +62,16 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
           size='small'
           className='w-full'
         />
-        
+        <Tooltip content={t('sider.memory.open_first', { defaultValue: 'Open first result' })}>
           <Button
             icon={<BookOpen theme='outline' size='16' fill='currentColor' />}
             size='small'
-            onClick={handleMemoryClick.bind(null, filteredMemories[0]?.id || '')}
+            htmlType='button'
+            onClick={() => handleMemoryClick(filteredMemories[0]?.id || '')}
             disabled={!filteredMemories.length}
-            tooltip={t('sider.memory.open_first', { defaultValue: 'Open first result' })}
           />
-        
-            </div>
+        </Tooltip>
+      </div>
 
       {/* Memories List */}
       <div className='flex-1 min-h-0 overflow-y-auto'>
@@ -82,7 +79,7 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
           filteredMemories.map((memory) => (
             <Button
               key={memory.id}
-              type='button'
+              htmlType='button'
               className={classNames(
                 'w-full text-left p-3px rounded-4px border-0 bg-transparent hover:bg-[var(--color-fill-0)] flex items-center gap-3px',
                 collapsed && 'collapsed-hidden'
@@ -108,10 +105,9 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
 
       {/* Add Memory Button */}
       <Button
-        type='button'
-        block
+        htmlType='button'
         size='small'
-        className='mt-4px px-3px py-2px'
+        className='mt-4px w-full px-3px py-2px'
         onClick={() => {
           // In a real implementation, this would open a modal to add a new memory
           console.log('Add new memory');
