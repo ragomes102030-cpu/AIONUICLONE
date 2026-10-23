@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license
  * Copyright 2025 AionUi (aionui.com)
  * SPDX-License-Identifier: Apache-2.0
@@ -35,7 +35,7 @@ type LinkItem =
   | { title: string; onClick: () => void; icon: React.ReactNode; url?: never };
 
 // Direct contact channel for the Arquimedes Civil Engineering edition.
-const CONTACT_WHATSAPP_NUMBER = '+55 85 987708-8724';
+const CONTACT_WHATSAPP_NUMBER = '+55 85 98770-8724';
 const CONTACT_WHATSAPP_URL = 'https://wa.me/5585987708724';
 
 const WhatsAppIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -256,3 +256,4 @@ const AboutModalContent: React.FC = () => {
 };
 
 export default AboutModalContent;
+
