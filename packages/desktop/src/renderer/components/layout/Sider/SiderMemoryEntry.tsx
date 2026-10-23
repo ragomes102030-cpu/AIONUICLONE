@@ -6,7 +6,7 @@
 
 import classNames from 'classnames';
 import React, { useCallback, useState } from 'react';
-import { Button, Input, InputGroup, Popover, Tooltip } from '@arco-design/web-react';
+import { Button, Input, Popover, Tooltip } from '@arco-design/web-react';
 import { BookOpen } from '@icon-park/react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -56,7 +56,8 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
   return (
     <div className='min-h-full flex flex-col gap-2px'>
       {/* Memory Search Bar */}
-      <InputGroup compact className='mb-4px'>
+            {/* Memory Search Bar */}
+      <div className='flex items-center gap-2px mb-4px'>
         <Input
           placeholder={t('sider.memory.search', { defaultValue: 'Search memories...' })}
           value={searchTerm}
@@ -64,7 +65,7 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
           size='small'
           className='w-full'
         />
-        <InputGroup.Append>
+        
           <Button
             icon={<BookOpen theme='outline' size='16' fill='currentColor' />}
             size='small'
@@ -72,8 +73,8 @@ const SiderMemoryEntry: React.FC<SiderMemoryEntryProps> = ({
             disabled={!filteredMemories.length}
             tooltip={t('sider.memory.open_first', { defaultValue: 'Open first result' })}
           />
-        </InputGroup.Append>
-      </InputGroup>
+        
+            </div>
 
       {/* Memories List */}
       <div className='flex-1 min-h-0 overflow-y-auto'>
