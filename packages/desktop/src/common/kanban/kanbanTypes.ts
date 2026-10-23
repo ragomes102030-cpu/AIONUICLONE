@@ -192,6 +192,7 @@ export function effectiveDeadline(
 export type KanbanScheduleStatus =
   | 'not_started'
   | 'scheduled'
+  | 'start_overdue'
   | 'due_soon'
   | 'overdue'
   | 'in_progress'
@@ -203,7 +204,7 @@ export type KanbanScheduleStatus =
 export const KANBAN_ARCHIVE_COLUMN_KEY = 'finalizados';
 
 export function deriveScheduleStatus(
-  card: Pick<KanbanCard, 'column_id' | 'scheduled_for' | 'started_at' | 'finished_at'>,
+  card: Pick<KanbanCard, 'column_id' | 'scheduled_for' | 'start_for' | 'started_at' | 'finished_at'>,
   columns: ReadonlyArray<Pick<KanbanColumn, 'id' | 'key'>>,
   now: number,
   dueSoonHours: number = KANBAN_DUE_SOON_HOURS,
@@ -232,9 +233,19 @@ export function deriveScheduleStatus(
   // "Iniciou dd/mm" tag, so "underway" stays visible without hiding the
   // warning.
   if (deadline !== null && now >= deadline) return 'overdue';
+  // A planned start that passed while nobody recorded a start is its own
+  // failure: the service never began. It is not the same problem as finishing
+  // late, so it gets its own status and its own filter.
+  //
+  // One full day of grace is deliberate: a date-only picker stores local
+  // midnight, so a service planned for today would otherwise be "late" at
+  // 00:01 of the very day it was supposed to start.
+  if (card.started_at === null && card.start_for !== null && now >= card.start_for + DAY_MS) {
+    return 'start_overdue';
+  }
   if (deadline !== null && now >= deadline - dueSoonHours * 60 * 60 * 1000) return 'due_soon';
   if (card.started_at !== null) return 'in_progress';
-  if (deadline === null) return 'not_started';
+  if (deadline === null && card.start_for === null) return 'not_started';
   return 'scheduled';
 }
 
@@ -278,11 +289,14 @@ const BLOCKING_COLUMN_KEYS = new Set(['blocked']);
 export function isCardAtRisk(
   card: Pick<
     KanbanCardWithDeps,
-    'column_id' | 'depends_on' | 'scheduled_for' | 'started_at' | 'finished_at' | 'archived'
+    'column_id' | 'depends_on' | 'scheduled_for' | 'start_for' | 'started_at' | 'finished_at' | 'archived'
   >,
   cards: ReadonlyMap<
     string,
-    Pick<KanbanCardWithDeps, 'column_id' | 'depends_on' | 'scheduled_for' | 'started_at' | 'finished_at' | 'archived'>
+    Pick<
+      KanbanCardWithDeps,
+      'column_id' | 'depends_on' | 'scheduled_for' | 'start_for' | 'started_at' | 'finished_at' | 'archived'
+    >
   >,
   columns: ReadonlyArray<Pick<KanbanColumn, 'id' | 'key'>>,
   now: number
@@ -317,7 +331,16 @@ export type CardImpact = {
 
 type SchedulableCard = Pick<
   KanbanCardWithDeps,
-  'id' | 'title' | 'assignee' | 'column_id' | 'depends_on' | 'scheduled_for' | 'started_at' | 'finished_at' | 'archived'
+  | 'id'
+  | 'title'
+  | 'assignee'
+  | 'column_id'
+  | 'depends_on'
+  | 'scheduled_for'
+  | 'start_for'
+  | 'started_at'
+  | 'finished_at'
+  | 'archived'
 >;
 
 /**

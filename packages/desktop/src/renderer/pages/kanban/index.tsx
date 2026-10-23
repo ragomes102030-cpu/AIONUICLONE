@@ -7,6 +7,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 import {
   Button,
   Checkbox,
@@ -200,6 +201,7 @@ const SCHEDULE_STATUS_TAG: Record<KanbanScheduleStatus, string> = {
   done: 'green',
   archived: 'gray',
   late_finish: 'red',
+  start_overdue: 'orange',
   in_progress: 'blue',
   overdue: 'red',
   due_soon: 'orange',
@@ -307,9 +309,16 @@ function KanbanCardView({
       card.finished_at !== null ? (
         <div className='mt-8px flex flex-wrap items-center gap-5px'>
           {card.start_for !== null ? (
-            <Tag size='small' className='shrink-0'>
-              {t('agentTasks.kanban.startsAt', { defaultValue: 'Começa' })} {formatScheduleTime(card.start_for, t)}
-            </Tag>
+            <>
+              <Tag size='small' className='shrink-0'>
+                {t('agentTasks.kanban.startsAt', { defaultValue: 'Começa' })} {formatScheduleTime(card.start_for, t)}
+              </Tag>
+              {scheduleStatus === 'start_overdue' ? (
+                <Tag size='small' color='orange' className='shrink-0 ml-4px'>
+                  {t('agentTasks.kanban.startOverdue', { defaultValue: 'Início atrasado' })}
+                </Tag>
+              ) : null}
+            </>
           ) : null}
           {card.scheduled_for !== null ? (
             <Tag size='small' color={SCHEDULE_STATUS_TAG[scheduleStatus]} className='shrink-0'>
@@ -807,6 +816,25 @@ function CardEditorModal({
   });
   const [saving, setSaving] = useState(false);
 
+  /** Preset options for the card date pickers: Today / Tomorrow / +7 days. */
+  const DATE_PICKER_SHORTCUTS = useMemo(
+    () => [
+      {
+        text: t('agentTasks.kanban.shortcutToday', { defaultValue: 'Hoje' }),
+        value: () => dayjs().startOf('day'),
+      },
+      {
+        text: t('agentTasks.kanban.shortcutTomorrow', { defaultValue: 'Amanhã' }),
+        value: () => dayjs().add(1, 'day').startOf('day'),
+      },
+      {
+        text: t('agentTasks.kanban.shortcutWeek', { defaultValue: '+ 7 dias' }),
+        value: () => dayjs().add(7, 'day').startOf('day'),
+      },
+    ],
+    [t]
+  );
+
   useEffect(() => {
     if (!visible) return;
     setDraft({
@@ -836,6 +864,17 @@ function CardEditorModal({
     if (!draft.title.trim()) return;
     setSaving(true);
     try {
+      const startMs = draft.startFor;
+      const dueMs = draft.scheduledFor;
+      if (startMs != null && dueMs != null && startMs > dueMs) {
+        Message.error(
+          t('agentTasks.kanban.startAfterDueError', {
+            defaultValue: 'O início planejado não pode ser depois do término previsto.',
+          })
+        );
+        return;
+      }
+
       await onSave(
         card
           ? {
@@ -908,19 +947,27 @@ function CardEditorModal({
           </label>
           <DatePicker
             style={{ width: '100%' }}
-            value={draft.startFor}
-            onChange={(value) => setDraft((prev) => ({ ...prev, startFor: value ? Number(value) : null }))}
+            value={draft.startFor ? dayjs(draft.startFor) : null}
+            shortcuts={DATE_PICKER_SHORTCUTS}
+            allowClear
+            onChange={(_text, date) =>
+              setDraft((prev) => ({ ...prev, startFor: date ? date.valueOf() : null }))
+            }
           />
         </div>
         <div>
           <label className='mb-6px block text-12px text-t-secondary'>
-            {t('agentTasks.kanban.scheduledForLabel', { defaultValue: 'Marcado para' })}
+            {t('agentTasks.kanban.scheduledForLabel', { defaultValue: 'Término previsto' })}
           </label>
           <DatePicker
             showTime
             style={{ width: '100%' }}
-            value={draft.scheduledFor}
-            onChange={(value) => setDraft((prev) => ({ ...prev, scheduledFor: value ? Number(value) : null }))}
+            value={draft.scheduledFor ? dayjs(draft.scheduledFor) : null}
+            shortcuts={DATE_PICKER_SHORTCUTS}
+            allowClear
+            onChange={(_text, date) =>
+              setDraft((prev) => ({ ...prev, scheduledFor: date ? date.valueOf() : null }))
+            }
           />
         </div>
         <div>
@@ -969,6 +1016,32 @@ function CardEditorModal({
               >
                 {t('agentTasks.kanban.markFinished', { defaultValue: 'Concluir' })}
               </Button>
+            </div>
+            <div className='flex flex-wrap items-center gap-8px mt-6px'>
+              <label className='mb-0 block text-11px text-t-secondary shrink-0'>
+                {t('agentTasks.kanban.startedAtLabel', { defaultValue: 'Início real' })}
+              </label>
+              <DatePicker
+                style={{ width: 200 }}
+                value={card.started_at ? dayjs(card.started_at) : null}
+                allowClear
+                onChange={(_text, date) =>
+                  void recordReceipt({ started_at: date ? date.valueOf() : null })
+                }
+              />
+              <label className='mb-0 block text-11px text-t-secondary shrink-0'>
+                {t('agentTasks.kanban.finishedAtLabel', { defaultValue: 'Término real' })}
+              </label>
+              <DatePicker
+                style={{ width: 200 }}
+                value={card.finished_at ? dayjs(card.finished_at) : null}
+                allowClear
+                onChange={(_text, date) =>
+                  void recordReceipt({ finished_at: date ? date.valueOf() : null })
+                }
+              />
+            </div>
+            <div className='flex flex-wrap items-center gap-8px mt-6px'>
               <Input
                 style={{ maxWidth: '240px' }}
                 placeholder={t('agentTasks.kanban.notDoneReason', { defaultValue: 'Motivo de não conclusão' })}
@@ -1231,7 +1304,7 @@ const KanbanPage: React.FC = () => {
   const roleById = useMemo(() => new Map((board?.roles ?? []).map((role) => [role.id, role])), [board?.roles]);
   const assistantNameById = useMemo(() => new Map(assistants.map((item) => [item.id, item.name])), [assistants]);
   const now = useNow();
-  const [focus, setFocus] = useState<'all' | 'due_soon' | 'overdue'>('all');
+  const [focus, setFocus] = useState<'all' | 'due_soon' | 'overdue' | 'start_overdue'>('all');
   const boardColumns = board?.columns ?? [];
   const overdueCardIds = useMemo(() => {
     if (!board) return new Set<string>();
@@ -1267,6 +1340,15 @@ const KanbanPage: React.FC = () => {
     return new Set(
       board.cards
         .filter((card) => !card.archived && deriveScheduleStatus(card, board.columns, now) === 'due_soon')
+        .map((card) => card.id)
+    );
+  }, [board, now]);
+
+  const startOverdueCardIds = useMemo(() => {
+    if (!board) return new Set<string>();
+    return new Set(
+      board.cards
+        .filter((card) => !card.archived && deriveScheduleStatus(card, board.columns, now) === 'start_overdue')
         .map((card) => card.id)
     );
   }, [board, now]);
@@ -1655,7 +1737,9 @@ const KanbanPage: React.FC = () => {
             size='small'
             className='ms-auto shrink-0'
             value={focus}
-            onChange={(value) => setFocus(value as 'all' | 'due_soon' | 'overdue')}
+            onChange={(value) =>
+              setFocus(value as 'all' | 'due_soon' | 'overdue' | 'start_overdue')
+            }
           >
             <Radio value='all'>{t('agentTasks.kanban.filterAll', { defaultValue: 'Todos' })}</Radio>
             <Radio value='due_soon'>
@@ -1663,6 +1747,11 @@ const KanbanPage: React.FC = () => {
             </Radio>
             <Radio value='overdue'>
               {t('agentTasks.kanban.onlyOverdue', { defaultValue: 'Atrasados' })} ({overdueCardIds.size})
+            </Radio>
+            <Radio value='start_overdue'>
+              {t('agentTasks.kanban.onlyStartOverdue', {
+                defaultValue: 'Início atrasado',
+              })} ({startOverdueCardIds.size})
             </Radio>
           </Radio.Group>
           <Checkbox checked={showArchived} onChange={setShowArchived} className='shrink-0'>
@@ -1713,14 +1802,13 @@ const KanbanPage: React.FC = () => {
                 (card) =>
                   card.column_id === column.id &&
                   (showArchived || !card.archived) &&
-                  // Three tabs, and only three: what is fine, what is about to
-                  // be late, what is already late. A card that depends on
-                  // another is not this board's job to reason about — the
-                  // field tells us the service slipped, not a network model of
-                  // why. Scheduling lives here, precedence does not.
+                  // Four tabs: everything, about to be late, already late, and
+                  // planned to start but never started. Precedence is not the
+                  // board's job — scheduling is.
                   (focus === 'all' ||
                     (focus === 'due_soon' && dueSoonCardIds.has(card.id)) ||
-                    (focus === 'overdue' && overdueCardIds.has(card.id)))
+                    (focus === 'overdue' && overdueCardIds.has(card.id)) ||
+                    (focus === 'start_overdue' && startOverdueCardIds.has(card.id)))
               );
               return (
                 <KanbanColumnView

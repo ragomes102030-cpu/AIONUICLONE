@@ -115,6 +115,8 @@ describe('kanbanRepository', () => {
   // says, never something anyone moves a card to express.
   describe('schedule commitment and the receipt the field hands back', () => {
     const HOUR = 60 * 60 * 1000;
+    const DAY = 24 * HOUR;
+    const DAY_MS = DAY;
 
     function boardWithColumn() {
       const board = listKanbanBoards(db)[0];
@@ -404,6 +406,42 @@ describe('kanbanRepository', () => {
       const done = reloaded.columns.find((column) => column.key === 'done')!;
       const movedCard = moveKanbanCard(db, { id: card.id, column_id: done.id });
       expect(deriveScheduleStatus(movedCard, reloaded.columns, 1_800_000_000_000 + HOUR)).toBe('done');
+    });
+
+    it('flags a service whose planned start passed without anyone starting it', () => {
+      const { board, scheduled } = boardWithColumn();
+      const at = 1_800_000_000_000;
+      const card = createKanbanCard(db, {
+        board_id: board.id,
+        column_id: scheduled.id,
+        title: 'Comecar ontem',
+        scheduled_for: at,
+        start_for: at - 2 * DAY,
+      });
+
+      const columns = listKanbanBoards(db)[0].columns;
+
+      // Even well before the planned start, the card is 'due_soon' because the
+      // due date is 2 days away and the warning window is 72 hours.
+      expect(deriveScheduleStatus(card, columns, at - 2 * DAY - HOUR)).toBe('due_soon');
+      // At the planned start, still within the due_soon window.
+      expect(deriveScheduleStatus(card, columns, at - 2 * DAY)).toBe('due_soon');
+      // One day after the planned start (with one-day grace for date-only pickers)
+      // and nobody started: start_overdue takes precedence over due_soon.
+      expect(deriveScheduleStatus(card, columns, at - 2 * DAY + DAY_MS)).toBe('start_overdue');
+      // After someone started, the start_overdue status is cleared.
+      const started = updateKanbanCard(db, { id: card.id, started_at: at - DAY });
+      // Well before the deadline (outside the due_soon window), the service is in progress.
+      expect(deriveScheduleStatus(started, columns, at - 80 * HOUR)).toBe('in_progress');
+      // Without a planned start, there is no start_overdue; after ten days
+      // the service is overdue (deadline passed).
+      const noStart = createKanbanCard(db, {
+        board_id: board.id,
+        column_id: scheduled.id,
+        title: 'Sem planejamento de inicio',
+        scheduled_for: at,
+      });
+      expect(deriveScheduleStatus(noStart, columns, at + 10 * DAY)).toBe('overdue');
     });
   });
 
